@@ -31,7 +31,7 @@ func (e AssertionError) Error() string {
   et, ek := typeAndKind(e.Expected)
   at, _ := typeAndKind(e.Actual)
   
-  if et != at || (ek != reflect.Struct && ek != reflect.Map && ek != reflect.Slice && ek != reflect.Array) {
+  if et != at || (ek != reflect.String && ek != reflect.Struct && ek != reflect.Map && ek != reflect.Slice && ek != reflect.Array) {
     m += "           expected: "+ spew.Sdump(e.Expected)
     m += "             actual: "+ spew.Sdump(e.Actual)
   }else{
@@ -72,13 +72,19 @@ func diff(expected, actual interface{}) string {
   if et != at {
     return ""
   }
-  if ek != reflect.Struct && ek != reflect.Map && ek != reflect.Slice && ek != reflect.Array {
+  if ek != reflect.String && ek != reflect.Struct && ek != reflect.Map && ek != reflect.Slice && ek != reflect.Array {
     return ""
   }
   
-  spew.Config.SortKeys = true
-  e := spew.Sdump(expected)
-  a := spew.Sdump(actual)
+  var e, a string
+  if ek == reflect.String {
+    e = expected.(string)
+    a = actual.(string)
+  }else{
+    spew.Config.SortKeys = true
+    e = spew.Sdump(expected)
+    a = spew.Sdump(actual)
+  }
   
   diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
     A:        difflib.SplitLines(e),

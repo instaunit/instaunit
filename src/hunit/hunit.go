@@ -15,6 +15,8 @@ import (
   "gopkg.in/yaml.v2"
 )
 
+const whitespace = " \n\r\t\v"
+
 /**
  * HTTP client
  */
@@ -76,7 +78,12 @@ func (c Case) Run(context Context) (*Result, error) {
     return nil, fmt.Errorf("Request requires a method (set 'method')")
   }
   
-  url := joinPath(context.BaseURL, c.Request.URL)
+  var url string
+  if isAbsoluteURL(c.Request.URL) {
+    url = c.Request.URL
+  }else{
+    url = joinPath(context.BaseURL, c.Request.URL)
+  }
   if url == "" {
     return nil, fmt.Errorf("Request requires a URL (set 'url')")
   }
@@ -118,18 +125,19 @@ func (c Case) Run(context Context) (*Result, error) {
   }
   
   // check response entity, if necessary
-  if c.Response.Entity != "" {
-    if (context.Options & OptionEntityTrimTrailingWhitespace) == OptionEntityTrimTrailingWhitespace {
-      c.Response.Entity = strings.TrimRight(c.Response.Entity, " \n\r\t\v")
-    }
-    entity := []byte(c.Response.Entity)
+  if entity := c.Response.Entity; entity != "" {
     if rsp.Body == nil {
-      result.AssertEqual(entity, []byte(nil), "Entities do not match")
+      result.AssertEqual(entity, "", "Entities do not match")
     }else{
-      check, err := ioutil.ReadAll(rsp.Body)
+      data, err := ioutil.ReadAll(rsp.Body)
       if err != nil {
         result.Error(err)
       }else{
+        check := string(data)
+        if (context.Options & OptionEntityTrimTrailingWhitespace) == OptionEntityTrimTrailingWhitespace {
+          entity = strings.TrimRight(entity, whitespace)
+          check = strings.TrimRight(check, whitespace)
+        }
         result.AssertEqual(entity, check, "Entities do not match")
       }
     }
