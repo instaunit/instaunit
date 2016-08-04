@@ -4,6 +4,7 @@ package hunit
  * A test result
  */
 type Result struct {
+  Name      string
   Success   bool
   Errors    []error
 }

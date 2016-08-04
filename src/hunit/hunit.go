@@ -6,6 +6,7 @@ import (
   "fmt"
   "time"
   "bytes"
+  "strings"
   "net/http"
   "io/ioutil"
 )
@@ -20,10 +21,21 @@ import (
 var client = http.Client{Timeout: time.Second * 30}
 
 /**
+ * Options
+ */
+type Options uint32
+
+const (
+  OptionNone                          = 0
+  OptionEntityTrimTrailingWhitespace  = 1 << 0
+)
+
+/**
  * A test context
  */
 type Context struct {
   BaseURL   string
+  Options   Options
   Debug     bool
 }
 
@@ -67,8 +79,6 @@ func (c Case) Run(context Context) (*Result, error) {
   url := joinPath(context.BaseURL, c.Request.URL)
   if url == "" {
     return nil, fmt.Errorf("Request requires a URL (set 'url')")
-  }else if context.Debug {
-    fmt.Printf("----> %v %v\n", method, url)
   }
   
   var entity io.Reader
@@ -87,7 +97,7 @@ func (c Case) Run(context Context) (*Result, error) {
     }
   }
   
-  result := &Result{}
+  result := &Result{Name:fmt.Sprintf("%v %v\n", method, url)}
   
   rsp, err := client.Do(req)
   if rsp != nil && rsp.Body != nil {
@@ -109,6 +119,9 @@ func (c Case) Run(context Context) (*Result, error) {
   
   // check response entity, if necessary
   if c.Response.Entity != "" {
+    if (context.Options & OptionEntityTrimTrailingWhitespace) == OptionEntityTrimTrailingWhitespace {
+      c.Response.Entity = strings.TrimRight(c.Response.Entity, " \n\r\t\v")
+    }
     entity := []byte(c.Response.Entity)
     if rsp.Body == nil {
       result.AssertEqual(entity, []byte(nil), "Entities do not match")
