@@ -1,7 +1,7 @@
 package hunit
 
 import (
-  "fmt"
+  "github.com/davecgh/go-spew/spew"
 )
 
 /**
@@ -17,9 +17,11 @@ type AssertionError struct {
  * Error
  */
 func (e AssertionError) Error() string {
-  m := fmt.Sprintf("%v (expected) != %v (actual)", e.Expected, e.Actual)
+  m := e.Message
   if e.Message != "" {
-    m += ": "+ e.Message
+    m += ":\n"
   }
+  m += "        expected: "+ spew.Sdump(e.Expected)
+  m += "          actual: "+ spew.Sdump(e.Actual)
   return m
 }

@@ -50,7 +50,7 @@ func main() {
       }
       if r.Errors != nil {
         for _, e := range r.Errors {
-          fmt.Printf("%v: %v\n", base, e)
+          fmt.Printf("      %v\n", e)
         }
       }
     }

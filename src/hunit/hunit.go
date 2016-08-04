@@ -97,7 +97,15 @@ func (c Case) Run(context Context) (*Result, error) {
     return result.Error(err), nil
   }
   
+  // check the response status
   result.AssertEqual(c.Response.Status, rsp.StatusCode, "Unexpected status code")
+  
+  // check response headers, if necessary
+  if headers := c.Response.Headers; headers != nil {
+    for k, v := range headers {
+      result.AssertEqual(v, rsp.Header.Get(k), "Headers do not match: %v", k)
+    }
+  }
   
   return result, nil
 }
