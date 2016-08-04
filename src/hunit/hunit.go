@@ -107,6 +107,21 @@ func (c Case) Run(context Context) (*Result, error) {
     }
   }
   
+  // check response entity, if necessary
+  if c.Response.Entity != "" {
+    entity := []byte(c.Response.Entity)
+    if rsp.Body == nil {
+      result.AssertEqual(entity, []byte(nil), "Entities do not match")
+    }else{
+      check, err := ioutil.ReadAll(rsp.Body)
+      if err != nil {
+        result.Error(err)
+      }else{
+        result.AssertEqual(entity, check, "Entities do not match")
+      }
+    }
+  }
+  
   return result, nil
 }
 
