@@ -21,7 +21,7 @@ func (e AssertionError) Error() string {
   if e.Message != "" {
     m += ":\n"
   }
-  m += "        expected: "+ spew.Sdump(e.Expected)
-  m += "          actual: "+ spew.Sdump(e.Actual)
+  m += "           expected: "+ spew.Sdump(e.Expected)
+  m += "             actual: "+ spew.Sdump(e.Actual)
   return m
 }

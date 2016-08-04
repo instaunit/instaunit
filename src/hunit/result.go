@@ -25,7 +25,7 @@ func (r *Result) AssertEqual(e, a interface{}, m string, x ...interface{}) bool 
  * the result is returned so calls can be chained.
  */
 func (r *Result) Error(e error) *Result {
-  if r.Errors != nil {
+  if r.Errors == nil {
     r.Errors = make([]error, 0)
   }
   r.Success = false
