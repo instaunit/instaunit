@@ -3,7 +3,7 @@
 - 
   request:
     method: GET
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/test.txt
+    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
     headers:
       Origin: localhost
   
@@ -20,7 +20,7 @@
 - 
   request:
     method: GET
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/test.txt
+    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
     headers:
       Origin: localhost
   
