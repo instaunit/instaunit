@@ -33,3 +33,21 @@
       response from the
       server.      
 
+# Test semantic entity
+- 
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+    headers:
+      Origin: localhost
+  
+  response:
+    status: 200
+    headers:
+      Content-Type: application/json
+    entity: |
+      {
+        "z": "Hello, this is the value",
+        "a": 123,
+        "/": false
+      }

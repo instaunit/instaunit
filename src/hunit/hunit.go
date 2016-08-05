@@ -6,7 +6,6 @@ import (
   "fmt"
   "time"
   "bytes"
-  "strings"
   "net/http"
   "io/ioutil"
 )
@@ -30,6 +29,7 @@ type Options uint32
 const (
   OptionNone                          = 0
   OptionEntityTrimTrailingWhitespace  = 1 << 0
+  OptionEntityCompareSemantically     = 1 << 1
 )
 
 /**
@@ -132,13 +132,8 @@ func (c Case) Run(context Context) (*Result, error) {
       data, err := ioutil.ReadAll(rsp.Body)
       if err != nil {
         result.Error(err)
-      }else{
-        check := string(data)
-        if (context.Options & OptionEntityTrimTrailingWhitespace) == OptionEntityTrimTrailingWhitespace {
-          entity = strings.TrimRight(entity, whitespace)
-          check = strings.TrimRight(check, whitespace)
-        }
-        result.AssertEqual(entity, check, "Entities do not match")
+      }else if err = entitiesEqual(context, []byte(entity), data); err != nil {
+        result.Error(err)
       }
     }
   }

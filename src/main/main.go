@@ -17,11 +17,12 @@ var DEBUG_VERBOSE bool
 func main() {
   var tests, failures int
   
-  cmdline     := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-  fBaseURL    := cmdline.String   ("base-url",      coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
-  fTrimEntity := cmdline.Bool     ("entity:trim",   true,                                                         "Trim trailing whitespace from entities.")
-  fDebug      := cmdline.Bool     ("debug",         false,                                                        "Enable debugging mode.")
-  fVerbose    := cmdline.Bool     ("verbose",       false,                                                        "Enable verbose debugging mode.")
+  cmdline       := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+  fBaseURL      := cmdline.String   ("base-url",        coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
+  fTrimEntity   := cmdline.Bool     ("entity:trim",     true,                                                         "Trim trailing whitespace from entities.")
+  // fParseEntity  := cmdline.Bool     ("entity:semantic", true,                                                         "Parse supported entities and compare them semantically.")
+  fDebug        := cmdline.Bool     ("debug",           false,                                                        "Enable debugging mode.")
+  fVerbose      := cmdline.Bool     ("verbose",         false,                                                        "Enable verbose debugging mode.")
   cmdline.Parse(os.Args[1:])
   
   DEBUG = *fDebug
@@ -31,6 +32,9 @@ func main() {
   if *fTrimEntity {
     options |= hunit.OptionEntityTrimTrailingWhitespace
   }
+  // if *fParseEntity {
+  //   options |= hunit.OptionEntityCompareSemantically
+  // }
   
   success := true
   for _, e := range cmdline.Args() {
@@ -72,7 +76,8 @@ func main() {
   if !success {
     fmt.Printf("FAILURES! %d of %d tests failed.\n", failures, tests)
     os.Exit(1)
-  }else if tests == 1 {
+  }
+  if tests == 1 {
     fmt.Printf("SUCCESS! The test passed.\n")
   }else{
     fmt.Printf("SUCCESS! All %d tests passed.\n", tests)
