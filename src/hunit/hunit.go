@@ -104,7 +104,7 @@ func (c Case) Run(context Context) (*Result, error) {
     }
   }
   
-  result := &Result{Name:fmt.Sprintf("%v %v\n", method, url)}
+  result := &Result{Name:fmt.Sprintf("%v %v\n", method, url), Success:true}
   
   rsp, err := client.Do(req)
   if rsp != nil && rsp.Body != nil {
