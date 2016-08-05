@@ -1,4 +1,5 @@
 
+# This one should pass
 - 
   request:
     method: GET
@@ -12,6 +13,23 @@
       Content-Type: text/plain; charset=utf-8
     entity: |+
       Here's a simple
+      response from the
+      server.      
+
+# This one should have failures
+- 
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/bww/hunit/master/example/test.txt
+    headers:
+      Origin: localhost
+  
+  response:
+    status: 201
+    headers:
+      Content-Type: text/plain; charset=utf-8
+    entity: |+
+      Here is a simple
       response from the
       server.      
 

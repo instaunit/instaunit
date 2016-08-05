@@ -15,6 +15,7 @@ var DEBUG_VERBOSE bool
  * You know what it does
  */
 func main() {
+  var tests, failures int
   
   cmdline     := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
   fBaseURL    := cmdline.String   ("base-url",      coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
@@ -53,8 +54,10 @@ func main() {
     var count int
     for _, r := range results {
       fmt.Printf("----> %v", r.Name)
+      tests++
       if !r.Success {
         success = false
+        failures++
       }
       if r.Errors != nil {
         for _, e := range r.Errors {
@@ -67,7 +70,12 @@ func main() {
   }
   
   if !success {
+    fmt.Printf("FAILURES! %d of %d tests failed.\n", failures, tests)
     os.Exit(1)
+  }else if tests == 1 {
+    fmt.Printf("SUCCESS! The test passed.\n")
+  }else{
+    fmt.Printf("SUCCESS! All %d tests passed.\n", tests)
   }
 }
 
