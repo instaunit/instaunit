@@ -6,6 +6,7 @@ import (
   "flag"
   "path"
   "hunit"
+  "strings"
 )
 
 var DEBUG bool
@@ -19,9 +20,10 @@ func main() {
   
   cmdline       := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
   fBaseURL      := cmdline.String   ("base-url",        coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
-  fTrimEntity   := cmdline.Bool     ("entity:trim",     true,                                                         "Trim trailing whitespace from entities.")
-  fDebug        := cmdline.Bool     ("debug",           false,                                                        "Enable debugging mode.")
-  fVerbose      := cmdline.Bool     ("verbose",         false,                                                        "Enable verbose debugging mode.")
+  fTrimEntity   := cmdline.Bool     ("entity:trim",     strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
+  fSmartEntity  := cmdline.Bool     ("entity:smart",    strToBool(os.Getenv("HUNIT_SMART_ENTITY"), true),             "Attempt to interpret supported entities semantically by unmarshaling them and comparing the resulting objects.")
+  fDebug        := cmdline.Bool     ("debug",           strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
+  fVerbose      := cmdline.Bool     ("verbose",         strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
   cmdline.Parse(os.Args[1:])
   
   DEBUG = *fDebug
@@ -29,7 +31,12 @@ func main() {
   
   var options hunit.Options
   if *fTrimEntity {
+    if DEBUG_VERBOSE { fmt.Println("Enabled: Trim entity trailing whitespace") }
     options |= hunit.OptionEntityTrimTrailingWhitespace
+  }
+  if *fSmartEntity {
+    if DEBUG_VERBOSE { fmt.Println("Enabled: Smart entity comparison") }
+    options |= hunit.OptionEntityCompareSemantically
   }
   
   success := true
@@ -90,4 +97,18 @@ func coalesce(v... string) string {
     }
   }
   return ""
+}
+
+/**
+ * String to bool
+ */
+func strToBool(s string, d ...bool) bool {
+  if s == "" {
+    if len(d) > 0 {
+      return d[0]
+    }else{
+      return false
+    }
+  }
+  return strings.EqualFold(s, "t") || strings.EqualFold(s, "true") || strings.EqualFold(s, "y") || strings.EqualFold(s, "yes")
 }

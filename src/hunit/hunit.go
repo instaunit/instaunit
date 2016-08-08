@@ -6,6 +6,7 @@ import (
   "fmt"
   "time"
   "bytes"
+  "strings"
   "net/http"
   "io/ioutil"
 )
@@ -117,6 +118,8 @@ func (c Case) Run(context Context) (*Result, error) {
   // check the response status
   result.AssertEqual(c.Response.Status, rsp.StatusCode, "Unexpected status code")
   
+  // note the content type
+  contentType := strings.ToLower(rsp.Header.Get("Content-Type"))
   // check response headers, if necessary
   if headers := c.Response.Headers; headers != nil {
     for k, v := range headers {
@@ -132,7 +135,7 @@ func (c Case) Run(context Context) (*Result, error) {
       data, err := ioutil.ReadAll(rsp.Body)
       if err != nil {
         result.Error(err)
-      }else if err = entitiesEqual(context, []byte(entity), data); err != nil {
+      }else if err = entitiesEqual(context, contentType, []byte(entity), data); err != nil {
         result.Error(err)
       }
     }
