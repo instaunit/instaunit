@@ -20,6 +20,8 @@ A simple testing tool for HTTP APIs.
 
 ### test.yml
 
+Refer to the full [`test.yml`](https://github.com/bww/hunit/blob/master/example/test.yml) file for a more complete illustration of test cases.
+
 	- 
       request:
         method: GET

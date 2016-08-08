@@ -16,7 +16,7 @@ const (
 
 var comparisonNames = []string{
   "literal",
-  "values",
+  "semantic",
 }
 
 /**
@@ -49,7 +49,7 @@ func (c *Comparison) UnmarshalYAML(unmarshal func(interface{}) error) error {
   switch s {
     case "literal", "":
       *c = CompareLiteral
-    case "smart":
+    case "semantic":
       *c = CompareSemantic
     default:
       return fmt.Errorf("Unsupported comparison type: %v", s)

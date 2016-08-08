@@ -89,7 +89,7 @@ func unmarshalJSONEntity(context Context, entity []byte) (interface{}, error) {
   var value interface{}
   err := json.Unmarshal(entity, &value)
   if err != nil {
-    return nil, err
+    return nil, fmt.Errorf("Could not parse JSON entity: %v", err)
   }
   return value, nil
 }

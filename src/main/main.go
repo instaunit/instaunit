@@ -71,6 +71,7 @@ func main() {
     
   }
   
+  fmt.Println()
   if !success {
     fmt.Printf("FAILURES! %d of %d tests failed.\n", failures, tests)
     os.Exit(1)

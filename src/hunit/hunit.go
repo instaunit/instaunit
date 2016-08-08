@@ -59,6 +59,7 @@ type Response struct {
   Headers     map[string]string   `yaml:"headers"`
   Entity      string              `yaml:"entity"`
   Comparison  Comparison          `yaml:"compare"`
+  Format      string              `yaml:"format"`
 }
 
 /**
@@ -118,8 +119,14 @@ func (c Case) Run(context Context) (*Result, error) {
   // check the response status
   result.AssertEqual(c.Response.Status, rsp.StatusCode, "Unexpected status code")
   
-  // note the content type
-  contentType := strings.ToLower(rsp.Header.Get("Content-Type"))
+  // note the content type; we prefer the explicit format over the content type
+  var contentType string
+  if c.Response.Format != "" {
+    contentType = c.Response.Format
+  }else{
+    contentType = strings.ToLower(rsp.Header.Get("Content-Type"))
+  }
+  
   // check response headers, if necessary
   if headers := c.Response.Headers; headers != nil {
     for k, v := range headers {
