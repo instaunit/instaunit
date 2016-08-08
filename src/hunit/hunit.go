@@ -30,7 +30,6 @@ type Options uint32
 const (
   OptionNone                          = 0
   OptionEntityTrimTrailingWhitespace  = 1 << 0
-  OptionEntityCompareSemantically     = 1 << 1
 )
 
 /**
@@ -56,9 +55,10 @@ type Request struct {
  * A test response
  */
 type Response struct {
-  Status    int                   `yaml:"status"`
-  Headers   map[string]string     `yaml:"headers"`
-  Entity    string                `yaml:"entity"`
+  Status      int                 `yaml:"status"`
+  Headers     map[string]string   `yaml:"headers"`
+  Entity      string              `yaml:"entity"`
+  Comparison  Comparison          `yaml:"compare"`
 }
 
 /**
@@ -135,7 +135,7 @@ func (c Case) Run(context Context) (*Result, error) {
       data, err := ioutil.ReadAll(rsp.Body)
       if err != nil {
         result.Error(err)
-      }else if err = entitiesEqual(context, contentType, []byte(entity), data); err != nil {
+      }else if err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), data); err != nil {
         result.Error(err)
       }
     }

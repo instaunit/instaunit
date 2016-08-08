@@ -45,9 +45,9 @@
     status: 200
     headers:
       Content-Type: application/json
+    compare: smart
     entity: |
       {
         "z": "Hello, this is the value",
         "a": 123,
-        "/": false
       }

@@ -21,7 +21,6 @@ func main() {
   cmdline       := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
   fBaseURL      := cmdline.String   ("base-url",        coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
   fTrimEntity   := cmdline.Bool     ("entity:trim",     strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
-  fSmartEntity  := cmdline.Bool     ("entity:smart",    strToBool(os.Getenv("HUNIT_SMART_ENTITY"), true),             "Attempt to interpret supported entities semantically by unmarshaling them and comparing the resulting objects.")
   fDebug        := cmdline.Bool     ("debug",           strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose      := cmdline.Bool     ("verbose",         strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
   cmdline.Parse(os.Args[1:])
@@ -33,10 +32,6 @@ func main() {
   if *fTrimEntity {
     if DEBUG_VERBOSE { fmt.Println("Enabled: Trim entity trailing whitespace") }
     options |= hunit.OptionEntityTrimTrailingWhitespace
-  }
-  if *fSmartEntity {
-    if DEBUG_VERBOSE { fmt.Println("Enabled: Smart entity comparison") }
-    options |= hunit.OptionEntityCompareSemantically
   }
   
   success := true

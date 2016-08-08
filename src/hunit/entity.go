@@ -9,8 +9,8 @@ import (
 /**
  * Compare entities for equality
  */
-func entitiesEqual(context Context, contentType string, expected, actual []byte) error {
-  if (context.Options & OptionEntityCompareSemantically) == OptionEntityCompareSemantically {
+func entitiesEqual(context Context, comparison Comparison, contentType string, expected, actual []byte) error {
+  if comparison == CompareSemantic {
     return semanticEntitiesEqual(context, contentType, expected, actual)
   }else{
     return literalEntitiesEqual(context, contentType, expected, actual)
@@ -64,12 +64,19 @@ func semanticEntitiesEqual(context Context, contentType string, expected, actual
  * Unmarshal an entity
  */
 func unmarshalEntity(context Context, contentType string, entity []byte) (interface{}, error) {
+  
+  // trim off the parameters following ';' if we have any
+  if i := strings.Index(contentType, ";"); i > 0 {
+    contentType = contentType[:i]
+  }
+  
   switch contentType {
     case "application/json":
       return unmarshalJSONEntity(context, entity)
     default:
-      return nil, fmt.Errorf("Unsupported content type: %v", contentType)
+      return nil, fmt.Errorf("Unsupported content type for semantic comparison: %v", contentType)
   }
+  
 }
 
 /**
