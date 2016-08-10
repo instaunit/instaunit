@@ -91,8 +91,10 @@ type Case struct {
  */
 func (c Case) Run(context Context) (*Result, error) {
   
-  method := c.Request.Method
-  if method == "" {
+  method, err := interpolateIfRequired(context, c.Request.Method)
+  if err != nil {
+    return nil, err
+  }else if method == "" {
     return nil, fmt.Errorf("Request requires a method (set 'method')")
   }
   
@@ -102,13 +104,22 @@ func (c Case) Run(context Context) (*Result, error) {
   }else{
     url = joinPath(context.BaseURL, c.Request.URL)
   }
-  if url == "" {
+  
+  url, err = interpolateIfRequired(context, url)
+  if err != nil {
+    return nil, err
+  }else if url == "" {
     return nil, fmt.Errorf("Request requires a URL (set 'url')")
   }
   
   var entity io.Reader
   if c.Request.Entity != "" {
-    entity = bytes.NewBuffer([]byte(c.Request.Entity))
+    expand, err := interpolateIfRequired(context, c.Request.Entity)
+    if err != nil {
+      return nil, err
+    }else{
+      entity = bytes.NewBuffer([]byte(expand))
+    }
   }
   
   req, err := http.NewRequest(method, url, entity)
@@ -118,6 +129,14 @@ func (c Case) Run(context Context) (*Result, error) {
   
   if c.Request.Headers != nil {
     for k, v := range c.Request.Headers {
+      k, err = interpolateIfRequired(context, k)
+      if err != nil {
+        return nil, err
+      }
+      v, err = interpolateIfRequired(context, v)
+      if err != nil {
+        return nil, err
+      }
       req.Header.Add(k, v)
     }
   }
@@ -143,9 +162,22 @@ func (c Case) Run(context Context) (*Result, error) {
     contentType = strings.ToLower(rsp.Header.Get("Content-Type"))
   }
   
+  contentType, err = interpolateIfRequired(context, contentType)
+  if err != nil {
+    return nil, err
+  }
+  
   // check response headers, if necessary
   if headers := c.Response.Headers; headers != nil {
     for k, v := range headers {
+      k, err = interpolateIfRequired(context, k)
+      if err != nil {
+        return nil, err
+      }
+      v, err = interpolateIfRequired(context, v)
+      if err != nil {
+        return nil, err
+      }
       result.AssertEqual(v, rsp.Header.Get(k), "Headers do not match: %v", k)
     }
   }
@@ -153,6 +185,10 @@ func (c Case) Run(context Context) (*Result, error) {
   // check response entity, if necessary
   var data []byte
   if entity := c.Response.Entity; entity != "" {
+    entity, err = interpolateIfRequired(context, entity)
+    if err != nil {
+      return nil, err
+    }
     if rsp.Body == nil {
       result.AssertEqual(entity, "", "Entities do not match")
     }else{

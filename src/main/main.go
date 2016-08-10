@@ -20,6 +20,7 @@ func main() {
   
   cmdline       := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
   fBaseURL      := cmdline.String   ("base-url",        coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
+  fExpandVars   := cmdline.Bool     ("expand-vars",     strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true),              "Expand variables in test cases.")
   fTrimEntity   := cmdline.Bool     ("entity:trim",     strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
   fDebug        := cmdline.Bool     ("debug",           strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose      := cmdline.Bool     ("verbose",         strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
@@ -32,6 +33,10 @@ func main() {
   if *fTrimEntity {
     if DEBUG_VERBOSE { fmt.Println("Enabled: Trim entity trailing whitespace") }
     options |= hunit.OptionEntityTrimTrailingWhitespace
+  }
+  if *fExpandVars {
+    if DEBUG_VERBOSE { fmt.Println("Enabled: Expand variables in test cases") }
+    options |= hunit.OptionInterpolateVariables
   }
   
   success := true

@@ -6,6 +6,17 @@ import (
 )
 
 /**
+ * Interpolate if required
+ */
+func interpolateIfRequired(c Context, s string) (string, error) {
+  if (c.Options & OptionInterpolateVariables) == OptionInterpolateVariables {
+    return interpolate(s, "${", "}", c.Variables)
+  }else{
+    return s, nil
+  }
+}
+
+/**
  * Interpolate expressions in a string
  */
 func interpolate(s, pre, suf string, context interface{}) (string, error) {
