@@ -30,11 +30,9 @@ func interpolate(s, pre, suf string, context interface{}) (string, error) {
       }
       i++
       continue
-    }else{
-      esc = 0
     }
     
-    if s[i] == fp && matchAhead(s[i:], pre) {
+    if s[i] == fp && (esc % 2) == 0 && matchAhead(s[i:], pre) {
       i += len(pre)
       start := i
       for {
@@ -71,6 +69,7 @@ func interpolate(s, pre, suf string, context interface{}) (string, error) {
       i++
     }
     
+    esc = 0
   }
   
   return out, nil

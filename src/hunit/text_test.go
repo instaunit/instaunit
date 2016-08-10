@@ -13,16 +13,26 @@ var (
 var context = map[string]interface{}{
   "a": 123,
   "b": "String value",
+  "c": map[string]interface{}{
+    "a": []string{ "Zero", "One", "Two", "Three" },
+    "b": false,
+  },
 }
 
 /**
  * Test interpolate
  */
 func TestInterpolateVariables(t *testing.T) {
-  testInterpolate(t, "This is the string ${a}, alright.", "This is the string 123, alright.", context)
-  testInterpolate(t, "This is the string ${a, alright.", invalidInputError, context)
-  testInterpolate(t, `This is the string ${a
-}, alright.`, `This is the string 123, alright.`, context) // whitespace is not significant in EPL
+  testInterpolate(t, `Before ${a}, after.`, `Before 123, after.`, context)
+  testInterpolate(t, `Before \${a}, after.`, `Before ${a}, after.`, context)
+  testInterpolate(t, `Before \\${a}, after.`, `Before \123, after.`, context)
+  testInterpolate(t, `Before $${a}}, after.`, `Before $123}, after.`, context)
+  testInterpolate(t, `Before $${a}}, after.`, `Before $123}, after.`, context)
+  testInterpolate(t, `Before ${c.a[0]}, after.`, `Before Zero, after.`, context)
+  testInterpolate(t, `Before ${c["b"]}, after.`, `Before false, after.`, context)
+  testInterpolate(t, `Before ${a, after.`, invalidInputError, context)
+  testInterpolate(t, `Before ${a
+}, after.`, `Before 123, after.`, context) // whitespace is not significant in EPL
 }
 
 func testInterpolate(t *testing.T, s string, e, c interface{}) {
