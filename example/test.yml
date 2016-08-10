@@ -1,6 +1,10 @@
 
 # This one is pretty self-explanatory and should pass
 - 
+  # Test cases can have an optional identifier, in which case subsequent
+  # tests can refer to the response from this test.
+  id: first
+  
   request:
     # The HTTP method to use
     method: GET
@@ -40,7 +44,7 @@
   response:
     status: 201 # wrong
     headers:
-      Content-Type: text/plain; charset=utf-8
+      Content-Type: ${first.response.headers["Content-Type"]}
     entity: |+  # wrong
       Here is a simple
       response from the
@@ -57,7 +61,7 @@
 - 
   request:
     method: GET
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.json
     headers:
       Origin: localhost
   
@@ -76,5 +80,5 @@
     entity: |
       {
         "z": "Hello, this is the value",
-        "a": 123,
+        "a": 123
       }

@@ -30,6 +30,8 @@ type Options uint32
 const (
   OptionNone                          = 0
   OptionEntityTrimTrailingWhitespace  = 1 << 0
+  OptionInterpolateVariables          = 1 << 1
+  OptionInterpolateEnvironment        = 1 << 2
 )
 
 /**
@@ -39,6 +41,19 @@ type Context struct {
   BaseURL   string
   Options   Options
   Debug     bool
+  Variables map[string]interface{}
+}
+
+/**
+ * Derive a subcontext
+ */
+func (c Context) Subcontext(vars map[string]interface{}) Context {
+  return Context{
+    BaseURL: c.BaseURL,
+    Options: c.Options,
+    Debug: c.Debug,
+    Variables: vars,
+  }
 }
 
 /**
@@ -66,6 +81,7 @@ type Response struct {
  * A test case
  */
 type Case struct {
+  Id        string                `yaml:"id"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
 }
@@ -135,17 +151,39 @@ func (c Case) Run(context Context) (*Result, error) {
   }
   
   // check response entity, if necessary
+  var data []byte
   if entity := c.Response.Entity; entity != "" {
     if rsp.Body == nil {
       result.AssertEqual(entity, "", "Entities do not match")
     }else{
-      data, err := ioutil.ReadAll(rsp.Body)
+      data, err = ioutil.ReadAll(rsp.Body)
       if err != nil {
         result.Error(err)
       }else if err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), data); err != nil {
         result.Error(err)
       }
     }
+  }
+  
+  // add to our context if we have an identifier
+  if c.Id != "" {
+    
+    headers := make(map[string]string)
+    for k, v := range rsp.Header {
+      if len(v) > 0 {
+        headers[k] = v[0]
+      }
+    }
+    
+    context.Variables[c.Id] = map[string]interface{}{
+      "case": c,
+      "response": map[string]interface{}{
+        "headers": headers,
+        "entity": data,
+        "status": rsp.StatusCode,
+      },
+    }
+    
   }
   
   return result, nil
@@ -195,9 +233,10 @@ func LoadSuite(data []byte) (*Suite, error) {
  */
 func (s *Suite) Run(context Context) ([]*Result, error) {
   results := make([]*Result, 0)
+  c := context.Subcontext(make(map[string]interface{}))
   
   for _, e := range s.Cases {
-    r, err := e.Run(context)
+    r, err := e.Run(c)
     if err != nil {
       return nil, err
     }
