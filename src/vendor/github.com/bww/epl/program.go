@@ -37,6 +37,8 @@ import (
   "reflect"
 )
 
+var undefinedVariableError = fmt.Errorf("undefined")
+
 /**
  * A runtime context
  */
@@ -57,17 +59,34 @@ type Runtime struct {
 }
 
 /**
+ * The environment context
+ */
+type environment struct {}
+
+/**
+ * Obtain an environment variable
+ */
+func (e environment) Variable(name string) (interface{}, error) {
+  v := os.Getenv(name)
+  if v != "" {
+    return v, nil
+  }else{
+    return nil, undefinedVariableError
+  }
+}
+
+/**
  * Executable context
  */
 type context struct {
-  stack   []interface{}
+  stack []interface{}
 }
 
 /**
  * Create a new context
  */
-func newContext(f interface{}) *context {
-  return &context{[]interface{}{f}}
+func newContext(f ...interface{}) *context {
+  return &context{f}
 }
 
 /**
@@ -110,15 +129,13 @@ func (c *context) sget(s span, n string, k []interface{}) (interface{}, error) {
   }
   
   v, err := derefProp(s, k[l-1], n)
-  if err != nil {
+  if err == undefinedVariableError && l > 1 {
+    return c.sget(s, n, k[:l-1])
+  }else if err != nil {
     return nil, err
   }
   
-  if v == nil && l > 1 {
-    return c.sget(s, n, k[:l-1])
-  }else{
-    return v, nil
-  }
+  return v, nil
 }
 
 /**
@@ -162,7 +179,7 @@ type Program struct {
  * Execute
  */
 func (p *Program) Exec(context interface{}) (interface{}, error) {
-  return p.root.exec(&Runtime{os.Stdout}, newContext(context))
+  return p.root.exec(&Runtime{os.Stdout}, newContext(map[string]interface{}{"env": environment{}}, context))
 }
 
 /**
@@ -545,7 +562,12 @@ func derefProp(s span, context interface{}, ident string) (interface{}, error) {
     case func(string)(interface{}, error):
       return v(ident)
     case map[string]interface{}:
-      return v[ident], nil
+      res, ok := v[ident]
+      if ok {
+        return res, nil
+      }else{
+        return nil, undefinedVariableError
+      }
   }
   
   val := reflect.ValueOf(context)
@@ -570,7 +592,12 @@ func derefMap(s span, val reflect.Value, property string) (interface{}, error) {
     return nil, runtimeErrorf(s, "Expression result is not assignable to map key type: %v != %v", key.Type(), val.Type().Key())
   }
   
-  return val.MapIndex(key).Interface(), nil
+  res := val.MapIndex(key)
+  if res.IsValid() {
+    return res.Interface(), nil
+  }else{
+    return nil, undefinedVariableError
+  }
 }
 
 /**
@@ -625,7 +652,7 @@ func derefMember(s span, val reflect.Value, property string) (interface{}, error
     return v.Interface(), nil
   }
   
-  return nil, fmt.Errorf("No suitable method or field '%v' of %v", property, displayType(val))
+  return nil, undefinedVariableError
 }
 
 /**

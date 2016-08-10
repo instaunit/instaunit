@@ -44,6 +44,9 @@
   response:
     status: 201 # wrong
     headers:
+      # Reference the content type from the previous request, which has the
+      # identifier 'first'. The response object represents the actual response
+      # from the server rather than the expected response defined above.
       Content-Type: ${first.response.headers["Content-Type"]}
     entity: |+  # wrong
       Here is a simple
