@@ -44,7 +44,7 @@
   response:
     status: 201 # wrong
     headers:
-      Content-Type: ${first.response.headers["Content-Type"]}
+      Content-Type: ${first.response.headers."Content-Type"}
     entity: |+  # wrong
       Here is a simple
       response from the

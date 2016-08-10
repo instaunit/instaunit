@@ -25,6 +25,7 @@ $(PRODUCT): $(SRC)
 build: $(PRODUCT) ## Build the service
 
 test: ## Run tests
+	go test -test.v hunit
 
 clean: ## Delete the built product and any generated files
 	rm -rf $(TARGETS)
