@@ -27,18 +27,16 @@ func (e AssertionError) Error() string {
   if e.Message != "" {
     m += ":\n"
   }
-
-  et, ek := typeAndKind(e.Expected)
-  at, _ := typeAndKind(e.Actual)
   
-  if et != at || (ek != reflect.String && ek != reflect.Struct && ek != reflect.Map && ek != reflect.Slice && ek != reflect.Array) {
-    m += "           expected: "+ spew.Sdump(e.Expected)
-    m += "             actual: "+ spew.Sdump(e.Actual)
-  }else{
+  _, ek := typeAndKind(e.Expected)
+  if ek == reflect.String || ek == reflect.Struct || ek == reflect.Map || ek == reflect.Slice || ek == reflect.Array {
     d := diff(e.Expected, e.Actual)
     if d != "" {
       m += indent(d, "           ")
     }
+  }else{
+    m += "           expected: "+ spew.Sdump(e.Expected)
+    m += "             actual: "+ spew.Sdump(e.Actual)
   }
   
   return m
@@ -66,12 +64,7 @@ func diff(expected, actual interface{}) string {
     return ""
   }
   
-  et, ek := typeAndKind(expected)
-  at, _ := typeAndKind(actual)
-  
-  if et != at {
-    return ""
-  }
+  _, ek := typeAndKind(expected)
   if ek != reflect.String && ek != reflect.Struct && ek != reflect.Map && ek != reflect.Slice && ek != reflect.Array {
     return ""
   }
@@ -103,7 +96,7 @@ func diff(expected, actual interface{}) string {
 func typeAndKind(v interface{}) (reflect.Type, reflect.Kind) {
   t := reflect.TypeOf(v)
   k := t.Kind()
-  if k == reflect.Ptr {
+  for k == reflect.Ptr {
     t = t.Elem()
     k = t.Kind()
   }
