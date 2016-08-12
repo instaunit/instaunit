@@ -7,6 +7,7 @@ import (
   "time"
   "bytes"
   "strings"
+  "strconv"
   "net/http"
   "io/ioutil"
 )
@@ -31,7 +32,8 @@ const (
   OptionNone                          = 0
   OptionEntityTrimTrailingWhitespace  = 1 << 0
   OptionInterpolateVariables          = 1 << 1
-  OptionInterpolateEnvironment        = 1 << 2
+  OptionDisplayRequests               = 1 << 2
+  OptionDisplayResponses              = 1 << 3
 )
 
 /**
@@ -112,13 +114,14 @@ func (c Case) Run(context Context) (*Result, error) {
     return nil, fmt.Errorf("Request requires a URL (set 'url')")
   }
   
+  var reqdata string
   var entity io.Reader
   if c.Request.Entity != "" {
-    expand, err := interpolateIfRequired(context, c.Request.Entity)
+    reqdata, err = interpolateIfRequired(context, c.Request.Entity)
     if err != nil {
       return nil, err
     }else{
-      entity = bytes.NewBuffer([]byte(expand))
+      entity = bytes.NewBuffer([]byte(reqdata))
     }
   }
   
@@ -139,6 +142,37 @@ func (c Case) Run(context Context) (*Result, error) {
       }
       req.Header.Add(k, v)
     }
+  }
+  
+  if reqdata != "" {
+    req.Header.Add("Content-Length", strconv.FormatInt(int64(len(reqdata)), 10))
+  }
+  
+  if (context.Options & (OptionDisplayRequests | OptionDisplayResponses)) != 0 {
+    fmt.Println()
+  }
+  if (context.Options & OptionDisplayRequests) == OptionDisplayRequests {
+    dump := req.Method +" "
+    dump += req.URL.Path
+    if q := req.URL.RawQuery; q != "" { dump += "?"+ q }
+    dump += " "+ req.Proto +"\n"
+    
+    dump += "Host: "+ req.URL.Host +"\n"
+    for k, v := range req.Header {
+      dump += k +": "
+      for i, e := range v {
+        if i > 0 { dump += "," }
+        dump += e
+      }
+      dump += "\n"
+    }
+    
+    dump += "\n"
+    if reqdata != "" {
+      dump += reqdata +"\n"
+    }
+    
+    fmt.Println(indent(dump, "> "))
   }
   
   result := &Result{Name:fmt.Sprintf("%v %v\n", method, url), Success:true}
@@ -183,7 +217,7 @@ func (c Case) Run(context Context) (*Result, error) {
   }
   
   // check response entity, if necessary
-  var data []byte
+  var rspdata []byte
   if entity := c.Response.Entity; entity != "" {
     entity, err = interpolateIfRequired(context, entity)
     if err != nil {
@@ -192,13 +226,33 @@ func (c Case) Run(context Context) (*Result, error) {
     if rsp.Body == nil {
       result.AssertEqual(entity, "", "Entities do not match")
     }else{
-      data, err = ioutil.ReadAll(rsp.Body)
+      rspdata, err = ioutil.ReadAll(rsp.Body)
       if err != nil {
         result.Error(err)
-      }else if err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), data); err != nil {
+      }else if err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), rspdata); err != nil {
         result.Error(err)
       }
     }
+  }
+  
+  if (context.Options & OptionDisplayResponses) == OptionDisplayResponses {
+    dump := rsp.Proto +" "+ rsp.Status +"\n"
+    
+    for k, v := range rsp.Header {
+      dump += k +": "
+      for i, e := range v {
+        if i > 0 { dump += "," }
+        dump += e
+      }
+      dump += "\n"
+    }
+    
+    dump += "\n"
+    if rspdata != nil {
+      dump += string(rspdata) +"\n"
+    }
+    
+    fmt.Println(indent(dump, "< "))
   }
   
   // add to our context if we have an identifier
@@ -215,7 +269,7 @@ func (c Case) Run(context Context) (*Result, error) {
       "case": c,
       "response": map[string]interface{}{
         "headers": headers,
-        "entity": data,
+        "entity": rspdata,
         "status": rsp.StatusCode,
       },
     }

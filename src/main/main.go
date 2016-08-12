@@ -20,8 +20,10 @@ func main() {
   
   cmdline       := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
   fBaseURL      := cmdline.String   ("base-url",        coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
-  fExpandVars   := cmdline.Bool     ("expand-vars",     strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true),              "Expand variables in test cases.")
+  fExpandVars   := cmdline.Bool     ("expand",          strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true),              "Expand variables in test cases.")
   fTrimEntity   := cmdline.Bool     ("entity:trim",     strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
+  fDumpRequest  := cmdline.Bool     ("dump:request",    strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")),                  "Dump requests to standard output as they are processed.")
+  fDumpResponse := cmdline.Bool     ("dump:response",   strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")),                 "Dump responses to standard output as they are processed.")
   fDebug        := cmdline.Bool     ("debug",           strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose      := cmdline.Bool     ("verbose",         strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
   cmdline.Parse(os.Args[1:])
@@ -37,6 +39,18 @@ func main() {
   if *fExpandVars {
     if DEBUG_VERBOSE { fmt.Println("Enabled: Expand variables in test cases") }
     options |= hunit.OptionInterpolateVariables
+  }
+  if *fDumpRequest {
+    if DEBUG_VERBOSE { fmt.Println("Enabled: Dump requests") }
+    options |= hunit.OptionDisplayRequests
+  }
+  if *fDumpResponse {
+    if DEBUG_VERBOSE { fmt.Println("Enabled: Dump responses") }
+    options |= hunit.OptionDisplayResponses
+  }
+  if DEBUG && DEBUG_VERBOSE {
+    fmt.Println("Enabled: Verbose output")
+    options |= hunit.OptionDisplayRequests | hunit.OptionDisplayResponses
   }
   
   success := true
@@ -56,6 +70,12 @@ func main() {
     if err != nil {
       fmt.Printf("Could not run test suite: %v\n", err)
       continue
+    }
+    
+    if (options & (hunit.OptionDisplayRequests | hunit.OptionDisplayResponses)) != 0 {
+      if len(results) > 0 {
+        fmt.Println()
+      }
     }
     
     var count int
