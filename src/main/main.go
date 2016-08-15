@@ -16,7 +16,7 @@ var DEBUG_VERBOSE bool
  * You know what it does
  */
 func main() {
-  var tests, failures int
+  var tests, failures, errors int
   
   cmdline       := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
   fBaseURL      := cmdline.String   ("base-url",        coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
@@ -58,12 +58,14 @@ func main() {
     suite, err := hunit.LoadSuiteFromFile(e)
     if err != nil {
       fmt.Printf("Could not load test suite: %v\n", err)
+      errors++
       continue
     }
     
     results, err := suite.Run(hunit.Context{BaseURL: *fBaseURL, Options: options, Debug: DEBUG})
     if err != nil {
       fmt.Printf("Could not run test suite: %v\n", err)
+      errors++
       continue
     }
     
@@ -92,6 +94,9 @@ func main() {
   }
   
   fmt.Println()
+  if errors > 0 {
+    fmt.Printf("ERRORS! %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
+  }
   if !success {
     fmt.Printf("FAILURES! %d of %d tests failed.\n", failures, tests)
     os.Exit(1)
@@ -100,6 +105,17 @@ func main() {
     fmt.Printf("SUCCESS! The test passed.\n")
   }else{
     fmt.Printf("SUCCESS! All %d tests passed.\n", tests)
+  }
+}
+
+/**
+ * Pluralize
+ */
+func plural(v int, s, p string) string {
+  if v == 1 {
+    return s
+  }else{
+    return p
   }
 }
 
