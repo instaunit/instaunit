@@ -9,7 +9,7 @@ import (
 /**
  * Compare entities for equality
  */
-func entitiesEqual(context Context, comparison Comparison, contentType string, expected, actual []byte) error {
+func entitiesEqual(context Context, comparison Comparison, contentType string, expected, actual []byte) (interface{}, error) {
   if comparison == CompareSemantic {
     return semanticEntitiesEqual(context, contentType, expected, actual)
   }else{
@@ -20,7 +20,7 @@ func entitiesEqual(context Context, comparison Comparison, contentType string, e
 /**
  * Compare entities for equality
  */
-func literalEntitiesEqual(context Context, contentType string, expected, actual []byte) error {
+func literalEntitiesEqual(context Context, contentType string, expected, actual []byte) (interface{}, error) {
   var e, a interface{}
   
   if (context.Options & OptionEntityTrimTrailingWhitespace) == OptionEntityTrimTrailingWhitespace {
@@ -32,31 +32,31 @@ func literalEntitiesEqual(context Context, contentType string, expected, actual 
   }
   
   if !equalValues(e, a) {
-    return &AssertionError{e, a, "Entities are not equal"}
+    return a, &AssertionError{e, a, "Entities are not equal"}
   }else{
-    return nil
+    return a, nil
   }
 }
 
 /**
  * Compare entities for equality
  */
-func semanticEntitiesEqual(context Context, contentType string, expected, actual []byte) error {
+func semanticEntitiesEqual(context Context, contentType string, expected, actual []byte) (interface{}, error) {
   
   e, err := unmarshalEntity(context, contentType, expected)
   if err != nil {
-    return err
+    return nil, err
   }
   
   a, err := unmarshalEntity(context, contentType, actual)
   if err != nil {
-    return err
+    return nil, err
   }
   
   if !semanticEqual(e, a) {
-    return &AssertionError{e, a, "Entities are not equal"}
+    return a, &AssertionError{e, a, "Entities are not equal"}
   }else{
-    return nil
+    return a, nil
   }
 }
 

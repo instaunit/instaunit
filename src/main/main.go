@@ -33,23 +33,18 @@ func main() {
   
   var options hunit.Options
   if *fTrimEntity {
-    if DEBUG_VERBOSE { fmt.Println("Enabled: Trim entity trailing whitespace") }
     options |= hunit.OptionEntityTrimTrailingWhitespace
   }
   if *fExpandVars {
-    if DEBUG_VERBOSE { fmt.Println("Enabled: Expand variables in test cases") }
     options |= hunit.OptionInterpolateVariables
   }
   if *fDumpRequest {
-    if DEBUG_VERBOSE { fmt.Println("Enabled: Dump requests") }
     options |= hunit.OptionDisplayRequests
   }
   if *fDumpResponse {
-    if DEBUG_VERBOSE { fmt.Println("Enabled: Dump responses") }
     options |= hunit.OptionDisplayResponses
   }
   if DEBUG && DEBUG_VERBOSE {
-    fmt.Println("Enabled: Verbose output")
     options |= hunit.OptionDisplayRequests | hunit.OptionDisplayResponses
   }
   

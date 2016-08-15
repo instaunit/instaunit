@@ -30,10 +30,11 @@ type Options uint32
 
 const (
   OptionNone                          = 0
-  OptionEntityTrimTrailingWhitespace  = 1 << 0
-  OptionInterpolateVariables          = 1 << 1
-  OptionDisplayRequests               = 1 << 2
-  OptionDisplayResponses              = 1 << 3
+  OptionDebug                         = 1 << 0
+  OptionEntityTrimTrailingWhitespace  = 1 << 1
+  OptionInterpolateVariables          = 1 << 2
+  OptionDisplayRequests               = 1 << 3
+  OptionDisplayResponses              = 1 << 4
 )
 
 /**
@@ -218,6 +219,7 @@ func (c Case) Run(context Context) (*Result, error) {
   
   // check response entity, if necessary
   var rspdata []byte
+  var rspvalue interface{}
   if entity := c.Response.Entity; entity != "" {
     entity, err = interpolateIfRequired(context, entity)
     if err != nil {
@@ -229,7 +231,7 @@ func (c Case) Run(context Context) (*Result, error) {
       rspdata, err = ioutil.ReadAll(rsp.Body)
       if err != nil {
         result.Error(err)
-      }else if err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), rspdata); err != nil {
+      }else if rspvalue, err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), rspdata); err != nil {
         result.Error(err)
       }
     }
@@ -270,6 +272,7 @@ func (c Case) Run(context Context) (*Result, error) {
       "response": map[string]interface{}{
         "headers": headers,
         "entity": rspdata,
+        "value": rspvalue,
         "status": rsp.StatusCode,
       },
     }
