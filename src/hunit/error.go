@@ -5,8 +5,8 @@ import (
 )
 
 import (
+  "github.com/kr/pretty"
   "github.com/davecgh/go-spew/spew"
-  "github.com/pmezard/go-difflib/difflib"
 )
 
 /**
@@ -30,9 +30,11 @@ func (e AssertionError) Error() string {
   
   _, ek := typeAndKind(e.Expected)
   if ek == reflect.String || ek == reflect.Struct || ek == reflect.Map || ek == reflect.Slice || ek == reflect.Array {
-    d := diff(e.Expected, e.Actual)
-    if d != "" {
-      m += indent(d, "           ")
+    d := pretty.Diff(e.Expected, e.Actual)
+    if d != nil && len(d) > 0 {
+      for _, e := range d {
+        m += indent(e, "           ") +"\n"
+      }
     }
   }else{
     m += "           expected: "+ spew.Sdump(e.Expected)
@@ -54,40 +56,6 @@ func indent(s, p string) string {
     }
   }
   return o
-}
-
-/**
- * Obtain a diff of values
- */
-func diff(expected, actual interface{}) string {
-  if expected == nil || actual == nil {
-    return ""
-  }
-  
-  _, ek := typeAndKind(expected)
-  if ek != reflect.String && ek != reflect.Struct && ek != reflect.Map && ek != reflect.Slice && ek != reflect.Array {
-    return ""
-  }
-  
-  var e, a string
-  if ek == reflect.String {
-    e = expected.(string)
-    a = actual.(string)
-  }else{
-    spew.Config.SortKeys = true
-    e = spew.Sdump(expected)
-    a = spew.Sdump(actual)
-  }
-  
-  diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-    A:        difflib.SplitLines(e),
-    B:        difflib.SplitLines(a),
-    FromFile: "Expected",
-    ToFile:   "Actual",
-    Context:  1,
-  })
-  
-  return diff
 }
 
 /**
