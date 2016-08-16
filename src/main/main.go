@@ -96,6 +96,7 @@ func main() {
   fmt.Println()
   if errors > 0 {
     fmt.Printf("ERRORS! %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
+    os.Exit(1)
   }
   if !success {
     fmt.Printf("FAILURES! %d of %d tests failed.\n", failures, tests)
