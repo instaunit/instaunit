@@ -10,7 +10,7 @@ import (
 )
 
 var DEBUG bool
-var DEBUG_VERBOSE bool
+var VERBOSE bool
 
 /**
  * You know what it does
@@ -29,7 +29,7 @@ func main() {
   cmdline.Parse(os.Args[1:])
   
   DEBUG = *fDebug
-  DEBUG_VERBOSE = *fVerbose
+  VERBOSE = *fVerbose
   
   var options hunit.Options
   if *fTrimEntity {
@@ -44,7 +44,7 @@ func main() {
   if *fDumpResponse {
     options |= hunit.OptionDisplayResponses
   }
-  if DEBUG && DEBUG_VERBOSE {
+  if VERBOSE {
     options |= hunit.OptionDisplayRequests | hunit.OptionDisplayResponses
   }
   
