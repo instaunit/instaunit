@@ -116,6 +116,9 @@ func semanticEqual(expected, actual interface{}) bool {
       if !ok {
         return false
       }
+      if len(a) != len(e) {
+        return false
+      }
       for i, v := range e {
         if !semanticEqual(v, a[i]) {
           return false

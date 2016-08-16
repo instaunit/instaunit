@@ -185,7 +185,7 @@ func (c Case) Run(context Context) (*Result, error) {
       dump += reqdata +"\n"
     }
     
-    fmt.Println(indent(dump, "> "))
+    fmt.Println(Indent(dump, "> "))
   }
   
   rsp, err := client.Do(req)
@@ -264,7 +264,7 @@ func (c Case) Run(context Context) (*Result, error) {
       dump += string(rspdata) +"\n"
     }
     
-    fmt.Println(indent(dump, "< "))
+    fmt.Println(Indent(dump, "< "))
   }
   
   // add to our context if we have an identifier

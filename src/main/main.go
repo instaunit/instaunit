@@ -83,7 +83,7 @@ func main() {
       if r.Errors != nil {
         for _, e := range r.Errors {
           count++
-          fmt.Printf("      #%d %v\n", count, e)
+          fmt.Println(hunit.IndentWithOptions(fmt.Sprintf("      #%d %v\n", count, e), "           ", 0))
         }
       }
     }
