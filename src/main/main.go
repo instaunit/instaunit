@@ -51,22 +51,19 @@ func main() {
   success := true
   for _, e := range cmdline.Args() {
     base := path.Base(e)
-    if DEBUG {
-      fmt.Printf("====> %v\n", base)
-    }
+    fmt.Printf("====> %v\n", base)
     
     suite, err := hunit.LoadSuiteFromFile(e)
     if err != nil {
-      fmt.Printf("Could not load test suite: %v\n", err)
+      fmt.Printf("* * * Could not load test suite: %v\n", err)
       errors++
       continue
     }
     
     results, err := suite.Run(hunit.Context{BaseURL: *fBaseURL, Options: options, Debug: DEBUG})
     if err != nil {
-      fmt.Printf("Could not run test suite: %v\n", err)
+      fmt.Printf("* * * Could not run test suite: %v\n", err)
       errors++
-      continue
     }
     
     if (options & (hunit.OptionDisplayRequests | hunit.OptionDisplayResponses)) != 0 {

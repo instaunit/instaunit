@@ -94,12 +94,18 @@ type Case struct {
  */
 func (c Case) Run(context Context) (*Result, error) {
   
+  // start with an unevaluated result
+  result := &Result{Name:fmt.Sprintf("%v %v\n", c.Request.Method, c.Request.URL), Success:true}
+  
   method, err := interpolateIfRequired(context, c.Request.Method)
   if err != nil {
-    return nil, err
+    return result.Error(err), nil
   }else if method == "" {
     return nil, fmt.Errorf("Request requires a method (set 'method')")
   }
+  
+  // incrementally update the name as we evaluate it
+  result.Name = fmt.Sprintf("%v %v\n", method, c.Request.URL)
   
   var url string
   if isAbsoluteURL(c.Request.URL) {
@@ -108,19 +114,25 @@ func (c Case) Run(context Context) (*Result, error) {
     url = joinPath(context.BaseURL, c.Request.URL)
   }
   
+  // incrementally update the name as we evaluate it
+  result.Name = fmt.Sprintf("%v %v\n", method, url)
+  
   url, err = interpolateIfRequired(context, url)
   if err != nil {
-    return nil, err
+    return result.Error(err), nil
   }else if url == "" {
     return nil, fmt.Errorf("Request requires a URL (set 'url')")
   }
+  
+  // incrementally update the name as we evaluate it
+  result.Name = fmt.Sprintf("%v %v\n", method, url)
   
   var reqdata string
   var entity io.Reader
   if c.Request.Entity != "" {
     reqdata, err = interpolateIfRequired(context, c.Request.Entity)
     if err != nil {
-      return nil, err
+      return result.Error(err), nil
     }else{
       entity = bytes.NewBuffer([]byte(reqdata))
     }
@@ -135,11 +147,11 @@ func (c Case) Run(context Context) (*Result, error) {
     for k, v := range c.Request.Headers {
       k, err = interpolateIfRequired(context, k)
       if err != nil {
-        return nil, err
+        return result.Error(err), nil
       }
       v, err = interpolateIfRequired(context, v)
       if err != nil {
-        return nil, err
+        return result.Error(err), nil
       }
       req.Header.Add(k, v)
     }
@@ -176,8 +188,6 @@ func (c Case) Run(context Context) (*Result, error) {
     fmt.Println(indent(dump, "> "))
   }
   
-  result := &Result{Name:fmt.Sprintf("%v %v\n", method, url), Success:true}
-  
   rsp, err := client.Do(req)
   if rsp != nil && rsp.Body != nil {
     defer rsp.Body.Close()
@@ -199,7 +209,7 @@ func (c Case) Run(context Context) (*Result, error) {
   
   contentType, err = interpolateIfRequired(context, contentType)
   if err != nil {
-    return nil, err
+    return result.Error(err), nil
   }
   
   // check response headers, if necessary
@@ -207,11 +217,11 @@ func (c Case) Run(context Context) (*Result, error) {
     for k, v := range headers {
       k, err = interpolateIfRequired(context, k)
       if err != nil {
-        return nil, err
+        return result.Error(err), nil
       }
       v, err = interpolateIfRequired(context, v)
       if err != nil {
-        return nil, err
+        return result.Error(err), nil
       }
       result.AssertEqual(v, rsp.Header.Get(k), "Headers do not match: %v", k)
     }
@@ -223,7 +233,7 @@ func (c Case) Run(context Context) (*Result, error) {
   if entity := c.Response.Entity; entity != "" {
     entity, err = interpolateIfRequired(context, entity)
     if err != nil {
-      return nil, err
+      return result.Error(err), nil
     }
     if rsp.Body == nil {
       result.AssertEqual(entity, "", "Entities do not match")
