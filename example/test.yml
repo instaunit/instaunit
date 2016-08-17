@@ -35,6 +35,11 @@
 
 # This one should have failures
 - 
+  # Wait two seconds before performing this request. this can be used to pause
+  # before requests that may need some time for an asynchronous operation to
+  # complete in the background. (That's not actually the case here...)
+  wait: 2s
+  
   request:
     method: GET
     url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt

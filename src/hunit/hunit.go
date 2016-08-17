@@ -85,6 +85,7 @@ type Response struct {
  */
 type Case struct {
   Id        string                `yaml:"id"`
+  Wait      time.Duration         `yaml:"wait"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
 }
@@ -93,6 +94,11 @@ type Case struct {
  * Run a test case
  */
 func (c Case) Run(context Context) (*Result, error) {
+  
+  // wait if we need to
+  if c.Wait > 0 {
+    <- time.After(c.Wait)
+  }
   
   // start with an unevaluated result
   result := &Result{Name:fmt.Sprintf("%v %v\n", c.Request.Method, c.Request.URL), Success:true}
