@@ -12,11 +12,14 @@ import (
 var DEBUG bool
 var VERBOSE bool
 
+const ws = " \n\r\t\v"
+
 /**
  * You know what it does
  */
 func main() {
   var tests, failures, errors int
+  var headerSpecs flagList
   
   cmdline       := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
   fBaseURL      := cmdline.String   ("base-url",        coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
@@ -26,6 +29,7 @@ func main() {
   fDumpResponse := cmdline.Bool     ("dump:response",   strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")),                 "Dump responses to standard output as they are processed.")
   fDebug        := cmdline.Bool     ("debug",           strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose      := cmdline.Bool     ("verbose",         strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
+  cmdline.Var    (&headerSpecs,      "header",                                                                        "Provide a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
   cmdline.Parse(os.Args[1:])
   
   DEBUG = *fDebug
@@ -48,6 +52,19 @@ func main() {
     options |= hunit.OptionDisplayRequests | hunit.OptionDisplayResponses
   }
   
+  var globalHeaders map[string]string
+  if headerSpecs != nil && len(headerSpecs) > 0 {
+    globalHeaders = make(map[string]string)
+    for _, e := range headerSpecs {
+      x := strings.Index(e, ":")
+      if x < 1 {
+        fmt.Printf("* * * Invalid header: %v\n", e)
+        return
+      }
+      globalHeaders[strings.Trim(e[:x], ws)] = strings.Trim(e[x+1:], ws)
+    }
+  }
+  
   success := true
   for _, e := range cmdline.Args() {
     base := path.Base(e)
@@ -60,7 +77,7 @@ func main() {
       continue
     }
     
-    results, err := suite.Run(hunit.Context{BaseURL: *fBaseURL, Options: options, Debug: DEBUG})
+    results, err := suite.Run(hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG})
     if err != nil {
       fmt.Printf("* * * Could not run test suite: %v\n", err)
       errors++
@@ -104,6 +121,26 @@ func main() {
   }else{
     fmt.Printf("SUCCESS! All %d tests passed.\n", tests)
   }
+}
+
+/**
+ * Flag string list
+ */
+type flagList []string
+
+/**
+ * Set a flag
+ */
+func (s *flagList) Set(v string) error {
+  *s = append(*s, v)
+  return nil
+}
+
+/**
+ * Describe
+ */
+func (s *flagList) String() string {
+  return fmt.Sprintf("%+v", *s)
 }
 
 /**

@@ -43,6 +43,7 @@ const (
 type Context struct {
   BaseURL   string
   Options   Options
+  Headers   map[string]string
   Debug     bool
   Variables map[string]interface{}
 }
@@ -54,6 +55,7 @@ func (c Context) Subcontext(vars map[string]interface{}) Context {
   return Context{
     BaseURL: c.BaseURL,
     Options: c.Options,
+    Headers: c.Headers,
     Debug: c.Debug,
     Variables: vars,
   }
@@ -147,6 +149,20 @@ func (c Case) Run(context Context) (*Result, error) {
   req, err := http.NewRequest(method, url, entity)
   if err != nil {
     return nil, err
+  }
+  
+  if context.Headers != nil {
+    for k, v := range context.Headers {
+      k, err = interpolateIfRequired(context, k)
+      if err != nil {
+        return result.Error(err), nil
+      }
+      v, err = interpolateIfRequired(context, v)
+      if err != nil {
+        return result.Error(err), nil
+      }
+      req.Header.Add(k, v)
+    }
   }
   
   if c.Request.Headers != nil {
