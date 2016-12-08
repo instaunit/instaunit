@@ -1,15 +1,14 @@
 
 # the product we're building
-PRODUCT := hunit
+NAME := hunit
 # the product's main package
 MAIN := ./src/main
 # fix our gopath
 GOPATH := $(GOPATH):$(PWD)
 
 # build and packaging
-TARGETS		:= $(PWD)/target
-BUILD_DIR	:= $(TARGETS)/$(PRODUCT)
-PRODUCT		:= $(BUILD_DIR)/bin/hunit
+TARGETS		:= $(PWD)/bin
+PRODUCT		:= $(TARGETS)/$(NAME)
 
 # sources
 SRC = $(shell find src -name \*.go -print)
@@ -19,7 +18,6 @@ SRC = $(shell find src -name \*.go -print)
 all: build
 
 $(PRODUCT): $(SRC)
-	mkdir -p $(BUILD_DIR)/bin
 	go build -o $@ $(MAIN)
 
 build: $(PRODUCT) ## Build the service

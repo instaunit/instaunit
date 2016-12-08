@@ -1,4 +1,7 @@
 # Run-time data directories
 **/dist/
 **/target/
+**/bin/
+
+# Apple garbage
 .DS_Store
