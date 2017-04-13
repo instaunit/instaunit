@@ -9,7 +9,7 @@ import (
 /**
  * Compare entities for equality
  */
-func entitiesEqual(context Context, comparison Comparison, contentType string, expected, actual []byte) (interface{}, error) {
+func entitiesEqual(context Context, comparison Comparison, contentType string, expected []byte, actual interface{}) error {
   if comparison == CompareSemantic {
     return semanticEntitiesEqual(context, contentType, expected, actual)
   }else{
@@ -20,43 +20,44 @@ func entitiesEqual(context Context, comparison Comparison, contentType string, e
 /**
  * Compare entities for equality
  */
-func literalEntitiesEqual(context Context, contentType string, expected, actual []byte) (interface{}, error) {
+func literalEntitiesEqual(context Context, contentType string, expected []byte, actual interface{}) error {
   var e, a interface{}
+  var ok bool
+  
+  var abytes []byte
+  if abytes, ok = actual.([]byte); !ok {
+    return &AssertionError{expected, actual, "Entities are not equal"}
+  }
   
   if (context.Options & OptionEntityTrimTrailingWhitespace) == OptionEntityTrimTrailingWhitespace {
     e = strings.TrimRight(string(expected), whitespace)
-    a = strings.TrimRight(string(actual), whitespace)
+    a = strings.TrimRight(string(abytes), whitespace)
   }else{
     e = expected
-    a = actual
+    a = abytes
   }
   
   if !equalValues(e, a) {
-    return a, &AssertionError{e, a, "Entities are not equal"}
+    return &AssertionError{e, a, "Entities are not equal"}
   }else{
-    return a, nil
+    return nil
   }
 }
 
 /**
  * Compare entities for equality
  */
-func semanticEntitiesEqual(context Context, contentType string, expected, actual []byte) (interface{}, error) {
+func semanticEntitiesEqual(context Context, contentType string, expected []byte, actual interface{}) error {
   
   e, err := unmarshalEntity(context, contentType, expected)
   if err != nil {
-    return nil, err
+    return err
   }
   
-  a, err := unmarshalEntity(context, contentType, actual)
-  if err != nil {
-    return nil, err
-  }
-  
-  if !semanticEqual(e, a) {
-    return a, &AssertionError{e, a, "Entities are not equal"}
+  if !semanticEqual(e, actual) {
+    return &AssertionError{e, actual, "Entities are not equal"}
   }else{
-    return a, nil
+    return nil
   }
 }
 

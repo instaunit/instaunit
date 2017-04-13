@@ -249,23 +249,34 @@ func (c Case) Run(context Context) (*Result, error) {
     }
   }
   
-  // check response entity, if necessary
+  // handle the response entity
   var rspdata []byte
-  var rspvalue interface{}
+  if rsp.Body != nil {
+    rspdata, err = ioutil.ReadAll(rsp.Body)
+    if err != nil {
+      result.Error(err)
+    }
+  }
+  
+  // parse response entity if necessry
+  var rspvalue interface{} = rspdata
+  if c.Id != "" || c.Response.Comparison == CompareSemantic {
+    rspvalue, err = unmarshalEntity(context, contentType, rspdata)
+    if err != nil {
+      return result.Error(err), nil
+    }
+  }
+  
+  // check response entity, if necessary
   if entity := c.Response.Entity; entity != "" {
     entity, err = interpolateIfRequired(context, entity)
     if err != nil {
       return result.Error(err), nil
     }
-    if rsp.Body == nil {
+    if len(rspdata) == 0 {
       result.AssertEqual(entity, "", "Entities do not match")
-    }else{
-      rspdata, err = ioutil.ReadAll(rsp.Body)
-      if err != nil {
-        result.Error(err)
-      }else if rspvalue, err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), rspdata); err != nil {
-        result.Error(err)
-      }
+    }else if err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), rspvalue); err != nil {
+      result.Error(err)
     }
   }
   
