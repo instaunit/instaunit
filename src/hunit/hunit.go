@@ -1,7 +1,6 @@
 package hunit
 
 import (
-  "os"
   "io"
   "fmt"
   "time"
@@ -10,13 +9,8 @@ import (
   "strconv"
   "net/http"
   "io/ioutil"
+  "hunit/test"
 )
-
-import (
-  "gopkg.in/yaml.v2"
-)
-
-const whitespace = " \n\r\t\v"
 
 /**
  * HTTP client
@@ -24,25 +18,11 @@ const whitespace = " \n\r\t\v"
 var client = http.Client{Timeout: time.Second * 30}
 
 /**
- * Options
- */
-type Options uint32
-
-const (
-  OptionNone                          = 0
-  OptionDebug                         = 1 << 0
-  OptionEntityTrimTrailingWhitespace  = 1 << 1
-  OptionInterpolateVariables          = 1 << 2
-  OptionDisplayRequests               = 1 << 3
-  OptionDisplayResponses              = 1 << 4
-)
-
-/**
  * A test context
  */
 type Context struct {
   BaseURL   string
-  Options   Options
+  Options   test.Options
   Headers   map[string]string
   Debug     bool
   Variables map[string]interface{}
@@ -62,40 +42,27 @@ func (c Context) Subcontext(vars map[string]interface{}) Context {
 }
 
 /**
- * A test request
+ * Run a test suite
  */
-type Request struct {
-  Method    string                `yaml:"method"`
-  URL       string                `yaml:"url"`
-  Headers   map[string]string     `yaml:"headers"`
-  Entity    string                `yaml:"entity"`
-}
-
-/**
- * A test response
- */
-type Response struct {
-  Status      int                 `yaml:"status"`
-  Headers     map[string]string   `yaml:"headers"`
-  Entity      string              `yaml:"entity"`
-  Comparison  Comparison          `yaml:"compare"`
-  Format      string              `yaml:"format"`
-}
-
-/**
- * A test case
- */
-type Case struct {
-  Id        string                `yaml:"id"`
-  Wait      time.Duration         `yaml:"wait"`
-  Request   Request               `yaml:"request"`
-  Response  Response              `yaml:"response"`
+func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
+  results := make([]*Result, 0)
+  c := context.Subcontext(make(map[string]interface{}))
+  
+  for _, e := range s.Cases {
+    r, err := RunTest(e, c)
+    if err != nil {
+      return nil, err
+    }
+    results = append(results, r)
+  }
+  
+  return results, nil
 }
 
 /**
  * Run a test case
  */
-func (c Case) Run(context Context) (*Result, error) {
+func RunTest(c test.Case, context Context) (*Result, error) {
   
   // wait if we need to
   if c.Wait > 0 {
@@ -183,10 +150,10 @@ func (c Case) Run(context Context) (*Result, error) {
     req.Header.Add("Content-Length", strconv.FormatInt(int64(len(reqdata)), 10))
   }
   
-  if (context.Options & (OptionDisplayRequests | OptionDisplayResponses)) != 0 {
+  if (context.Options & (test.OptionDisplayRequests | test.OptionDisplayResponses)) != 0 {
     fmt.Println()
   }
-  if (context.Options & OptionDisplayRequests) == OptionDisplayRequests {
+  if (context.Options & test.OptionDisplayRequests) == test.OptionDisplayRequests {
     dump := req.Method +" "
     dump += req.URL.Path
     if q := req.URL.RawQuery; q != "" { dump += "?"+ q }
@@ -260,7 +227,7 @@ func (c Case) Run(context Context) (*Result, error) {
   
   // parse response entity if necessry
   var rspvalue interface{} = rspdata
-  if c.Id != "" || c.Response.Comparison == CompareSemantic {
+  if c.Id != "" || c.Response.Comparison == test.CompareSemantic {
     rspvalue, err = unmarshalEntity(context, contentType, rspdata)
     if err != nil {
       return result.Error(err), nil
@@ -280,7 +247,7 @@ func (c Case) Run(context Context) (*Result, error) {
     }
   }
   
-  if (context.Options & OptionDisplayResponses) == OptionDisplayResponses {
+  if (context.Options & test.OptionDisplayResponses) == test.OptionDisplayResponses {
     dump := rsp.Proto +" "+ rsp.Status +"\n"
     
     for k, v := range rsp.Header {
@@ -323,63 +290,6 @@ func (c Case) Run(context Context) (*Result, error) {
   }
   
   return result, nil
-}
-
-/**
- * A test suite
- */
-type Suite struct {
-  Cases []Case
-}
-
-/**
- * Load a test suite
- */
-func LoadSuiteFromFile(p string) (*Suite, error) {
-  
-  file, err := os.Open(p)
-  if err != nil {
-    return nil, err
-  }
-  
-  data, err := ioutil.ReadAll(file)
-  if err != nil {
-    return nil, err
-  }
-  
-  return LoadSuite(data)
-}
-
-/**
- * Load a test suite
- */
-func LoadSuite(data []byte) (*Suite, error) {
-  
-  var cases []Case
-  err := yaml.Unmarshal(data, &cases)
-  if err != nil {
-    return nil, err
-  }
-  
-  return &Suite{cases}, nil
-}
-
-/**
- * Run a test suite
- */
-func (s *Suite) Run(context Context) ([]*Result, error) {
-  results := make([]*Result, 0)
-  c := context.Subcontext(make(map[string]interface{}))
-  
-  for _, e := range s.Cases {
-    r, err := e.Run(c)
-    if err != nil {
-      return nil, err
-    }
-    results = append(results, r)
-  }
-  
-  return results, nil
 }
 
 /**

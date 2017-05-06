@@ -2,14 +2,17 @@ package hunit
 
 import (
   "fmt"
+  "hunit/test"
   "github.com/bww/epl"
 )
+
+const whitespace = " \n\r\t\v"
 
 /**
  * Interpolate if required
  */
 func interpolateIfRequired(c Context, s string) (string, error) {
-  if (c.Options & OptionInterpolateVariables) == OptionInterpolateVariables {
+  if (c.Options & test.OptionInterpolateVariables) == test.OptionInterpolateVariables {
     return interpolate(s, "${", "}", c.Variables)
   }else{
     return s, nil

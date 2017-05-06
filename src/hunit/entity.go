@@ -3,14 +3,15 @@ package hunit
 import (
   "fmt"
   "strings"
+  "hunit/test"
   "encoding/json"
 )
 
 /**
  * Compare entities for equality
  */
-func entitiesEqual(context Context, comparison Comparison, contentType string, expected []byte, actual interface{}) error {
-  if comparison == CompareSemantic {
+func entitiesEqual(context Context, comparison test.Comparison, contentType string, expected []byte, actual interface{}) error {
+  if comparison == test.CompareSemantic {
     return semanticEntitiesEqual(context, contentType, expected, actual)
   }else{
     return literalEntitiesEqual(context, contentType, expected, actual)
@@ -29,7 +30,7 @@ func literalEntitiesEqual(context Context, contentType string, expected []byte, 
     return &AssertionError{expected, actual, "Entities are not equal"}
   }
   
-  if (context.Options & OptionEntityTrimTrailingWhitespace) == OptionEntityTrimTrailingWhitespace {
+  if (context.Options & test.OptionEntityTrimTrailingWhitespace) == test.OptionEntityTrimTrailingWhitespace {
     e = strings.TrimRight(string(expected), whitespace)
     a = strings.TrimRight(string(abytes), whitespace)
   }else{

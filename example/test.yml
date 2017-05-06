@@ -5,6 +5,10 @@
   # tests can refer to the response from this test.
   id: first
   
+  # Generate documentation for this endpoint, using the request and response
+  # as examples.
+  gendoc: markdown
+  
   request:
     # The HTTP method to use
     method: GET

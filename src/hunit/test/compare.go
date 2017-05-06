@@ -1,4 +1,4 @@
-package hunit
+package test
 
 import (
   "fmt"

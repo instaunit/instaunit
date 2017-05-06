@@ -5,8 +5,9 @@ import (
   "fmt"
   "flag"
   "path"
-  "hunit"
   "strings"
+  "hunit"
+  "hunit/test"
 )
 
 var DEBUG bool
@@ -35,21 +36,21 @@ func main() {
   DEBUG = *fDebug
   VERBOSE = *fVerbose
   
-  var options hunit.Options
+  var options test.Options
   if *fTrimEntity {
-    options |= hunit.OptionEntityTrimTrailingWhitespace
+    options |= test.OptionEntityTrimTrailingWhitespace
   }
   if *fExpandVars {
-    options |= hunit.OptionInterpolateVariables
+    options |= test.OptionInterpolateVariables
   }
   if *fDumpRequest {
-    options |= hunit.OptionDisplayRequests
+    options |= test.OptionDisplayRequests
   }
   if *fDumpResponse {
-    options |= hunit.OptionDisplayResponses
+    options |= test.OptionDisplayResponses
   }
   if VERBOSE {
-    options |= hunit.OptionDisplayRequests | hunit.OptionDisplayResponses
+    options |= test.OptionDisplayRequests | test.OptionDisplayResponses
   }
   
   var globalHeaders map[string]string
@@ -70,20 +71,20 @@ func main() {
     base := path.Base(e)
     fmt.Printf("====> %v\n", base)
     
-    suite, err := hunit.LoadSuiteFromFile(e)
+    suite, err := test.LoadSuiteFromFile(e)
     if err != nil {
       fmt.Printf("* * * Could not load test suite: %v\n", err)
       errors++
       continue
     }
     
-    results, err := suite.Run(hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG})
+    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG})
     if err != nil {
       fmt.Printf("* * * Could not run test suite: %v\n", err)
       errors++
     }
     
-    if (options & (hunit.OptionDisplayRequests | hunit.OptionDisplayResponses)) != 0 {
+    if (options & (test.OptionDisplayRequests | test.OptionDisplayResponses)) != 0 {
       if len(results) > 0 {
         fmt.Println()
       }
