@@ -8,6 +8,8 @@ import (
   "strings"
   "hunit"
   "hunit/test"
+  "hunit/doc"
+  "hunit/doc/emit"
 )
 
 var DEBUG bool
@@ -28,6 +30,8 @@ func main() {
   fTrimEntity   := cmdline.Bool     ("entity:trim",     strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
   fDumpRequest  := cmdline.Bool     ("dump:request",    strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")),                  "Dump requests to standard output as they are processed.")
   fDumpResponse := cmdline.Bool     ("dump:response",   strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")),                 "Dump responses to standard output as they are processed.")
+  fGendoc       := cmdline.String   ("gendoc",          os.Getenv("HUNIT_GENDOC_OUTPUT"),                             "Generate documentation and write it to the specified output `path`.")
+  fDoctype      := cmdline.String   ("doctype",         coalesce(os.Getenv("HUNIT_DOCTYPE"), "markdown"),             "The format to generate documentation in.")
   fDebug        := cmdline.Bool     ("debug",           strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose      := cmdline.Bool     ("verbose",         strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
   cmdline.Var    (&headerSpecs,      "header",                                                                        "Provide a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
@@ -66,6 +70,31 @@ func main() {
     }
   }
   
+  var gendoc []doc.Generator
+  if *fGendoc != "" {
+    doctype, err := emit.ParseDoctype(*fDoctype)
+    if err != nil {
+      fmt.Printf("* * * Invalid documentation type: %v\n", err)
+      return
+    }
+    
+    out, err := os.OpenFile(*fGendoc, os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
+    if err != nil {
+      fmt.Printf("* * * Could not open documentation output: %v\n", err)
+      return
+    }
+    
+    gen, err := doc.New(doctype, out)
+    if err != nil {
+      fmt.Printf("* * * Could create documentation generator: %v\n", err)
+      return
+    }
+    
+    gendoc = []doc.Generator{gen} // just one for now
+  }
+  
+  if gendoc != nil {}
+  
   success := true
   for _, e := range cmdline.Args() {
     base := path.Base(e)
@@ -78,7 +107,7 @@ func main() {
       continue
     }
     
-    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG})
+    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG, Gendoc: gendoc})
     if err != nil {
       fmt.Printf("* * * Could not run test suite: %v\n", err)
       errors++

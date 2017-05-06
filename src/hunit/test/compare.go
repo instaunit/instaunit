@@ -11,7 +11,7 @@ type Comparison uint32
 
 const (
   CompareLiteral  Comparison  = iota
-  CompareSemantic Comparison  = iota
+  CompareSemantic
 )
 
 var comparisonNames = []string{

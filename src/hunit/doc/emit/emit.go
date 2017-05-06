@@ -22,6 +22,20 @@ var doctypeNames = []string{
 }
 
 /**
+ * Parse a doctype
+ */
+func ParseDoctype(s string) (Doctype, error) {
+  switch s {
+    case "markdown":
+      return DoctypeMarkdown, nil
+    case "confluence":
+      return DoctypeConfluence, nil
+    default:
+      return DoctypeInvalid, fmt.Errorf("Unsupported type: %v", s)
+  }
+}
+
+/**
  * Stringer
  */
 func (c Doctype) String() string {
@@ -48,13 +62,9 @@ func (d *Doctype) UnmarshalYAML(unmarshal func(interface{}) error) error {
   if err != nil {
     return err
   }
-  switch s {
-    case "markdown":
-      *d = DoctypeMarkdown
-    case "confluence":
-      *d = DoctypeConfluence
-    default:
-      return fmt.Errorf("Unsupported documentation type: %v", s)
+  *d, err = ParseDoctype(s)
+  if err != nil {
+    return err
   }
   return nil
 }

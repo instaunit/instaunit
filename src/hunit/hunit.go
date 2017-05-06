@@ -9,6 +9,7 @@ import (
   "strconv"
   "net/http"
   "io/ioutil"
+  "hunit/doc"
   "hunit/test"
 )
 
@@ -25,6 +26,7 @@ type Context struct {
   Options   test.Options
   Headers   map[string]string
   Debug     bool
+  Gendoc    []doc.Generator
   Variables map[string]interface{}
 }
 
@@ -37,6 +39,7 @@ func (c Context) Subcontext(vars map[string]interface{}) Context {
     Options: c.Options,
     Headers: c.Headers,
     Debug: c.Debug,
+    Gendoc: c.Gendoc,
     Variables: vars,
   }
 }
@@ -227,10 +230,15 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   
   // parse response entity if necessry
   var rspvalue interface{} = rspdata
-  if c.Id != "" || c.Response.Comparison == test.CompareSemantic {
+  if c.Response.Comparison == test.CompareSemantic {
     rspvalue, err = unmarshalEntity(context, contentType, rspdata)
     if err != nil {
       return result.Error(err), nil
+    }
+  }else if c.Id != "" { // attempt it but don't produce an error if we fail
+    val, err := unmarshalEntity(context, contentType, rspdata)
+    if err == nil {
+      rspvalue = val
     }
   }
   
@@ -287,6 +295,16 @@ func RunTest(c test.Case, context Context) (*Result, error) {
       },
     }
     
+  }
+  
+  // generate documentation if necessary
+  if c.Gendoc && len(context.Gendoc) > 0 {
+    for _, e := range context.Gendoc {
+      err := e.Generate(c, reqdata, rspdata)
+      if err != nil {
+        return nil, fmt.Errorf("Could not generate documentation: %v", err)
+      }
+    }
   }
   
   return result, nil

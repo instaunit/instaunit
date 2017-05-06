@@ -4,7 +4,6 @@ import (
   "os"
   "time"
   "io/ioutil"
-  "hunit/doc/emit"
 )
 
 import (
@@ -52,7 +51,8 @@ type Response struct {
 type Case struct {
   Id        string                `yaml:"id"`
   Wait      time.Duration         `yaml:"wait"`
-  Gendoc    emit.Doctype          `yaml:"gendoc"`
+  Gendoc    bool                  `yaml:"gendoc"`
+  Comments  string                `yaml:"doc"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
 }
