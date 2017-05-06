@@ -8,6 +8,7 @@ import (
   "strings"
   "hunit"
   "hunit/test"
+  "hunit/text"
   "hunit/doc"
   "hunit/doc/emit"
 )
@@ -130,7 +131,7 @@ func main() {
       if r.Errors != nil {
         for _, e := range r.Errors {
           count++
-          fmt.Println(hunit.IndentWithOptions(fmt.Sprintf("      #%d %v\n", count, e), "           ", 0))
+          fmt.Println(text.IndentWithOptions(fmt.Sprintf("      #%d %v\n", count, e), "           ", 0))
         }
       }
     }

@@ -10,9 +10,17 @@
   gendoc: y
   
   # When generating documentation, the doc property is incorporated as a
-  # description into the documentation for this endpoint.
+  # description into the documentation for this endpoint. Setting this
+  # property to a non-empty string will implicitly cause documentation to be
+  # generated as if the gendoc property were set to true.
+  # 
+  # This documentation will be interpreted as Markdown and translated into
+  # the output format.
   doc: |
-    Fetch the entity text from Github.
+    Fetch the *entity text* from Github.
+    
+    The entity text is just some example text used to illustrate how literal
+    entites can be compared in a test case using [*HUnit*](https://github.com/bww/hunit).
   
   request:
     # The HTTP method to use

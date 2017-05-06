@@ -11,6 +11,7 @@ import (
   "io/ioutil"
   "hunit/doc"
   "hunit/test"
+  "hunit/text"
 )
 
 /**
@@ -177,7 +178,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
       dump += reqdata +"\n"
     }
     
-    fmt.Println(Indent(dump, "> "))
+    fmt.Println(text.Indent(dump, "> "))
   }
   
   rsp, err := client.Do(req)
@@ -272,7 +273,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
       dump += string(rspdata) +"\n"
     }
     
-    fmt.Println(Indent(dump, "< "))
+    fmt.Println(text.Indent(dump, "< "))
   }
   
   // add to our context if we have an identifier
@@ -298,7 +299,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   }
   
   // generate documentation if necessary
-  if c.Gendoc && len(context.Gendoc) > 0 {
+  if (c.Gendoc || c.Comments != "") && len(context.Gendoc) > 0 {
     for _, e := range context.Gendoc {
       err := e.Generate(c, reqdata, rspdata)
       if err != nil {

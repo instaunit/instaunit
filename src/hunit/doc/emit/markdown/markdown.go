@@ -4,6 +4,7 @@ import (
   "io"
   "fmt"
   "hunit/test"
+  "hunit/text"
 )
 
 /**
@@ -32,7 +33,21 @@ func (g *Generator) Generate(c test.Case, req string, rsp []byte) error {
   }
   
   if c.Comments != "" {
-    _, err = fmt.Fprint(g.w, c.Comments)
+    _, err = fmt.Fprint(g.w, "\n"+ c.Comments)
+    if err != nil {
+      return err
+    }
+  }
+  
+  if req != "" {
+    _, err = fmt.Fprint(g.w, "\n"+ text.Indent(req, "    "))
+    if err != nil {
+      return err
+    }
+  }
+  
+  if len(rsp) > 0 {
+    _, err = fmt.Fprint(g.w, "\n"+ text.Indent(string(rsp), "    "))
     if err != nil {
       return err
     }
