@@ -22,6 +22,11 @@
     The entity text is just some example text used to illustrate how literal
     entites can be compared in a test case using [*HUnit*](https://github.com/bww/hunit).
   
+  # If a documentation title is provided, it is used to describe the endpoint
+  # in generated documentation. If omitted, the endpoint is inferred from the
+  # request. Providing an explicit endpoint can be useful to note variables.
+  title: GET /example/:entity_name
+  
   request:
     # The HTTP method to use
     method: GET

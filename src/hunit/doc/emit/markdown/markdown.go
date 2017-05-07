@@ -3,6 +3,8 @@ package markdown
 import (
   "io"
   "fmt"
+  "bytes"
+  "net/http"
   "hunit/test"
   "hunit/text"
 )
@@ -24,36 +26,41 @@ func New(w io.Writer) *Generator {
 /**
  * Generate documentation
  */
-func (g *Generator) Generate(c test.Case, req string, rsp []byte) error {
+func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
   var err error
+  var doc string
   
-  _, err = fmt.Fprintf(g.w, "## %s %s\n", c.Request.Method, c.Request.URL)
-  if err != nil {
-    return err
+  if c.Title != "" {
+    doc += fmt.Sprintf("## %s\n", c.Title)
+  }else{
+    doc += fmt.Sprintf("## %s %s\n", c.Request.Method, c.Request.URL)
   }
   
   if c.Comments != "" {
-    _, err = fmt.Fprint(g.w, "\n"+ c.Comments)
+    doc += c.Comments +"\n"
+  }
+  
+  if req != nil {
+    b := &bytes.Buffer{}
+    err = text.WriteRequest(b, req, reqdata)
     if err != nil {
       return err
     }
+    doc += "### Example request\n\n"
+    doc += text.Indent(string(b.Bytes()), "    ") +"\n"
   }
   
-  if req != "" {
-    _, err = fmt.Fprint(g.w, "\n"+ text.Indent(req, "    "))
+  if rsp != nil {
+    b := &bytes.Buffer{}
+    err = text.WriteResponse(b, rsp, rspdata)
     if err != nil {
       return err
     }
+    doc += "### Example response\n\n"
+    doc += text.Indent(string(b.Bytes()), "    ") +"\n"
   }
   
-  if len(rsp) > 0 {
-    _, err = fmt.Fprint(g.w, "\n"+ text.Indent(string(rsp), "    "))
-    if err != nil {
-      return err
-    }
-  }
-  
-  _, err = fmt.Fprint(g.w, "\n\n")
+  _, err = fmt.Fprint(g.w, doc +"\n\n")
   if err != nil {
     return err
   }

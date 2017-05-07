@@ -158,27 +158,12 @@ func RunTest(c test.Case, context Context) (*Result, error) {
     fmt.Println()
   }
   if (context.Options & test.OptionDisplayRequests) == test.OptionDisplayRequests {
-    dump := req.Method +" "
-    dump += req.URL.Path
-    if q := req.URL.RawQuery; q != "" { dump += "?"+ q }
-    dump += " "+ req.Proto +"\n"
-    
-    dump += "Host: "+ req.URL.Host +"\n"
-    for k, v := range req.Header {
-      dump += k +": "
-      for i, e := range v {
-        if i > 0 { dump += "," }
-        dump += e
-      }
-      dump += "\n"
+    b := &bytes.Buffer{}
+    err = text.WriteRequest(b, req, reqdata)
+    if err != nil {
+      return result.Error(err), nil
     }
-    
-    dump += "\n"
-    if reqdata != "" {
-      dump += reqdata +"\n"
-    }
-    
-    fmt.Println(text.Indent(dump, "> "))
+    fmt.Println(text.Indent(string(b.Bytes()), "> "))
   }
   
   rsp, err := client.Do(req)
@@ -257,23 +242,12 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   }
   
   if (context.Options & test.OptionDisplayResponses) == test.OptionDisplayResponses {
-    dump := rsp.Proto +" "+ rsp.Status +"\n"
-    
-    for k, v := range rsp.Header {
-      dump += k +": "
-      for i, e := range v {
-        if i > 0 { dump += "," }
-        dump += e
-      }
-      dump += "\n"
+    b := &bytes.Buffer{}
+    err = text.WriteResponse(b, rsp, rspdata)
+    if err != nil {
+      return result.Error(err), nil
     }
-    
-    dump += "\n"
-    if rspdata != nil {
-      dump += string(rspdata) +"\n"
-    }
-    
-    fmt.Println(text.Indent(dump, "< "))
+    fmt.Println(text.Indent(string(b.Bytes()), "< "))
   }
   
   // add to our context if we have an identifier
@@ -301,7 +275,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   // generate documentation if necessary
   if (c.Gendoc || c.Comments != "") && len(context.Gendoc) > 0 {
     for _, e := range context.Gendoc {
-      err := e.Generate(c, reqdata, rspdata)
+      err := e.Generate(c, req, reqdata, rsp, rspdata)
       if err != nil {
         return nil, fmt.Errorf("Could not generate documentation: %v", err)
       }

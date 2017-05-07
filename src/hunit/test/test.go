@@ -52,6 +52,7 @@ type Case struct {
   Id        string                `yaml:"id"`
   Wait      time.Duration         `yaml:"wait"`
   Gendoc    bool                  `yaml:"gendoc"`
+  Title     string                `yaml:"title"`
   Comments  string                `yaml:"doc"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`

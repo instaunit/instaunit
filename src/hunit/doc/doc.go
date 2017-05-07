@@ -3,6 +3,7 @@ package doc
 import (
   "io"
   "fmt"
+  "net/http"
   "hunit/test"
   "hunit/doc/emit"
   "hunit/doc/emit/markdown"
@@ -12,7 +13,7 @@ import (
  * Implemented by documentation generators
  */
 type Generator interface {
-  Generate(test.Case, string, []byte)(error)
+  Generate(test.Case, *http.Request, string, *http.Response, []byte)(error)
 }
 
 /**
