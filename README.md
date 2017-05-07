@@ -38,7 +38,11 @@ Refer to [`docs.md`](https://github.com/bww/hunit/blob/master/example/docs.md) f
 
 Tests are described by a simple YAML-based document format. Tests and documentation are managed together.
 
-The test suite document format is straightforward and highly readible. Advanced features are also available if you need them, like variable interpolation and referencing the output of previously-run tests from currently-executing one.
+The test suite document format is straightforward and highly readible. Advanced features are also available if you need them, like:
+
+* Comparing entities semantically to ignore insignificant differences like whitespace,
+* Referencing the output of previously-run tests from the currently-executing one,
+* Some useful functions which can be invoked in string interpolation.
 
 Refer to the full [`test.yml`](https://github.com/bww/hunit/blob/master/example/test.yml) file for a more complete illustration of test cases.
 
