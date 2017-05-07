@@ -78,7 +78,7 @@
     entity: |+  # wrong
       Here is a simple
       response from the
-      server.      
+      server. ${std.RandomString(10)}
 
 # This one compares entities semantically. The entities are unmarshaled into
 # objects and the objects are compared. This allows you to ignore insignificant

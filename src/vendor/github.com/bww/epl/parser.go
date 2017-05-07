@@ -247,7 +247,7 @@ func (p *parser) parseArithmeticL1() (executable, error) {
  */
 func (p *parser) parseArithmeticL2() (executable, error) {
   
-  left, err := p.parseDeref()
+  left, err := p.parseDeref(nil)
   if err != nil {
     return nil, err
   }
@@ -274,9 +274,9 @@ func (p *parser) parseArithmeticL2() (executable, error) {
 /**
  * Parse a deref expression
  */
-func (p *parser) parseDeref() (executable, error) {
+func (p *parser) parseDeref(prev executable) (executable, error) {
   
-  left, err := p.parseIndex()
+  left, err := p.parseInvoke(prev)
   if err != nil {
     return nil, err
   }
@@ -292,18 +292,56 @@ func (p *parser) parseDeref() (executable, error) {
   }
   
   p.next() // consume the operator
-  right, err := p.parseDeref()
+  right, err := p.parseDeref(left)
   if err != nil {
     return nil, err
   }
   
   switch v := right.(type) {
-    case *identNode, *derefNode, *indexNode:
+    case *identNode, *derefNode, *indexNode, *invokeNode:
       return &derefNode{node{encompass(op.span, left.src()), &op}, left, v}, nil
     default:
       return nil, fmt.Errorf("Expected ident, deref or subscript: (%T) %v\n%v", right, right, excerptCallout.FormatExcerpt(right.src()))
   }
   
+}
+
+/**
+ * Parse a function invocation expression
+ */
+func (p *parser) parseInvoke(left executable) (executable, error) {
+  
+  right, err := p.parseIndex()
+  if err != nil {
+    return nil, err
+  }
+  
+  op := p.peek(0)
+  switch op.which {
+    case tokenError:
+      return nil, fmt.Errorf("Error: %v", op)
+    case tokenLParen:
+      break // valid token
+    default:
+      return right, nil
+  }
+  
+  p.next() // consume the '('
+  params, err := p.parseExprList()
+  if err != nil {
+    return nil, err
+  }
+  
+  t, err := p.nextAssert(tokenRParen)
+  if err != nil {
+    return nil, err
+  }
+  
+  if left != nil {
+    return &invokeNode{node{encompass(op.span, left.src(), right.src(), t.span), &op}, left, right, params}, nil
+  }else{
+    return &invokeNode{node{encompass(op.span, right.src(), t.span), &op}, nil, right, params}, nil
+  }
 }
 
 /**
@@ -391,6 +429,38 @@ func (p *parser) parseParen() (executable, error) {
   }
   
   return e, nil
+}
+
+/**
+ * Parse an expression list
+ */
+func (p *parser) parseExprList() ([]executable, error) {
+  list := make([]executable, 0)
+  
+  t := p.peek(0)
+  if t.which == tokenRParen {
+    return list, nil // end of list
+  }
+  
+  for {
+    
+    expr, err := p.parseExpression()
+    if err != nil {
+      return nil, err
+    }
+    
+    list = append(list, expr)
+    
+    t = p.peek(0)
+    if t.which == tokenComma {
+      p.next() // consume the comma
+    }else{
+      break
+    }
+    
+  }
+  
+  return list, nil
 }
 
 /**

@@ -3,17 +3,30 @@ package hunit
 import (
   "fmt"
   "hunit/test"
+  "hunit/runtime"
   "github.com/bww/epl"
 )
 
 const whitespace = " \n\r\t\v"
 
 /**
+ * Produce a context with the standard library included
+ */
+func contextWithStdlib(v map[string]interface{}) interface{} {
+  c := make(map[string]interface{})
+  for k, v := range v {
+    c[k] = v
+  }
+  c["std"] = runtime.Stdlib
+  return c
+}
+
+/**
  * Interpolate if required
  */
 func interpolateIfRequired(c Context, s string) (string, error) {
   if (c.Options & test.OptionInterpolateVariables) == test.OptionInterpolateVariables {
-    return interpolate(s, "${", "}", c.Variables)
+    return interpolate(s, "${", "}", contextWithStdlib(c.Variables))
   }else{
     return s, nil
   }

@@ -50,6 +50,16 @@ type SomeContext struct {
   BoolField     bool
 }
 
+func (c *SomeContext) ErrorMethod() error {
+  return nil
+}
+
+func (c *SomeContext) NoReturnValueMethod() {}
+
+func (c *SomeContext) ReturnParamValueMethod(v interface{}) interface{} {
+  return v
+}
+
 func (c *SomeContext) StringFieldMethod() string {
   return c.StringField
 }
@@ -240,6 +250,11 @@ func TestParse(t *testing.T) {
   parseAndRun(t, `foo.arr[1]`, nil, "One")
   parseAndRun(t, `foo["arr"][2]`, nil, "Two")
   
+  // variables using a string subscript operator
+  parseAndRun(t, `"hello"[0]`, nil, "h")
+  parseAndRun(t, `"世界"[1]`, nil, "界")
+  parseAndRun(t, `foo.bat[0]`, nil, "T")
+  
   // variables using a struct context
   parseAndRun(t, `StringField`, &SomeContext{StringField:"Hello, there"}, "Hello, there")
   parseAndRun(t, `StringFieldMethod`, &SomeContext{StringField:"Hello, there"}, "Hello, there")
@@ -247,6 +262,14 @@ func TestParse(t *testing.T) {
   parseAndRun(t, `ErrorFieldMethod`, &SomeContext{StringField:"Hello, there"}, testRuntimeError)
   parseAndRun(t, `MissingFieldMethod`, &SomeContext{StringField:"Hello, there"}, testRuntimeError)
   parseAndRun(t, `RecursiveFieldMethod.MissingMethod`, &SomeContext{StringField:"Hello, there"}, testRuntimeError)
+  
+  // method incorrectly used as variable
+  parseAndRun(t, `ErrorMethod`, &SomeContext{}, testRuntimeError)
+  parseAndRun(t, `NoReturnValueMethod`, &SomeContext{}, testRuntimeError)
+  
+  // function invocation
+  parseAndRun(t, `NoReturnValueMethod()`, &SomeContext{}, nil)
+  parseAndRun(t, `ReturnParamValueMethod(123.456)`, &SomeContext{}, 123.456)
   
   // variables using the environment
   os.Setenv("TEST_ENV_VARIABLE", "This is the value")
@@ -273,6 +296,15 @@ func TestParse(t *testing.T) {
     return n, nil
   }}, "7388AA2B-44C3-4146-8F17-C78F89B5F7D8")
   
+  // standard library
+  parseAndRun(t, `len("hello")`, nil, 5)
+  parseAndRun(t, `len(arr)`, nil, 4)
+  parseAndRun(t, `len(fix)`, nil, 3)
+  parseAndRun(t, `match("[h|H]el+o", "Hello")`, nil, true)
+  parseAndRun(t, `match("[h|H]el+o", 123)`, nil, testRuntimeError)
+  parseAndRun(t, `printf("Print this, please: %s", StringField)`, &SomeContext{StringField:"Hello, there"}, true)
+  parseAndRun(t, `printf("Print this, please")`, &SomeContext{StringField:"Hello, there"}, true)
+  
   // parseAndRun(t, `num == 3`, nil, nil)
   // parseAndRun(t, `num > 3`, nil, nil)
   // parseAndRun(t, `num < 4 || 1 + 2 < 5`, nil, nil)
@@ -289,6 +321,7 @@ func parseAndRun(t *testing.T, source string, context interface{}, result interf
     context = map[string]interface{}{
       "num": 123,
       "arr": []string{ "Zero", "One", "Two", "Three" },
+      "fix": [3]string{},
       "foo": map[string]interface{}{
         "arr": []string{ "Zero", "One", "Two", "Three" },
         "bat": "This is the value",
@@ -318,6 +351,8 @@ func parseAndRun(t *testing.T, source string, context interface{}, result interf
       return
     }
   }
+  
+  x.Print(os.Stdout, 0)
   
   y, err := x.Exec(context)
   if err != nil {
