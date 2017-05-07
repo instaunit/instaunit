@@ -1,0 +1,318 @@
+<p><ac:structured-macro ac:name="toc" ac:schema-version="1" ac:macro-id="b887f5cb-1de9-4f2d-8eec-5aa1d8506e8c"><ac:parameter ac:name="maxLevel">2</ac:parameter><ac:parameter ac:name="indent">2em</ac:parameter></ac:structured-macro></p>
+<h1>Campaigns</h1>
+<h2><code>POST /campaigns</code></h2>
+<p>Create a new <ac:link><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Campaign]]></ac:plain-text-link-body></ac:link>.</p>
+<h3>Entities</h3>
+<table class="wrapped"><colgroup><col /><col /></colgroup>
+<tbody>
+<tr>
+<th><strong>&rarr;</strong></th>
+<td>The <ac:link ac:anchor="Campaign"><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Campaign]]></ac:plain-text-link-body></ac:link> to create.</td></tr>
+<tr>
+<th>&larr;</th>
+<td>The canonical representation of the created <ac:link ac:anchor="Campaign"><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Campaign]]></ac:plain-text-link-body></ac:link>.</td></tr></tbody></table>
+<h3 class="auto-cursor-target">Examples</h3><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="292fad77-8670-40df-9c66-b569b26192e1"><ac:parameter ac:name="language">js</ac:parameter><ac:parameter ac:name="firstline">1</ac:parameter><ac:parameter ac:name="title">Example Request</ac:parameter><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[POST /v1/campaigns HTTP/1.1
+Host: example.com
+Content-Type: application/json
+Authorization: Basic ABC==
+Content-Length: 182
+
+{
+  "name": "A New Campaign",
+  "role_ids": [
+    "2d6738de-e228-434f-a640-276de999bdcc"
+  ],
+  "company_ids": [
+    "58f902caa0fdf27cde691bd9",
+    "58f902caa0fdf27cde691bda"
+  ]
+}]]></ac:plain-text-body></ac:structured-macro>
+<p class="auto-cursor-target"><br /></p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="96b9cd69-5da6-42ca-a236-dcea7aec53dc"><ac:parameter ac:name="language">js</ac:parameter><ac:parameter ac:name="firstline">1</ac:parameter><ac:parameter ac:name="title">Example Response</ac:parameter><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[HTTP/1.1 200 OK
+Content-Length: 499
+Content-Type: application/json
+X-Instance-Id: 50d500011ab4a2ed203031a455919be14ed9ac29
+X-Request-Id: H_-UhiX6EeecOGxACJiI_g
+Date: Thu, 20 Apr 2017 18:49:46 GMT
+
+{
+  "id": "835dcbc6-920e-4b89-914b-9c9bdf5b9d63",
+  "name": "A New Campaign",
+  "created_at": "0001-01-01T00:00:00Z",
+  "updated_at": "0001-01-01T00:00:00Z",
+  "companies": [
+    {
+      "id": "58f902caa0fdf27cde691bd9",
+      "slugs": ["company-1"],
+      "name": "company 1"
+    },
+    {
+      "id": "58f902caa0fdf27cde691bda",
+      "slugs": ["company-2"],
+      "name": "company 2"
+    }
+  ],
+  "roles": [
+    {
+      "id": "2d6738de-e228-434f-a640-276de999bdcc",
+      "name": "Accountant",
+      "description": "Accountants make sure Donald Trump doesn't have to pay his taxes.",
+      "created_at": "0001-01-01T00:00:00Z"
+    }
+  ]
+}]]></ac:plain-text-body></ac:structured-macro>
+<p><br /></p>
+<h2><code>GET /campaigns/:campaign_id</code></h2><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="2109105d-fb3e-41c9-bfce-3efbf3636454"><ac:parameter ac:name="language">text</ac:parameter><ac:parameter ac:name="title">Response</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[ GET /v1/campaigns/57dfc453-218c-44d0-85ef-0873b096d3a3 HTTP/1.1
+ Host: 10.9.8.51:8001
+ Content-Type: application/json
+ Authorization: Basic Y2FtcGFpZ25zOlhZWg==
+
+
+ HTTP/1.1 200 OK
+ Content-Type: application/json
+ X-Instance-Id: 4b48318314b85118740a0ce4e564681a5e83cdc4
+ X-Request-Id: CKfb4DDjEeew5HhPQ2BNEQ
+ Date: Thu, 04 May 2017 16:02:11 GMT
+ Content-Length: 575
+
+{
+  "id":"57dfc453-218c-44d0-85ef-0873b096d3a3",
+  "name":"a new campaign",
+  "created_at":"2017-05-04T16:02:11.875Z",
+  "updated_at":"2017-05-04T16:02:11.875Z",
+  "companies":[
+    {
+      "id":"590b5083558409f8b8b33214",
+      "slugs":["company-1-hello-there-62"],
+      "name":"company 1 hello there"
+    },
+    {
+      "id":"590b5083558409f8b8b33215",
+      "slugs":["one-more-company-2-63"],
+      "name":"one more company 2"
+    }
+  ],
+  "roles":[
+    {
+      "id":"64192e7a-ca59-46d2-8e03-9969711449bb",
+      "name":"Accountant",
+      "description":"Accountants make sure Donald Trump doesn't have to pay his taxes.",
+      "created_at":"0001-01-01T00:00:00Z"}
+  ]
+}
+
+
+]]></ac:plain-text-body></ac:structured-macro>
+<p><br /></p>
+<h2><code>PUT /campaigns/:campaign_id</code></h2>
+<h3>Entities</h3>
+<table><colgroup><col /><col /></colgroup>
+<tbody>
+<tr>
+<th><strong>&rarr;</strong></th>
+<td>The <ac:link ac:anchor="Campaign"><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Campaign]]></ac:plain-text-link-body></ac:link> to update.</td></tr>
+<tr>
+<th>&larr;</th>
+<td>The canonical representation of the updated <ac:link ac:anchor="Campaign"><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Campaign]]></ac:plain-text-link-body></ac:link>.</td></tr></tbody></table>
+<p class="auto-cursor-target"><br /></p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="3a8e1b66-7aab-4a1f-a113-60f9bdd0229b"><ac:parameter ac:name="title">Request</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[ PUT /v1/campaigns/57dfc453-218c-44d0-85ef-0873b096d3a3 HTTP/1.1
+ 
+ Content-Type: application/json
+ Authorization: Basic Y2FtcGFpZ25zOlhZWg==
+
+ {
+   "name": "a old campaign",
+   "company_ids": [
+     "590b5083558409f8b8b33214"
+   ]
+ }
+
+]]></ac:plain-text-body></ac:structured-macro>
+<p class="auto-cursor-target"><br /></p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="8e0fe760-9ddf-4eb0-aa0a-0aa4a4fc5161"><ac:parameter ac:name="title">Response</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[HTTP/1.1 200 OK
+Content-Type: application/json
+
+
+{
+  "id":"57dfc453-218c-44d0-85ef-0873b096d3a3",
+  "name":"a old campaign",
+  "created_at":"0001-01-01T00:00:00Z",
+  "updated_at":"2017-05-04T16:02:11.908Z",
+  "companies":[
+    {
+      "id":"590b5083558409f8b8b33214",
+      "slugs":["company-1-hello-there-62"],
+      "name":"company 1 hello there"}
+  ],
+  "roles": null
+}]]></ac:plain-text-body></ac:structured-macro>
+<p><span style="color: rgb(0,0,0);"><br /></span></p>
+<h2><code><span style="color: rgb(0,0,0);">POST</span><span style="color: rgb(0,0,0);"><span class="Apple-tab-span"> </span></span><span style="color: rgb(0,0,0);"><span class="Apple-tab-span"> </span></span><span style="color: rgb(0,0,0);">/campaigns/:campaign_id/companies</span></code></h2><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="2ac7cfe9-14f6-41ed-9485-09a1c3107274"><ac:parameter ac:name="title">Request</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[ POST /v1/campaigns/57dfc453-218c-44d0-85ef-0873b096d3a3/companies HTTP/1.1
+ 
+ Content-Type: application/json
+ Authorization: Basic Y2FtcGFpZ25zOlhZWg==
+
+ [
+   "590b5083558409f8b8b33214",
+   "590b5083558409f8b8b33215",
+   "590b5083558409f8b8b33216"
+ ]
+]]></ac:plain-text-body></ac:structured-macro>
+<p class="auto-cursor-target"><br /></p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="4ff7162b-501b-4acc-a281-bf9f41f83f86"><ac:parameter ac:name="title">Response</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[ HTTP/1.1 200 OK
+ Content-Type: application/json
+ X-Instance-Id: 4b48318314b85118740a0ce4e564681a5e83cdc4
+ X-Request-Id: CKu4mzDjEeew6HhPQ2BNEQ
+ Date: Thu, 04 May 2017 16:02:11 GMT
+ Content-Length: 287
+
+[
+  {
+    "id":"590b5083558409f8b8b33214",
+    "slugs":["company-1-hello-there-62"],
+    "name":"company1 hello there"
+  },
+  {
+    "id":"590b5083558409f8b8b33216",
+    "slugs":["company-3-yeah-63"],
+    "name":"company 3 yeah"
+  },
+  {
+    "id":"590b5083558409f8b8b33215",
+    "slugs":["one-more-company-2-63"],
+    "name":"one more company 2"
+  }
+]
+
+
+]]></ac:plain-text-body></ac:structured-macro>
+<p><span style="color: rgb(0,0,0);"><br /></span></p>
+<h2><code><span style="color: rgb(0,0,0);">GET</span><span style="color: rgb(0,0,0);"><span class="Apple-tab-span"> </span></span><span style="color: rgb(0,0,0);"><span class="Apple-tab-span"> </span></span><span style="color: rgb(0,0,0);">/campaigns/:campaign_id/companies</span></code></h2>
+<p><span style="color: rgb(0,0,0);">Get participating companies</span></p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="a20e089b-70b5-4537-897f-0c778acf886d"><ac:parameter ac:name="title">Response</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[ GET /v1/campaigns/57dfc453-218c-44d0-85ef-0873b096d3a3/companies HTTP/1.1
+ Host: 10.9.8.51:8001
+ Content-Type: application/json
+ Authorization: Basic Y2FtcGFpZ25zOlhZWg==
+
+
+ HTTP/1.1 200 OK
+ Content-Type: application/json
+ Date: Thu, 04 May 2017 16:02:12 GMT
+ Content-Length: 185
+
+[{"id":"590b5083558409f8b8b33215","slugs":["one-more-company-2-63"],"name":"one more company 2"},{"id":"590b5083558409f8b8b33216","slugs":["company-3-yeah-63"],"name":"company3 yeah"}]
+
+
+]]></ac:plain-text-body></ac:structured-macro>
+<p><br /></p>
+<h2><code><span style="color: rgb(0,0,0);">DELETE</span><span style="color: rgb(0,0,0);"><span class="Apple-tab-span"> </span></span><span style="color: rgb(0,0,0);">/campaigns/:campaign_id/companies/:company_id</span></code></h2>
+<p><span style="color: rgb(0,0,0);">Delete a participating company from a campaign</span></p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="04ca59a4-81b1-4f4c-80b5-781e2edf2c6a"><ac:parameter ac:name="title">Response</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[ DELETE /v1/campaigns/57dfc453-218c-44d0-85ef-0873b096d3a3/companies/590b5083558409f8b8b33214 HTTP/1.1
+ Host: 10.9.8.51:8001
+ Authorization: Basic Y2FtcGFpZ25zOlhZWg==
+ Content-Type: application/json
+
+
+ HTTP/1.1 200 OK
+ 
+ Date: Thu, 04 May 2017 16:02:12 GMT
+ Content-Length: 0
+ Content-Type: text/plain; charset=utf-8
+
+
+]]></ac:plain-text-body></ac:structured-macro>
+<p><span style="color: rgb(0,0,0);"><br /></span></p>
+<p><span style="font-family: monospace;font-size: 20.0px;">GET /campaigns/:campaign_id/status</span></p>
+<p>Get the status of the campaign.</p>
+<p><br /></p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="f16bfd73-2ff7-459b-b99d-4439ed4b12f3"><ac:parameter ac:name="language">text</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[GET /v1/campaigns/fb45efe0-4fbc-421e-8359-78ae33145cf2/status
+Authorization: Basic Y2FtcGFpZ25zOlhZWg==
+Content-Type: application/json
+
+
+{
+  "starts_at": "2017-03-10T19:04:49.118Z",
+  "ends_at": "2017-05-10T00:00:00.000Z",
+  "active": true
+}
+
+
+]]></ac:plain-text-body></ac:structured-macro>
+<h1>Forms</h1>
+<h2><code>POST /campaigns/<span style="color: rgb(0,51,102);">:campaign_id</span>/forms</code></h2>
+<p>Create a new <ac:link><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Form]]></ac:plain-text-link-body></ac:link> which is associated with a <ac:link><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Campaign]]></ac:plain-text-link-body></ac:link>.</p>
+<h3>Entities</h3>
+<table class="wrapped"><colgroup><col /><col /></colgroup>
+<tbody>
+<tr>
+<th><strong>&rarr;</strong></th>
+<td>The <ac:link ac:anchor="WufooForm"><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Form]]></ac:plain-text-link-body></ac:link> to create.</td></tr>
+<tr>
+<th>&larr;</th>
+<td>The canonical representation of the created <ac:link ac:anchor="WufooForm"><ri:page ri:content-title="Types" ri:version-at-save="7" /><ac:plain-text-link-body><![CDATA[Form]]></ac:plain-text-link-body></ac:link>.</td></tr></tbody></table>
+<h3 class="auto-cursor-target">Examples</h3><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="b8f6036a-78bd-424c-aac3-4405ae5ae3bb"><ac:parameter ac:name="language">js</ac:parameter><ac:parameter ac:name="firstline">1</ac:parameter><ac:parameter ac:name="title">Example Request</ac:parameter><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[POST /v1/campaigns/fb45efe0-4fbc-421e-8359-78ae33145cf2/forms HTTP/1.1
+Host: brooklyn.local:8001
+Authorization: Basic Zm9ybXM6WFla
+Content-Length: 454
+Content-Type: application/json
+
+{
+  "title": "This is the Form Title",
+  "api_hash": "ABC123",
+  "api_secret": "XYZ987",
+  "webhook_url": "https://google.com/",
+  "fields": [
+    {
+      "foreign_id": "field_1",
+      "local_id": "field_a",
+      "title": "The Field A"
+    },
+    {
+      "foreign_id": "field_2",
+      "local_id": "field_b",
+      "title": "The Field B"
+    },
+    {
+      "foreign_id": "field_3",
+      "local_id": "field_c",
+      "title": "The Field C"
+    }
+  ],
+  "starts_at": "2017-03-10T19:04:49.118Z",
+  "ends_at": "2017-05-10T00:00:00.000Z"
+}
+]]></ac:plain-text-body></ac:structured-macro>
+<p class="auto-cursor-target"><br /></p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="1b11f0d3-7208-4d8e-8518-97e64c61dafe"><ac:parameter ac:name="language">js</ac:parameter><ac:parameter ac:name="firstline">1</ac:parameter><ac:parameter ac:name="title">Example Response</ac:parameter><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[HTTP/1.1 200 OK
+Content-Type: application/json
+X-Instance-Id: 50d500011ab4a2ed203031a455919be14ed9ac29
+X-Request-Id: pjWIsyY7EeeAr2xACJiI_g
+Date: Fri, 21 Apr 2017 02:38:49 GMT
+Content-Length: 607
+
+
+{
+  "id": "255cc882-11b3-4a7e-bb33-efe07b2128ee",
+  "api_secret": "987XYZ",
+  "api_hash": "123ABC",
+  "webhook_url": "https://bing.com/",
+  "title": "This is the New Form Title",
+  "fields": [
+    {
+      "id": "a2b0e76c-2931-4178-8f53-3c121511123c",
+      "foreign_id": "field_9",
+      "local_id": "field_z",
+      "title": "The Field Z"
+    },
+    {
+      "id": "d351b298-33ad-4557-a7bf-447c9522e598",
+      "foreign_id": "field_8",
+      "local_id": "field_y",
+      "title": "The Field Y"
+    },
+    {
+      "id": "3cc04513-c607-4d00-b97b-16e0ff7fd641",
+      "foreign_id": "field_7",
+      "local_id": "field_x",
+      "title": "The Field X"
+    }
+  ],
+  "created_at": "2017-03-10T19:04:49.118Z",
+  "updated_at": "2017-03-10T19:04:49.118Z",
+  "starts_at": null,
+  "ends_at": null
+}
+]]></ac:plain-text-body></ac:structured-macro>
+<p class="auto-cursor-target"><br /></p>

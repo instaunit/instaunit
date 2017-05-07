@@ -24,6 +24,20 @@ func New(w io.Writer) *Generator {
 }
 
 /**
+ * Generate documentation preamble
+ */
+func (g *Generator) Prefix() error {
+  return nil
+}
+
+/**
+ * Generate documentation suffix
+ */
+func (g *Generator) Suffix() error {
+  return nil
+}
+
+/**
  * Generate documentation
  */
 func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {

@@ -52,12 +52,26 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   results := make([]*Result, 0)
   c := context.Subcontext(make(map[string]interface{}))
   
+  for _, e := range context.Gendoc {
+    err := e.Prefix()
+    if err != nil {
+      return nil, err
+    }
+  }
+  
   for _, e := range s.Cases {
     r, err := RunTest(e, c)
     if err != nil {
       return nil, err
     }
     results = append(results, r)
+  }
+  
+  for _, e := range context.Gendoc {
+    err := e.Suffix()
+    if err != nil {
+      return nil, err
+    }
   }
   
   return results, nil
