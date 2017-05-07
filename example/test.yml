@@ -5,6 +5,36 @@
   # tests can refer to the response from this test.
   id: first
   
+  request:
+    # The HTTP method to use
+    method: GET
+    # The URL to make our request to. You can also provide a relative URL and
+    # set the -base-url flag when running HUnit to specify a base for all
+    # relative URLs. Absolute URLs (those with a scheme) will not be affected.
+    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+    # Arbitrary headers to set in our request
+    headers:
+      Origin: localhost
+  
+  response:
+    # The status code we expect in our response
+    status: 200
+    # Headers we expect in our response. Only headers specified here are checked
+    # in the response. It's not currently possible to assert that there are no
+    # headers in the response other than those provided here.
+    headers:
+      Content-Type: text/plain; charset=utf-8
+    # The expected entity to compare against the server's response. By default
+    # entities are compared literally, byte-for-byte. You can also compare
+    # supported (JSON) entities semantically. See the last test in this file
+    # for an example of semantic comparisons.
+    entity: |+
+      Here's a simple
+      response from the
+      server.      
+
+# This test is documented and should succeed
+- 
   # Generate documentation for this endpoint, using the request and response
   # as examples, if the -gendoc flag is set.
   gendoc: y

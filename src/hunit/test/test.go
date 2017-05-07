@@ -59,6 +59,13 @@ type Case struct {
 }
 
 /**
+ * Determine if this case is documented or not
+ */
+func (c Case) Documented() bool {
+  return c.Gendoc || c.Title != "" || c.Comments != ""
+}
+
+/**
  * A test suite
  */
 type Suite struct {

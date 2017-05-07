@@ -287,7 +287,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   }
   
   // generate documentation if necessary
-  if (c.Gendoc || c.Comments != "") && len(context.Gendoc) > 0 {
+  if c.Documented() && len(context.Gendoc) > 0 {
     for _, e := range context.Gendoc {
       err := e.Generate(c, req, reqdata, rsp, rspdata)
       if err != nil {
