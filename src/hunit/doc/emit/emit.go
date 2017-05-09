@@ -21,6 +21,12 @@ var doctypeNames = []string{
   "<invalid>",
 }
 
+var doctypeExts = []string{
+  ".md",
+  ".xml",
+  ".???",
+}
+
 /**
  * Parse a doctype
  */
@@ -32,6 +38,17 @@ func ParseDoctype(s string) (Doctype, error) {
       return DoctypeConfluence, nil
     default:
       return DoctypeInvalid, fmt.Errorf("Unsupported type: %v", s)
+  }
+}
+
+/**
+ * Extension
+ */
+func (c Doctype) Ext() string {
+  if c < 0 || c >= DoctypeInvalid {
+    return ""
+  }else{
+    return doctypeExts[int(c)]
   }
 }
 
