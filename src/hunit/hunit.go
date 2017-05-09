@@ -256,12 +256,14 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   }
   
   if (context.Options & test.OptionDisplayResponses) == test.OptionDisplayResponses {
-    b := &bytes.Buffer{}
-    err = text.WriteResponse(b, rsp, rspdata)
+    bufHeaders := &bytes.Buffer{}
+    bufEntity := &bytes.Buffer{}
+    err = text.WriteResponse(bufHeaders, bufEntity, rsp, rspdata)
     if err != nil {
       return result.Error(err), nil
     }
-    fmt.Println(text.Indent(string(b.Bytes()), "< "))
+    fmt.Println(text.Indent(string(bufHeaders.Bytes()), "< "))
+    fmt.Println(text.Indent(string(bufEntity.Bytes()), "< "))
   }
   
   // add to our context if we have an identifier

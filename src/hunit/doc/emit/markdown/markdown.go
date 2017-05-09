@@ -7,6 +7,7 @@ import (
   "net/http"
   "hunit/test"
   "hunit/text"
+  "encoding/json"
 )
 
 /**
@@ -65,13 +66,19 @@ func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp
   }
   
   if rsp != nil {
-    b := &bytes.Buffer{}
-    err = text.WriteResponse(b, rsp, rspdata)
+    bufHeaders := &bytes.Buffer{}
+    bufEntity := &bytes.Buffer{}
+    err = text.WriteResponse(bufHeaders, bufEntity, rsp, rspdata)
     if err != nil {
       return err
     }
     doc += "### Example response\n\n"
-    doc += text.Indent(string(b.Bytes()), "    ") +"\n"
+    doc += text.Indent(string(bufHeaders.Bytes()), "    ") +"\n"
+
+    temp := &bytes.Buffer{}
+    json.Indent(temp, bufEntity.Bytes(), "", "  ")
+
+    doc += text.Indent(string(temp.Bytes()), "    ") +"\n"
   }
   
   _, err = fmt.Fprint(g.w, doc +"\n\n")

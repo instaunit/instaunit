@@ -41,7 +41,7 @@ func WriteRequest(w io.Writer, req *http.Request, entity string) error {
 /**
  * Write a response to the specified output
  */
-func WriteResponse(w io.Writer, rsp *http.Response, entity []byte) error {
+func WriteResponse(wHeaders, wEntity io.Writer, rsp *http.Response, entity []byte) error {
   dump := rsp.Proto +" "+ rsp.Status +"\n"
   
   for k, v := range rsp.Header {
@@ -54,13 +54,16 @@ func WriteResponse(w io.Writer, rsp *http.Response, entity []byte) error {
   }
   
   dump += "\n"
-  if entity != nil {
-    dump += string(entity) +"\n"
-  }
-  
-  _, err := w.Write([]byte(dump))
+  _, err := wHeaders.Write([]byte(dump))
   if err != nil {
     return err
+  }
+  if entity != nil {
+		e := string(entity) + "\n"
+		_, err := wEntity.Write([]byte(e))
+		if err != nil {
+			return err
+		}
   }
   
   return nil
