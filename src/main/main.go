@@ -73,6 +73,7 @@ func main() {
   }
   
   var doctype emit.Doctype
+  var docname map[string]int
   if *fGendoc {
     var err error
     doctype, err = emit.ParseDoctype(*fDoctype)
@@ -85,10 +86,10 @@ func main() {
       fmt.Printf("* * * Could not create documentation base: %v\n", err)
       return
     }
+    docname = make(map[string]int)
   }
   
   success := true
-  var docname map[string]int
   for _, e := range cmdline.Args() {
     base := path.Base(e)
     fmt.Printf("====> %v\n", base)
@@ -102,12 +103,9 @@ func main() {
     
     var gendoc []doc.Generator
     if *fGendoc {
-      if docname == nil {
-        docname = make(map[string]int)
-      }
-      
       ext := path.Ext(base)
       stem := base[:len(base) - len(ext)]
+      
       n, ok := docname[stem]
       if ok && n > 0 {
         stem = fmt.Sprintf("%v-%d", stem, n)
