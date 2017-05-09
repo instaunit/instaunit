@@ -14,8 +14,8 @@ import (
  * Implemented by documentation generators
  */
 type Generator interface {
-  Prefix()(error)
-  Suffix()(error)
+  Prefix(*test.Suite)(error)
+  Suffix(*test.Suite)(error)
   Generate(test.Case, *http.Request, string, *http.Response, []byte)(error)
 }
 

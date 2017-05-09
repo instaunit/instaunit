@@ -1,4 +1,18 @@
 
+title: Some Example Tests
+
+doc: |
+  This suite-level documentation is copied to the top of the generated
+  documentation file, when documentation is generated.
+    
+    * The first example thing,
+    * The second example thing,
+    * The third and final example thing.
+  
+  Read more about [HUnit](https://github.com/bww/hunit).
+
+tests:
+
 # This one is pretty self-explanatory and should pass
 - 
   # Test cases can have an optional identifier, in which case subsequent

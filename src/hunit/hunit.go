@@ -53,7 +53,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   c := context.Subcontext(make(map[string]interface{}))
   
   for _, e := range context.Gendoc {
-    err := e.Prefix()
+    err := e.Prefix(s)
     if err != nil {
       return nil, err
     }
@@ -68,7 +68,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   }
   
   for _, e := range context.Gendoc {
-    err := e.Suffix()
+    err := e.Suffix(s)
     if err != nil {
       return nil, err
     }

@@ -4,6 +4,7 @@ import (
   "io"
   "fmt"
   "bytes"
+  "strings"
   "net/http"
   "hunit/test"
   "hunit/text"
@@ -26,14 +27,29 @@ func New(w io.Writer) *Generator {
 /**
  * Generate documentation preamble
  */
-func (g *Generator) Prefix() error {
+func (g *Generator) Prefix(suite *test.Suite) error {
+  var err error
+  var doc string
+  
+  if suite.Title != "" {
+    doc += fmt.Sprintf("# %s\n\n", strings.TrimSpace(suite.Title))
+  }
+  if suite.Comments != "" {
+    doc += strings.TrimSpace(suite.Comments) +"\n\n"
+  }
+  
+  _, err = fmt.Fprint(g.w, doc)
+  if err != nil {
+    return err
+  }
+  
   return nil
 }
 
 /**
  * Generate documentation suffix
  */
-func (g *Generator) Suffix() error {
+func (g *Generator) Suffix(suite *test.Suite) error {
   return nil
 }
 
@@ -45,13 +61,13 @@ func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp
   var doc string
   
   if c.Title != "" {
-    doc += fmt.Sprintf("## %s\n", c.Title)
+    doc += fmt.Sprintf("## %s\n", strings.TrimSpace(c.Title))
   }else{
     doc += fmt.Sprintf("## %s %s\n", c.Request.Method, c.Request.URL)
   }
   
   if c.Comments != "" {
-    doc += c.Comments +"\n"
+    doc += strings.TrimSpace(c.Comments) +"\n"
   }
   
   if req != nil {

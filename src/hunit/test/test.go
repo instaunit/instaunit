@@ -69,7 +69,9 @@ func (c Case) Documented() bool {
  * A test suite
  */
 type Suite struct {
-  Cases []Case
+  Title     string  `yaml:"title"`
+  Comments  string  `yaml:"doc"`
+  Cases     []Case  `yaml:"tests"`
 }
 
 /**
@@ -95,11 +97,11 @@ func LoadSuiteFromFile(p string) (*Suite, error) {
  */
 func LoadSuite(data []byte) (*Suite, error) {
   
-  var cases []Case
-  err := yaml.Unmarshal(data, &cases)
+  suite := &Suite{}
+  err := yaml.Unmarshal(data, suite)
   if err != nil {
     return nil, err
   }
   
-  return &Suite{cases}, nil
+  return suite, nil
 }

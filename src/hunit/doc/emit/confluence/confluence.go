@@ -26,14 +26,14 @@ func New(w io.Writer) *Generator {
 /**
  * Generate documentation preamble
  */
-func (g *Generator) Prefix() error {
+func (g *Generator) Prefix(suite *test.Suite) error {
   return nil
 }
 
 /**
  * Generate documentation suffix
  */
-func (g *Generator) Suffix() error {
+func (g *Generator) Suffix(suite *test.Suite) error {
   return nil
 }
 

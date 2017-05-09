@@ -92,13 +92,20 @@ func main() {
   success := true
   for _, e := range cmdline.Args() {
     base := path.Base(e)
-    fmt.Printf("====> %v\n", base)
+    fmt.Printf("====> %v", base)
     
     suite, err := test.LoadSuiteFromFile(e)
     if err != nil {
+      fmt.Println()
       fmt.Printf("* * * Could not load test suite: %v\n", err)
       errors++
       continue
+    }
+    
+    if suite.Title != "" {
+      fmt.Printf(" (%v)\n", suite.Title)
+    }else{
+      fmt.Println()
     }
     
     var gendoc []doc.Generator
