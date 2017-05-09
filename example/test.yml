@@ -11,7 +11,7 @@
     # The URL to make our request to. You can also provide a relative URL and
     # set the -base-url flag when running HUnit to specify a base for all
     # relative URLs. Absolute URLs (those with a scheme) will not be affected.
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+    url: https://raw.githubusercontent.com/shangsunset/hunit/master/example/entity.txt
     # Arbitrary headers to set in our request
     headers:
       Origin: localhost
@@ -50,7 +50,7 @@
     Fetch the *entity text* from Github.
     
     The entity text is just some example text used to illustrate how literal
-    entites can be compared in a test case using [*HUnit*](https://github.com/bww/hunit).
+    entites can be compared in a test case using [*HUnit*](https://github.com/shangsunset/hunit).
   
   # If a documentation title is provided, it is used to describe the endpoint
   # in generated documentation. If omitted, the endpoint is inferred from the
@@ -63,7 +63,7 @@
     # The URL to make our request to. You can also provide a relative URL and
     # set the -base-url flag when running HUnit to specify a base for all
     # relative URLs. Absolute URLs (those with a scheme) will not be affected.
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+    url: https://raw.githubusercontent.com/shangsunset/hunit/master/example/entity.txt
     # Arbitrary headers to set in our request
     headers:
       Origin: localhost
@@ -94,7 +94,7 @@
   
   request:
     method: GET
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+    url: https://raw.githubusercontent.com/shangsunset/hunit/master/example/entity.txt
     headers:
       Origin: localhost
   
@@ -121,7 +121,7 @@
 - 
   request:
     method: GET
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.json
+    url: https://raw.githubusercontent.com/shangsunset/hunit/master/example/entity.json
     headers:
       Origin: localhost
   
