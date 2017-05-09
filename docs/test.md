@@ -14,29 +14,29 @@ entites can be compared in a test case using [*HUnit*](https://github.com/shangs
 ### Example response
 
     HTTP/1.1 200 OK
-    X-Timer: S1494300747.410475,VS0,VE0
+    X-Cache-Hits: 1
+    X-Timer: S1494302458.144317,VS0,VE0
     Vary: Authorization,Accept-Encoding
-    Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
-    X-Geo-Block-List: 
-    Connection: keep-alive
-    X-Github-Request-Id: F580:4019:1F3B5B5:208508F:59113792
-    Date: Tue, 09 May 2017 03:32:27 GMT
-    Access-Control-Allow-Origin: *
-    X-Fastly-Request-Id: 815d6e33fe7bab963c5a581611dd602802ccf338
-    Strict-Transport-Security: max-age=31536000
-    X-Content-Type-Options: nosniff
+    Etag: "adf1355d43286ca52615dbef27463748d1178d24"
     Cache-Control: max-age=300
+    X-Github-Request-Id: 5F12:4019:1F54C65:209F9D8:59113EFA
+    Date: Tue, 09 May 2017 04:00:58 GMT
+    Expires: Tue, 09 May 2017 04:05:58 GMT
+    X-Content-Type-Options: nosniff
+    X-Geo-Block-List: 
+    Accept-Ranges: bytes
+    Access-Control-Allow-Origin: *
+    Strict-Transport-Security: max-age=31536000
+    X-Frame-Options: deny
+    Via: 1.1 varnish
+    X-Fastly-Request-Id: 3a5a749f44406f609a1a57d8ec939b0aab06b3b9
+    Source-Age: 0
     X-Cache: HIT
-    X-Cache-Hits: 2
+    Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
     X-Xss-Protection: 1; mode=block
     Content-Type: text/plain; charset=utf-8
-    Accept-Ranges: bytes
-    Via: 1.1 varnish
-    X-Served-By: cache-jfk8145-JFK
-    Expires: Tue, 09 May 2017 03:37:27 GMT
-    Source-Age: 185
-    X-Frame-Options: deny
-    Etag: "adf1355d43286ca52615dbef27463748d1178d24"
+    Connection: keep-alive
+    X-Served-By: cache-jfk8147-JFK
     
     
     {
