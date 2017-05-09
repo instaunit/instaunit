@@ -88,6 +88,7 @@ func main() {
   }
   
   success := true
+  var docname map[string]int
   for _, e := range cmdline.Args() {
     base := path.Base(e)
     fmt.Printf("====> %v\n", base)
@@ -101,17 +102,30 @@ func main() {
     
     var gendoc []doc.Generator
     if *fGendoc {
+      if docname == nil {
+        docname = make(map[string]int)
+      }
+      
       ext := path.Ext(base)
-      out, err := os.OpenFile(path.Join(*fDocpath, base[:len(base) - len(ext)] + doctype.Ext()), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
+      stem := base[:len(base) - len(ext)]
+      n, ok := docname[stem]
+      if ok && n > 0 {
+        stem = fmt.Sprintf("%v-%d", stem, n)
+      }
+      docname[stem] = n + 1
+      
+      out, err := os.OpenFile(path.Join(*fDocpath, stem + doctype.Ext()), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
       if err != nil {
         fmt.Printf("* * * Could not open documentation output: %v\n", err)
         return
       }
+      
       gen, err := doc.New(doctype, out)
       if err != nil {
         fmt.Printf("* * * Could create documentation generator: %v\n", err)
         return
       }
+      
       gendoc = []doc.Generator{gen} // just one for now
     }
     
