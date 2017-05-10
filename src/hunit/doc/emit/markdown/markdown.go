@@ -75,10 +75,14 @@ func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp
     doc += "### Example response\n\n"
     doc += text.Indent(string(bufHeaders.Bytes()), "    ") +"\n"
 
-    temp := &bytes.Buffer{}
-    json.Indent(temp, bufEntity.Bytes(), "", "  ")
+		if text.IsJSON(string(bufEntity.Bytes())) {
+			temp := &bytes.Buffer{}
+			json.Indent(temp, bufEntity.Bytes(), "", "  ")
+			doc += text.Indent(string(temp.Bytes()), "    ") +"\n"
+		} else {
+			doc += text.Indent(string(bufEntity.Bytes()), "    ") +"\n"
+		}
 
-    doc += text.Indent(string(temp.Bytes()), "    ") +"\n"
   }
   
   _, err = fmt.Fprint(g.w, doc +"\n\n")

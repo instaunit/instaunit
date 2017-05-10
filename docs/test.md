@@ -14,29 +14,29 @@ entites can be compared in a test case using [*HUnit*](https://github.com/shangs
 ### Example response
 
     HTTP/1.1 200 OK
-    X-Cache-Hits: 1
-    X-Timer: S1494302458.144317,VS0,VE0
-    Vary: Authorization,Accept-Encoding
-    Etag: "adf1355d43286ca52615dbef27463748d1178d24"
-    Cache-Control: max-age=300
-    X-Github-Request-Id: 5F12:4019:1F54C65:209F9D8:59113EFA
-    Date: Tue, 09 May 2017 04:00:58 GMT
-    Expires: Tue, 09 May 2017 04:05:58 GMT
+    X-Frame-Options: deny
+    Date: Wed, 10 May 2017 04:17:24 GMT
+    Via: 1.1 varnish
+    X-Cache-Hits: 2
+    X-Timer: S1494389844.391998,VS0,VE0
+    Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
     X-Content-Type-Options: nosniff
     X-Geo-Block-List: 
-    Accept-Ranges: bytes
-    Access-Control-Allow-Origin: *
-    Strict-Transport-Security: max-age=31536000
-    X-Frame-Options: deny
-    Via: 1.1 varnish
-    X-Fastly-Request-Id: 3a5a749f44406f609a1a57d8ec939b0aab06b3b9
-    Source-Age: 0
+    X-Github-Request-Id: 45B4:4018:23EB840:255D67E:5912942D
+    Connection: keep-alive
     X-Cache: HIT
-    Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
+    Access-Control-Allow-Origin: *
+    Expires: Wed, 10 May 2017 04:22:24 GMT
+    Strict-Transport-Security: max-age=31536000
+    Cache-Control: max-age=300
+    Accept-Ranges: bytes
+    X-Served-By: cache-jfk8131-JFK
+    Vary: Authorization,Accept-Encoding
+    X-Fastly-Request-Id: d4b2112511585ec1c41ad87627a6bff1dce98027
     X-Xss-Protection: 1; mode=block
     Content-Type: text/plain; charset=utf-8
-    Connection: keep-alive
-    X-Served-By: cache-jfk8147-JFK
+    Source-Age: 39
+    Etag: "adf1355d43286ca52615dbef27463748d1178d24"
     
     
     {
