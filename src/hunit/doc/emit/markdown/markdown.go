@@ -61,33 +61,43 @@ func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp
   var doc string
   
   if c.Title != "" {
-    doc += fmt.Sprintf("## %s\n", strings.TrimSpace(c.Title))
+    doc += fmt.Sprintf("## %s\n\n", strings.TrimSpace(c.Title))
   }else{
-    doc += fmt.Sprintf("## %s %s\n", c.Request.Method, c.Request.URL)
+    doc += fmt.Sprintf("## %s %s\n\n", c.Request.Method, c.Request.URL)
   }
   
   if c.Comments != "" {
-    doc += strings.TrimSpace(c.Comments) +"\n"
+    doc += strings.TrimSpace(c.Comments) +"\n\n"
   }
   
   if req != nil {
     b := &bytes.Buffer{}
-    err = text.WriteRequest(b, req, reqdata)
+    err = text.WriteRequest(b, nil, reqdata)
     if err != nil {
       return err
     }
-    doc += "### Example request\n\n"
-    doc += text.Indent(string(b.Bytes()), "    ") +"\n"
+    if b.Len() > 0 {
+      h := text.EntityHighlight(req.Header.Get("Content-Type"))
+      doc += "### Example request\n\n"
+      doc += "```"+ h +"\n"
+      doc += string(b.Bytes()) +"\n"
+      doc += "```\n"
+    }
   }
   
   if rsp != nil {
     b := &bytes.Buffer{}
-    err = text.WriteResponse(b, rsp, rspdata)
+    err = text.WriteResponse(b, nil, rspdata)
     if err != nil {
       return err
     }
-    doc += "### Example response\n\n"
-    doc += text.Indent(string(b.Bytes()), "    ") +"\n"
+    if b.Len() > 0 {
+      h := text.EntityHighlight(text.Coalesce(c.Response.Format, req.Header.Get("Content-Type")))
+      doc += "### Example response\n\n"
+      doc += "```"+ h +"\n"
+      doc += string(b.Bytes()) +"\n"
+      doc += "```\n"
+    }
   }
   
   _, err = fmt.Fprint(g.w, doc +"\n\n")
