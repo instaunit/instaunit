@@ -96,12 +96,35 @@ func LoadSuiteFromFile(p string) (*Suite, error) {
  * Load a test suite
  */
 func LoadSuite(data []byte) (*Suite, error) {
+  var ferr error
   
   suite := &Suite{}
   err := yaml.Unmarshal(data, suite)
   if err != nil {
-    return nil, err
+    ferr = err
+  }
+  
+  if len(suite.Cases) < 1 {
+    var cases []Case
+    err := yaml.Unmarshal(data, &cases)
+    if err != nil {
+      return nil, coalesce(ferr, err)
+    }else{
+      suite.Cases = cases
+    }
   }
   
   return suite, nil
+}
+
+/**
+ * Return the first non-nil error or nil if there are none.
+ */
+func coalesce(err ...error) error {
+  for _, e := range err {
+    if e != nil {
+      return e
+    }
+  }
+  return nil
 }

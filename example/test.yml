@@ -12,147 +12,146 @@ doc: |
   Read more about [HUnit](https://github.com/bww/hunit).
 
 tests:
-
-# This one is pretty self-explanatory and should pass
-- 
-  # Test cases can have an optional identifier, in which case subsequent
-  # tests can refer to the response from this test.
-  id: first
-  
-  request:
-    # The HTTP method to use
-    method: GET
-    # The URL to make our request to. You can also provide a relative URL and
-    # set the -base-url flag when running HUnit to specify a base for all
-    # relative URLs. Absolute URLs (those with a scheme) will not be affected.
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
-    # Arbitrary headers to set in our request
-    headers:
-      Origin: localhost
-  
-  response:
-    # The status code we expect in our response
-    status: 200
-    # Headers we expect in our response. Only headers specified here are checked
-    # in the response. It's not currently possible to assert that there are no
-    # headers in the response other than those provided here.
-    headers:
-      Content-Type: text/plain; charset=utf-8
-    # The expected entity to compare against the server's response. By default
-    # entities are compared literally, byte-for-byte. You can also compare
-    # supported (JSON) entities semantically. See the last test in this file
-    # for an example of semantic comparisons.
-    entity: |+
-      Here's a simple
-      response from the
-      server.      
-
-# This test is documented and should succeed
-- 
-  # Generate documentation for this endpoint, using the request and response
-  # as examples, if the -gendoc flag is set.
-  gendoc: y
-  
-  # When generating documentation, the doc property is incorporated as a
-  # description into the documentation for this endpoint. Setting this
-  # property to a non-empty string will implicitly cause documentation to be
-  # generated as if the gendoc property were set to true.
-  # 
-  # This documentation will be interpreted as Markdown and translated into
-  # the output format.
-  doc: |
-    Fetch the *entity text* from Github.
+  # This one is pretty self-explanatory and should pass
+  - 
+    # Test cases can have an optional identifier, in which case subsequent
+    # tests can refer to the response from this test.
+    id: first
     
-    The entity text is just some example text used to illustrate how literal
-    entites can be compared in a test case using [*HUnit*](https://github.com/bww/hunit).
-  
-  # If a documentation title is provided, it is used to describe the endpoint
-  # in generated documentation. If omitted, the endpoint is inferred from the
-  # request. Providing an explicit endpoint can be useful to note variables.
-  title: GET /example/:entity_name
-  
-  request:
-    # The HTTP method to use
-    method: GET
-    # The URL to make our request to. You can also provide a relative URL and
-    # set the -base-url flag when running HUnit to specify a base for all
-    # relative URLs. Absolute URLs (those with a scheme) will not be affected.
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
-    # Arbitrary headers to set in our request
-    headers:
-      Origin: localhost
-  
-  response:
-    # The status code we expect in our response
-    status: 200
-    # Headers we expect in our response. Only headers specified here are checked
-    # in the response. It's not currently possible to assert that there are no
-    # headers in the response other than those provided here.
-    headers:
-      Content-Type: text/plain; charset=utf-8
-    # The expected entity to compare against the server's response. By default
-    # entities are compared literally, byte-for-byte. You can also compare
-    # supported (JSON) entities semantically. See the last test in this file
-    # for an example of semantic comparisons.
-    entity: |+
-      Here's a simple
-      response from the
-      server.      
+    request:
+      # The HTTP method to use
+      method: GET
+      # The URL to make our request to. You can also provide a relative URL and
+      # set the -base-url flag when running HUnit to specify a base for all
+      # relative URLs. Absolute URLs (those with a scheme) will not be affected.
+      url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+      # Arbitrary headers to set in our request
+      headers:
+        Origin: localhost
+    
+    response:
+      # The status code we expect in our response
+      status: 200
+      # Headers we expect in our response. Only headers specified here are checked
+      # in the response. It's not currently possible to assert that there are no
+      # headers in the response other than those provided here.
+      headers:
+        Content-Type: text/plain; charset=utf-8
+      # The expected entity to compare against the server's response. By default
+      # entities are compared literally, byte-for-byte. You can also compare
+      # supported (JSON) entities semantically. See the last test in this file
+      # for an example of semantic comparisons.
+      entity: |+
+        Here's a simple
+        response from the
+        server.      
 
-# This one should have failures
-- 
-  # Wait two seconds before performing this request. this can be used to pause
-  # before requests that may need some time for an asynchronous operation to
-  # complete in the background. (That's not actually the case here...)
-  # wait: 2s
-  
-  request:
-    method: GET
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
-    headers:
-      Origin: localhost
-  
-  response:
-    status: 201 # wrong
-    headers:
-      # Reference the content type from the previous request, which has the
-      # identifier 'first'. The response object represents the actual response
-      # from the server rather than the expected response defined above.
-      Content-Type: ${first.response.headers["Content-Type"]}
-    entity: |+  # wrong
-      Here is a simple
-      response from the
-      server. ${std.RandomString(10)}
+  # This test is documented and should succeed
+  - 
+    # Generate documentation for this endpoint, using the request and response
+    # as examples, if the -gendoc flag is set.
+    gendoc: y
+    
+    # When generating documentation, the doc property is incorporated as a
+    # description into the documentation for this endpoint. Setting this
+    # property to a non-empty string will implicitly cause documentation to be
+    # generated as if the gendoc property were set to true.
+    # 
+    # This documentation will be interpreted as Markdown and translated into
+    # the output format.
+    doc: |
+      Fetch the *entity text* from Github.
+      
+      The entity text is just some example text used to illustrate how literal
+      entites can be compared in a test case using [*HUnit*](https://github.com/bww/hunit).
+    
+    # If a documentation title is provided, it is used to describe the endpoint
+    # in generated documentation. If omitted, the endpoint is inferred from the
+    # request. Providing an explicit endpoint can be useful to note variables.
+    title: GET /example/:entity_name
+    
+    request:
+      # The HTTP method to use
+      method: GET
+      # The URL to make our request to. You can also provide a relative URL and
+      # set the -base-url flag when running HUnit to specify a base for all
+      # relative URLs. Absolute URLs (those with a scheme) will not be affected.
+      url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+      # Arbitrary headers to set in our request
+      headers:
+        Origin: localhost
+    
+    response:
+      # The status code we expect in our response
+      status: 200
+      # Headers we expect in our response. Only headers specified here are checked
+      # in the response. It's not currently possible to assert that there are no
+      # headers in the response other than those provided here.
+      headers:
+        Content-Type: text/plain; charset=utf-8
+      # The expected entity to compare against the server's response. By default
+      # entities are compared literally, byte-for-byte. You can also compare
+      # supported (JSON) entities semantically. See the last test in this file
+      # for an example of semantic comparisons.
+      entity: |+
+        Here's a simple
+        response from the
+        server.      
 
-# This one compares entities semantically. The entities are unmarshaled into
-# objects and the objects are compared. This allows you to ignore insignificant
-# differences like whitespace, formatting, and property order.
-# 
-# Semantically compared objects also ignore properties which are not present
-# in the provided "expected" entity. This allows you to compare only the
-# properties that you're interested and ignore properties that are unpredictable,
-# such as timestamps or identifiers generated by the service.
-- 
-  request:
-    method: GET
-    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.json
-    headers:
-      Origin: localhost
-  
-  response:
-    status: 200
-    headers:
-      Content-Type: text/plain; charset=utf-8
-    # Explicitly set the entity format. This is optional and defaults to the format
-    # indicated by the Content-Type response header. in this case we must override
-    # the Content-Type header since GitHub always serves raw files as plain text.
-    format: application/json
-    # Compare the expected and actual entities semantically instead of literally,
-    # which is the default.
-    compare: semantic
-    # The expected entity to compare against the server's response.
-    entity: |
-      {
-        "z": "Hello, this is the value",
-        "a": 123
-      }
+  # This one should have failures
+  - 
+    # Wait two seconds before performing this request. this can be used to pause
+    # before requests that may need some time for an asynchronous operation to
+    # complete in the background. (That's not actually the case here...)
+    # wait: 2s
+    
+    request:
+      method: GET
+      url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+      headers:
+        Origin: localhost
+    
+    response:
+      status: 201 # wrong
+      headers:
+        # Reference the content type from the previous request, which has the
+        # identifier 'first'. The response object represents the actual response
+        # from the server rather than the expected response defined above.
+        Content-Type: ${first.response.headers["Content-Type"]}
+      entity: |+  # wrong
+        Here is a simple
+        response from the
+        server. ${std.RandomString(10)}
+
+  # This one compares entities semantically. The entities are unmarshaled into
+  # objects and the objects are compared. This allows you to ignore insignificant
+  # differences like whitespace, formatting, and property order.
+  # 
+  # Semantically compared objects also ignore properties which are not present
+  # in the provided "expected" entity. This allows you to compare only the
+  # properties that you're interested and ignore properties that are unpredictable,
+  # such as timestamps or identifiers generated by the service.
+  - 
+    request:
+      method: GET
+      url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.json
+      headers:
+        Origin: localhost
+    
+    response:
+      status: 200
+      headers:
+        Content-Type: text/plain; charset=utf-8
+      # Explicitly set the entity format. This is optional and defaults to the format
+      # indicated by the Content-Type response header. in this case we must override
+      # the Content-Type header since GitHub always serves raw files as plain text.
+      format: application/json
+      # Compare the expected and actual entities semantically instead of literally,
+      # which is the default.
+      compare: semantic
+      # The expected entity to compare against the server's response.
+      entity: |
+        {
+          "z": "Hello, this is the value",
+          "a": 123
+        }
