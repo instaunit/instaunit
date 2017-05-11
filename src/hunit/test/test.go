@@ -1,13 +1,7 @@
 package test
 
 import (
-  "os"
   "time"
-  "io/ioutil"
-)
-
-import (
-  "gopkg.in/yaml.v2"
 )
 
 /**
@@ -63,68 +57,4 @@ type Case struct {
  */
 func (c Case) Documented() bool {
   return c.Gendoc || c.Title != "" || c.Comments != ""
-}
-
-/**
- * A test suite
- */
-type Suite struct {
-  Title     string  `yaml:"title"`
-  Comments  string  `yaml:"doc"`
-  Cases     []Case  `yaml:"tests"`
-}
-
-/**
- * Load a test suite
- */
-func LoadSuiteFromFile(p string) (*Suite, error) {
-  
-  file, err := os.Open(p)
-  if err != nil {
-    return nil, err
-  }
-  
-  data, err := ioutil.ReadAll(file)
-  if err != nil {
-    return nil, err
-  }
-  
-  return LoadSuite(data)
-}
-
-/**
- * Load a test suite
- */
-func LoadSuite(data []byte) (*Suite, error) {
-  var ferr error
-  
-  suite := &Suite{}
-  err := yaml.Unmarshal(data, suite)
-  if err != nil {
-    ferr = err
-  }
-  
-  if len(suite.Cases) < 1 {
-    var cases []Case
-    err := yaml.Unmarshal(data, &cases)
-    if err != nil {
-      return nil, coalesce(ferr, err)
-    }else{
-      suite.Cases = cases
-    }
-  }
-  
-  return suite, nil
-}
-
-/**
- * Return the first non-nil error or nil if there are none.
- */
-func coalesce(err ...error) error {
-  for _, e := range err {
-    if e != nil {
-      return e
-    }
-  }
-  return nil
 }
