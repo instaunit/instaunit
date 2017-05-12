@@ -100,7 +100,7 @@ func main() {
     base := path.Base(e)
     fmt.Printf("====> %v", base)
     
-    cdup := config
+    cdup := config // copy global configs and update them
     suite, err := test.LoadSuiteFromFile(&cdup, e)
     if err != nil {
       fmt.Println()
@@ -108,8 +108,6 @@ func main() {
       errors++
       continue
     }
-    
-    fmt.Println("CDUP!!", cdup)
     
     if suite.Title != "" {
       fmt.Printf(" (%v)\n", suite.Title)
@@ -143,7 +141,7 @@ func main() {
       gendoc = []doc.Generator{gen} // just one for now
     }
     
-    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG, Gendoc: gendoc, Config: config})
+    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG, Gendoc: gendoc, Config: cdup})
     if err != nil {
       fmt.Printf("* * * Could not run test suite: %v\n", err)
       errors++

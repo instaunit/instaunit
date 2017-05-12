@@ -15,7 +15,7 @@ import (
 type Generator interface {
   Prefix(*test.Suite)(error)
   Suffix(*test.Suite)(error)
-  Generate(test.Case, *http.Request, string, *http.Response, []byte)(error)
+  Generate(test.Config, test.Case, *http.Request, string, *http.Response, []byte)(error)
 }
 
 /**

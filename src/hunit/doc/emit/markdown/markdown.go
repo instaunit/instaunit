@@ -56,7 +56,7 @@ func (g *Generator) Suffix(suite *test.Suite) error {
 /**
  * Generate documentation
  */
-func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+func (g *Generator) Generate(conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
   var err error
   var doc string
   

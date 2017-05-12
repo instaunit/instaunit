@@ -28,29 +28,29 @@ Origin: localhost
 
 ```http
 HTTP/1.1 200 OK
-Etag: "9b5817fe39f818381e7cc03a1105ee2686f2831a"
+Source-Age: 156
+X-Geo-Block-List: 
+X-Github-Request-Id: 964A:34B9:22B2082:2408244:5915044E
+X-Served-By: cache-jfk8132-JFK
+X-Cache: HIT
+X-Cache-Hits: 2
+Expires: Fri, 12 May 2017 00:47:18 GMT
+Strict-Transport-Security: max-age=31536000
 Content-Type: text/plain; charset=utf-8
 Accept-Ranges: bytes
+Connection: keep-alive
+Vary: Authorization,Accept-Encoding
 Via: 1.1 varnish
+X-Timer: S1494549738.408763,VS0,VE0
+Access-Control-Allow-Origin: *
 Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
 X-Content-Type-Options: nosniff
-X-Xss-Protection: 1; mode=block
-Source-Age: 4
-X-Cache-Hits: 4
-X-Fastly-Request-Id: 217c6140bd53affd2ecff764c5fc32b072475b29
-Expires: Fri, 12 May 2017 00:39:40 GMT
-Date: Fri, 12 May 2017 00:34:40 GMT
-X-Served-By: cache-jfk8145-JFK
-X-Cache: HIT
-X-Github-Request-Id: 3938:34B4:36DF476:38F20DA:5915031C
-Connection: keep-alive
-X-Timer: S1494549281.938835,VS0,VE0
-Strict-Transport-Security: max-age=31536000
 X-Frame-Options: deny
+X-Xss-Protection: 1; mode=block
 Cache-Control: max-age=300
-Access-Control-Allow-Origin: *
-X-Geo-Block-List: 
-Vary: Authorization,Accept-Encoding
+X-Fastly-Request-Id: c6e92114a36fbce0d40294c83bc5791f7ca0414c
+Etag: "9b5817fe39f818381e7cc03a1105ee2686f2831a"
+Date: Fri, 12 May 2017 00:42:18 GMT
 
 Here's a simple
 response from the
@@ -74,29 +74,29 @@ Origin: localhost
 
 ```http
 HTTP/1.1 200 OK
-X-Frame-Options: deny
-X-Github-Request-Id: 243E:02E4:99986D:A11207:5915031C
-Date: Fri, 12 May 2017 00:34:40 GMT
-X-Served-By: cache-jfk8145-JFK
-X-Cache: HIT
-X-Fastly-Request-Id: 5dc7c777223c5282d6c8ac710dbf699b676865d8
-Source-Age: 4
-Strict-Transport-Security: max-age=31536000
-Etag: "bd5fdee5109d273e7d9d396848c196eb43ab9f77"
-Vary: Authorization,Accept-Encoding
-X-Xss-Protection: 1; mode=block
-Accept-Ranges: bytes
-Connection: keep-alive
-X-Cache-Hits: 1
-X-Timer: S1494549281.965496,VS0,VE0
-Access-Control-Allow-Origin: *
-X-Geo-Block-List: 
-X-Content-Type-Options: nosniff
 Content-Type: text/plain; charset=utf-8
-Cache-Control: max-age=300
-Via: 1.1 varnish
-Expires: Fri, 12 May 2017 00:39:40 GMT
+Connection: keep-alive
+Accept-Ranges: bytes
+Vary: Authorization,Accept-Encoding
 Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
+X-Content-Type-Options: nosniff
+X-Xss-Protection: 1; mode=block
+Cache-Control: max-age=300
+X-Served-By: cache-jfk8132-JFK
+X-Timer: S1494549738.449243,VS0,VE1
+Access-Control-Allow-Origin: *
+X-Fastly-Request-Id: a622bc9b89d090b0d45d9cb0c752e5931b4d0d09
+X-Frame-Options: deny
+Etag: "bd5fdee5109d273e7d9d396848c196eb43ab9f77"
+X-Geo-Block-List: 
+Via: 1.1 varnish
+Expires: Fri, 12 May 2017 00:47:18 GMT
+X-Cache-Hits: 1
+Source-Age: 156
+Strict-Transport-Security: max-age=31536000
+X-Github-Request-Id: 6AAE:02E6:183CC7C:1952513:5915044E
+Date: Fri, 12 May 2017 00:42:18 GMT
+X-Cache: HIT
 
 {
   "z": "Hello, this is the value",
