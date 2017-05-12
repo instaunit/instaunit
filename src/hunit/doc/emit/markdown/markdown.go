@@ -8,7 +8,6 @@ import (
   "net/http"
   "hunit/test"
   "hunit/text"
-  "encoding/json"
 )
 
 /**
@@ -57,46 +56,62 @@ func (g *Generator) Suffix(suite *test.Suite) error {
 /**
  * Generate documentation
  */
-func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+func (g *Generator) Generate(conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
   var err error
   var doc string
   
   if c.Title != "" {
-    doc += fmt.Sprintf("## %s\n", strings.TrimSpace(c.Title))
+    doc += fmt.Sprintf("## %s\n\n", strings.TrimSpace(c.Title))
   }else{
-    doc += fmt.Sprintf("## %s %s\n", c.Request.Method, c.Request.URL)
+    doc += fmt.Sprintf("## %s %s\n\n", c.Request.Method, c.Request.URL)
   }
   
   if c.Comments != "" {
-    doc += strings.TrimSpace(c.Comments) +"\n"
+    doc += strings.TrimSpace(c.Comments) +"\n\n"
   }
   
   if req != nil {
     b := &bytes.Buffer{}
+    if conf.Doc.FormatEntities {
+      f, err := text.FormatEntity(req, []byte(reqdata))
+      if err == nil {
+        reqdata = string(f)
+      }else if err != nil && err != text.ErrUnsupportedContentType {
+        fmt.Println("* * * Invalid request entity could not be formatted: %v", req.Header.Get("Content-Type"))
+      }
+    }
     err = text.WriteRequest(b, req, reqdata)
     if err != nil {
       return err
     }
-    doc += "### Example request\n\n"
-    doc += text.Indent(string(b.Bytes()), "    ") +"\n"
+    if b.Len() > 0 {
+      doc += "### Example request\n\n"
+      doc += "```http\n"
+      doc += string(b.Bytes()) +"\n"
+      doc += "```\n"
+    }
   }
   
   if rsp != nil {
     b := &bytes.Buffer{}
-
-		if text.HasContentType(req, "application/json") {
-			entityBuf := &bytes.Buffer{}
-			json.Indent(entityBuf, rspdata, "", "  ")
-			err = text.WriteResponse(b, rsp, entityBuf.Bytes())
-		} else {
-			err = text.WriteResponse(b, rsp, rspdata)
-		}
+    if conf.Doc.FormatEntities {
+      f, err := text.FormatEntity(req, rspdata)
+      if err == nil {
+        rspdata = f
+      }else if err != nil && err != text.ErrUnsupportedContentType {
+        fmt.Println("* * * Invalid entity could not be formatted: %v", req.Header.Get("Content-Type"))
+      }
+    }
+    err = text.WriteResponse(b, rsp, rspdata)
     if err != nil {
       return err
     }
-
-    doc += "### Example response\n\n"
-    doc += text.Indent(string(b.Bytes()), "    ") +"\n"
+    if b.Len() > 0 {
+      doc += "### Example response\n\n"
+      doc += "```http\n"
+      doc += string(b.Bytes()) +"\n"
+      doc += "```\n"
+    }
   }
   
   _, err = fmt.Fprint(g.w, doc +"\n\n")

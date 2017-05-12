@@ -17,13 +17,11 @@ const (
 
 var doctypeNames = []string{
   "markdown",
-  "confluence",
   "<invalid>",
 }
 
 var doctypeExts = []string{
   ".md",
-  ".xml",
   ".???",
 }
 
@@ -34,8 +32,6 @@ func ParseDoctype(s string) (Doctype, error) {
   switch s {
     case "markdown":
       return DoctypeMarkdown, nil
-    case "confluence":
-      return DoctypeConfluence, nil
     default:
       return DoctypeInvalid, fmt.Errorf("Unsupported type: %v", s)
   }

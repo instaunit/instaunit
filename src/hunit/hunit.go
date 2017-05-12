@@ -12,7 +12,6 @@ import (
   "hunit/doc"
   "hunit/test"
   "hunit/text"
-  "encoding/json"
 )
 
 /**
@@ -26,6 +25,7 @@ var client = http.Client{Timeout: time.Second * 30}
 type Context struct {
   BaseURL   string
   Options   test.Options
+  Config    test.Config
   Headers   map[string]string
   Debug     bool
   Gendoc    []doc.Generator
@@ -39,6 +39,7 @@ func (c Context) Subcontext(vars map[string]interface{}) Context {
   return Context{
     BaseURL: c.BaseURL,
     Options: c.Options,
+    Config: c.Config,
     Headers: c.Headers,
     Debug: c.Debug,
     Gendoc: c.Gendoc,
@@ -258,13 +259,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   
   if (context.Options & test.OptionDisplayResponses) == test.OptionDisplayResponses {
 		b := &bytes.Buffer{}
-		if text.HasContentType(req, "application/json") {
-			entityBuf := &bytes.Buffer{}
-			json.Indent(entityBuf, rspdata, "", "  ")
-			err = text.WriteResponse(b, rsp, entityBuf.Bytes())
-		} else {
-			err = text.WriteResponse(b, rsp, rspdata)
-		}
+		err = text.WriteResponse(b, rsp, rspdata)
     if err != nil {
       return result.Error(err), nil
     }
@@ -296,7 +291,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   // generate documentation if necessary
   if c.Documented() && len(context.Gendoc) > 0 {
     for _, e := range context.Gendoc {
-      err := e.Generate(c, req, reqdata, rsp, rspdata)
+      err := e.Generate(context.Config, c, req, reqdata, rsp, rspdata)
       if err != nil {
         return nil, fmt.Errorf("Could not generate documentation: %v", err)
       }
