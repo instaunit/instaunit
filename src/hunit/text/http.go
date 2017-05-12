@@ -2,6 +2,7 @@ package text
 
 import (
   "io"
+  "strings"
   "net/http"
 )
 
@@ -64,4 +65,9 @@ func WriteResponse(w io.Writer, rsp *http.Response, entity []byte) error {
   }
   
   return nil
+}
+
+func HasContentType(req *http.Request, t string) bool {
+  contentType := req.Header.Get("Content-Type")
+	return strings.Contains(strings.ToLower(contentType), t)
 }

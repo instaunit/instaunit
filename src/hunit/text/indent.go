@@ -1,5 +1,9 @@
 package text
 
+import (
+	"bytes"
+)
+
 /**
  * Indentiation options
  */
@@ -20,15 +24,15 @@ func Indent(s, p string) string {
  * Indent a string by prefixing each line with the provided string
  */
 func IndentWithOptions(s, p string, opt IndentOptions) string {
-  var o string
+	var o bytes.Buffer
   if (opt & IndentOptionIndentFirstLine) == IndentOptionIndentFirstLine {
-    o += p
+    o.WriteString(p)
   }
   for i := 0; i < len(s); i++ {
-    o += string(s[i])
+		o.WriteString(string(s[i]))
     if s[i] == '\n' {
-      o += p
+      o.WriteString(p)
     }
   }
-  return o
+  return o.String()
 }

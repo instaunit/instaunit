@@ -12,6 +12,7 @@ import (
   "hunit/doc"
   "hunit/test"
   "hunit/text"
+  "encoding/json"
 )
 
 /**
@@ -256,8 +257,14 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   }
   
   if (context.Options & test.OptionDisplayResponses) == test.OptionDisplayResponses {
-    b := &bytes.Buffer{}
-    err = text.WriteResponse(b, rsp, rspdata)
+		b := &bytes.Buffer{}
+		if text.HasContentType(req, "application/json") {
+			entityBuf := &bytes.Buffer{}
+			json.Indent(entityBuf, rspdata, "", "  ")
+			err = text.WriteResponse(b, rsp, entityBuf.Bytes())
+		} else {
+			err = text.WriteResponse(b, rsp, rspdata)
+		}
     if err != nil {
       return result.Error(err), nil
     }
