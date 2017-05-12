@@ -1,4 +1,4 @@
-import test
+package test
 
 import (
   "os"
@@ -12,7 +12,7 @@ import (
 /**
  * Suite options
  */
-type SuiteOptions struct {
+type Config struct {
   Doc struct {
     IncludeRequestHTTP  bool  `yaml:"doc-include-request-http"`
     IncludeResponseHTTP bool  `yaml:"doc-include-response-http"`
@@ -24,16 +24,16 @@ type SuiteOptions struct {
  * A test suite
  */
 type Suite struct {
-  Title       string          `yaml:"title"`
-  Comments    string          `yaml:"doc"`
-  Cases       []Case          `yaml:"tests"`
-  Options     SuiteOptions    `yaml:"options"`
+  Title       string      `yaml:"title"`
+  Comments    string      `yaml:"doc"`
+  Cases       []Case      `yaml:"tests"`
+  Config      Config      `yaml:"options"`
 }
 
 /**
  * Load a test suite
  */
-func LoadSuiteFromFile(p string) (*Suite, error) {
+func LoadSuiteFromFile(c *Config, p string) (*Suite, error) {
   
   file, err := os.Open(p)
   if err != nil {
@@ -45,16 +45,16 @@ func LoadSuiteFromFile(p string) (*Suite, error) {
     return nil, err
   }
   
-  return LoadSuite(data)
+  return LoadSuite(c, data)
 }
 
 /**
  * Load a test suite
  */
-func LoadSuite(data []byte) (*Suite, error) {
+func LoadSuite(conf *Config, data []byte) (*Suite, error) {
   var ferr error
   
-  suite := &Suite{}
+  suite := &Suite{Config:*conf}
   err := yaml.Unmarshal(data, suite)
   if err != nil {
     ferr = err
@@ -70,8 +70,7 @@ func LoadSuite(data []byte) (*Suite, error) {
     }
   }
   
-  fmt.Println("OPTIONS:", suite.Options)
-  
+  *conf = suite.Config
   return suite, nil
 }
 

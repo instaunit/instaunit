@@ -72,14 +72,13 @@ func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp
   
   if req != nil {
     b := &bytes.Buffer{}
-    err = text.WriteRequest(b, nil, reqdata)
+    err = text.WriteRequest(b, req, reqdata)
     if err != nil {
       return err
     }
     if b.Len() > 0 {
-      h := text.EntityHighlight(req.Header.Get("Content-Type"))
       doc += "### Example request\n\n"
-      doc += "```"+ h +"\n"
+      doc += "```http\n"
       doc += string(b.Bytes()) +"\n"
       doc += "```\n"
     }
@@ -87,14 +86,13 @@ func (g *Generator) Generate(c test.Case, req *http.Request, reqdata string, rsp
   
   if rsp != nil {
     b := &bytes.Buffer{}
-    err = text.WriteResponse(b, nil, rspdata)
+    err = text.WriteResponse(b, rsp, rspdata)
     if err != nil {
       return err
     }
     if b.Len() > 0 {
-      h := text.EntityHighlight(text.Coalesce(c.Response.Format, req.Header.Get("Content-Type")))
       doc += "### Example response\n\n"
-      doc += "```"+ h +"\n"
+      doc += "```http\n"
       doc += string(b.Bytes()) +"\n"
       doc += "```\n"
     }

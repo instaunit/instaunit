@@ -17,7 +17,7 @@ doc: |
   Read more about [HUnit](https://github.com/bww/hunit).
 
 options:
-  doc-include-http: y
+  doc-include-response-http: y
 
 # When any of the above fields are present, the tests section introduces
 # a sequence of test cases. If you don't need to include a documentation

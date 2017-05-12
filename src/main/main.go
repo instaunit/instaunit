@@ -26,17 +26,18 @@ func main() {
   var headerSpecs flagList
   
   cmdline       := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-  fBaseURL      := cmdline.String   ("base-url",        coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
-  fExpandVars   := cmdline.Bool     ("expand",          strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true),              "Expand variables in test cases.")
-  fTrimEntity   := cmdline.Bool     ("entity:trim",     strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
-  fDumpRequest  := cmdline.Bool     ("dump:request",    strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")),                  "Dump requests to standard output as they are processed.")
-  fDumpResponse := cmdline.Bool     ("dump:response",   strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")),                 "Dump responses to standard output as they are processed.")
-  fGendoc       := cmdline.Bool     ("gendoc",          strToBool(os.Getenv("HUNIT_GENDOC")),                         "Generate documentation.")
-  fDocpath      := cmdline.String   ("docpath",         coalesce(os.Getenv("HUNIT_DOCPATH"), "./docs"),               "The directory in which generated documentation should be written.")
-  fDoctype      := cmdline.String   ("doctype",         coalesce(os.Getenv("HUNIT_DOCTYPE"), "markdown"),             "The format to generate documentation in.")
-  fDebug        := cmdline.Bool     ("debug",           strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
-  fVerbose      := cmdline.Bool     ("verbose",         strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
-  cmdline.Var    (&headerSpecs,      "header",                                                                        "Provide a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
+  fBaseURL      := cmdline.String   ("base-url",          coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
+  fExpandVars   := cmdline.Bool     ("expand",            strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true),              "Expand variables in test cases.")
+  fTrimEntity   := cmdline.Bool     ("entity:trim",       strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
+  fDumpRequest  := cmdline.Bool     ("dump:request",      strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")),                  "Dump requests to standard output as they are processed.")
+  fDumpResponse := cmdline.Bool     ("dump:response",     strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")),                 "Dump responses to standard output as they are processed.")
+  fGendoc       := cmdline.Bool     ("gendoc",            strToBool(os.Getenv("HUNIT_GENDOC")),                         "Generate documentation.")
+  fDocpath      := cmdline.String   ("doc:output",        coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"),            "The directory in which generated documentation should be written.")
+  fDoctype      := cmdline.String   ("doc:type",          coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"),            "The format to generate documentation in.")
+  fDocInclHTTP  := cmdline.Bool     ("doc:include-http",  strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")),               "Include HTTP in request and response examples (as opposed to just routes and entities).")
+  fDebug        := cmdline.Bool     ("debug",             strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
+  fVerbose      := cmdline.Bool     ("verbose",           strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
+  cmdline.Var    (&headerSpecs,      "header",                                                                          "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
   cmdline.Parse(os.Args[1:])
   
   DEBUG = *fDebug
@@ -59,6 +60,11 @@ func main() {
     options |= test.OptionDisplayRequests | test.OptionDisplayResponses
   }
   
+  var config test.Config
+  if *fDocInclHTTP {
+    config.Doc.IncludeHTTP = true
+  }
+  
   var globalHeaders map[string]string
   if headerSpecs != nil && len(headerSpecs) > 0 {
     globalHeaders = make(map[string]string)
@@ -68,7 +74,7 @@ func main() {
         fmt.Printf("* * * Invalid header: %v\n", e)
         return
       }
-      globalHeaders[strings.Trim(e[:x], ws)] = strings.Trim(e[x+1:], ws)
+      globalHeaders[strings.TrimSpace(e[:x])] = strings.TrimSpace(e[x+1:])
     }
   }
   
@@ -94,13 +100,16 @@ func main() {
     base := path.Base(e)
     fmt.Printf("====> %v", base)
     
-    suite, err := test.LoadSuiteFromFile(e)
+    cdup := config
+    suite, err := test.LoadSuiteFromFile(&cdup, e)
     if err != nil {
       fmt.Println()
       fmt.Printf("* * * Could not load test suite: %v\n", err)
       errors++
       continue
     }
+    
+    fmt.Println("CDUP!!", cdup)
     
     if suite.Title != "" {
       fmt.Printf(" (%v)\n", suite.Title)
@@ -134,7 +143,7 @@ func main() {
       gendoc = []doc.Generator{gen} // just one for now
     }
     
-    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG, Gendoc: gendoc})
+    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG, Gendoc: gendoc, Config: config})
     if err != nil {
       fmt.Printf("* * * Could not run test suite: %v\n", err)
       errors++

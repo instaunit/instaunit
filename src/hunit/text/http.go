@@ -29,12 +29,11 @@ func WriteRequest(w io.Writer, req *http.Request, entity string) error {
       }
       dump += "\n"
     }
-    
-    dump += "\n"
   }
   
   if entity != "" {
-    dump += entity +"\n"
+    dump += "\n"
+    dump += entity
   }
   
   _, err := w.Write([]byte(dump))
@@ -62,12 +61,11 @@ func WriteResponse(w io.Writer, rsp *http.Response, entity []byte) error {
       }
       dump += "\n"
     }
-    
-    dump += "\n"
   }
   
   if entity != nil {
-    dump += string(entity) +"\n"
+    dump += "\n"
+    dump += string(entity)
   }
   
   _, err := w.Write([]byte(dump))

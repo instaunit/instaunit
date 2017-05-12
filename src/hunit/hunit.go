@@ -25,6 +25,7 @@ var client = http.Client{Timeout: time.Second * 30}
 type Context struct {
   BaseURL   string
   Options   test.Options
+  Config    test.Config
   Headers   map[string]string
   Debug     bool
   Gendoc    []doc.Generator
