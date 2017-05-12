@@ -2,7 +2,6 @@ package text
 
 import (
   "fmt"
-  "net/http"
   "encoding/json"
 )
 
@@ -21,9 +20,9 @@ var stdEntityFormatters = map[string]entityFormatter {
 /**
  * Format an entity, if possible
  */
-func FormatEntity(req *http.Request, entity []byte) ([]byte, error) {
+func FormatEntity(entity []byte, contentType string) ([]byte, error) {
   for k, f := range stdEntityFormatters {
-    if HasContentType(req, k) {
+    if MatchesContentType(k, contentType) {
       return f(entity)
     }
   }

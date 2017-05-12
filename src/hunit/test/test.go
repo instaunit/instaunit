@@ -22,10 +22,11 @@ const (
  * A test request
  */
 type Request struct {
-  Method    string                `yaml:"method"`
-  URL       string                `yaml:"url"`
-  Headers   map[string]string     `yaml:"headers"`
-  Entity    string                `yaml:"entity"`
+  Method      string              `yaml:"method"`
+  URL         string              `yaml:"url"`
+  Headers     map[string]string   `yaml:"headers"`
+  Entity      string              `yaml:"entity"`
+  Format      string              `yaml:"format"`
 }
 
 /**

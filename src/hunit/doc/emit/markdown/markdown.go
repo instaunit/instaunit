@@ -73,11 +73,12 @@ func (g *Generator) Generate(conf test.Config, c test.Case, req *http.Request, r
   if req != nil {
     b := &bytes.Buffer{}
     if conf.Doc.FormatEntities {
-      f, err := text.FormatEntity(req, []byte(reqdata))
+      t := text.Coalesce(c.Request.Format, req.Header.Get("Content-Type"))
+      f, err := text.FormatEntity([]byte(reqdata), t)
       if err == nil {
         reqdata = string(f)
       }else if err != nil && err != text.ErrUnsupportedContentType {
-        fmt.Println("* * * Invalid request entity could not be formatted: %v", req.Header.Get("Content-Type"))
+        fmt.Println("* * * Invalid request entity could not be formatted: %v", t)
       }
     }
     err = text.WriteRequest(b, req, reqdata)
@@ -95,11 +96,12 @@ func (g *Generator) Generate(conf test.Config, c test.Case, req *http.Request, r
   if rsp != nil {
     b := &bytes.Buffer{}
     if conf.Doc.FormatEntities {
-      f, err := text.FormatEntity(req, rspdata)
+      t := text.Coalesce(c.Response.Format, rsp.Header.Get("Content-Type"))
+      f, err := text.FormatEntity(rspdata, t)
       if err == nil {
         rspdata = f
       }else if err != nil && err != text.ErrUnsupportedContentType {
-        fmt.Println("* * * Invalid entity could not be formatted: %v", req.Header.Get("Content-Type"))
+        fmt.Println("* * * Invalid entity could not be formatted: %v", t)
       }
     }
     err = text.WriteResponse(b, rsp, rspdata)
