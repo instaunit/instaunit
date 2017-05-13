@@ -35,6 +35,11 @@ options:
     - X-Served-By
     - X-Github-Request-Id
 
+  # Allow only these headers in documentation output
+  suppress-headers:
+    - Host
+    - Content-Type
+
 # When any of the above fields are present, the tests section introduces
 # a sequence of test cases. If you don't need to include a documentation
 # introduction or title, you can omit title, doc, and tests and simply
