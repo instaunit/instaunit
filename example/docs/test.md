@@ -33,29 +33,29 @@ Origin: localhost
 
 ```http
 HTTP/1.1 200 OK
-Accept-Ranges: bytes
+Date: Sat, 13 May 2017 22:03:46 GMT
 Via: 1.1 varnish
 X-Cache: HIT
-X-Geo-Block-List: 
-Connection: keep-alive
-X-Timer: S1494712410.609448,VS0,VE0
-Vary: Authorization,Accept-Encoding
-X-Fastly-Request-Id: 5f4c13598bd1c6959fb1ef73597824e7fcd88bc7
-Source-Age: 0
+X-Cache-Hits: 1
+Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
+X-Xss-Protection: 1; mode=block
 Etag: "97a3ed924dddfaaaa2c566cf556e9fa1379cbd02"
-Date: Sat, 13 May 2017 21:53:29 GMT
+Connection: keep-alive
+Expires: Sat, 13 May 2017 22:08:46 GMT
+X-Geo-Block-List: 
+X-Github-Request-Id: 5F42:3F31:424ED5F:44E4DD7:591782C2
+Accept-Ranges: bytes
+Cache-Control: max-age=300
+X-Served-By: cache-sjc3650-SJC
+X-Timer: S1494713027.724161,VS0,VE0
+Strict-Transport-Security: max-age=31536000
 X-Content-Type-Options: nosniff
 Content-Type: text/plain; charset=utf-8
-X-Served-By: cache-sjc3642-SJC
-X-Cache-Hits: 1
-Access-Control-Allow-Origin: *
-Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
-Strict-Transport-Security: max-age=31536000
-Cache-Control: max-age=300
-X-Github-Request-Id: A372:3F31:4246163:44DBB97:59178058
-Expires: Sat, 13 May 2017 21:58:29 GMT
+Source-Age: 0
+X-Fastly-Request-Id: b110ed48cef06a65d6646e65d96f5eb21a3d122b
 X-Frame-Options: deny
-X-Xss-Protection: 1; mode=block
+Vary: Authorization,Accept-Encoding
+Access-Control-Allow-Origin: *
 
 Here's a simple
 response from the
@@ -80,29 +80,29 @@ Origin: localhost
 
 ```http
 HTTP/1.1 200 OK
-X-Cache: MISS
-X-Cache-Hits: 0
-Access-Control-Allow-Origin: *
-Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
-Strict-Transport-Security: max-age=31536000
-Etag: "f69bdd0be1577adf16208754ae8f62cd6e7fcb1a"
-Accept-Ranges: bytes
-Date: Sat, 13 May 2017 21:53:29 GMT
-X-Timer: S1494712410.639929,VS0,VE96
 X-Content-Type-Options: nosniff
-Cache-Control: max-age=300
-X-Github-Request-Id: 1448:0220:4A5C770:4D60120:59178058
-Connection: keep-alive
-X-Served-By: cache-sjc3642-SJC
-X-Xss-Protection: 1; mode=block
 Via: 1.1 varnish
-Expires: Sat, 13 May 2017 21:58:29 GMT
-Source-Age: 0
-X-Frame-Options: deny
+X-Cache: MISS
+X-Timer: S1494713027.753970,VS0,VE95
+X-Fastly-Request-Id: 908ef5ffbd99bf759ad5b7a694cf553a9cbd3a38
+Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
+X-Xss-Protection: 1; mode=block
+Etag: "f69bdd0be1577adf16208754ae8f62cd6e7fcb1a"
+Cache-Control: max-age=300
+Accept-Ranges: bytes
+Date: Sat, 13 May 2017 22:03:46 GMT
+Connection: keep-alive
+X-Served-By: cache-sjc3650-SJC
+X-Cache-Hits: 0
 Content-Type: text/plain; charset=utf-8
 X-Geo-Block-List: 
+X-Github-Request-Id: B85C:0220:4A66572:4D6A5DC:591782C1
+Source-Age: 0
+Strict-Transport-Security: max-age=31536000
+X-Frame-Options: deny
 Vary: Authorization,Accept-Encoding
-X-Fastly-Request-Id: 20242363a93ef617565fac8d7ec029ed3553a915
+Access-Control-Allow-Origin: *
+Expires: Sat, 13 May 2017 22:08:46 GMT
 
 {
   "/": false,

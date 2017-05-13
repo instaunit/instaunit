@@ -2,6 +2,7 @@ package main
 
 import (
   "os"
+  "io"
   "fmt"
   "flag"
   "path"
@@ -123,8 +124,10 @@ func main() {
       fmt.Println()
     }
     
+    var out io.WriteCloser
     var gendoc []doc.Generator
     if *fGendoc {
+      var err error
       ext := path.Ext(base)
       stem := base[:len(base) - len(ext)]
       
@@ -134,7 +137,7 @@ func main() {
       }
       docname[stem] = n + 1
       
-      out, err := os.OpenFile(path.Join(*fDocpath, stem + doctype.Ext()), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
+      out, err = os.OpenFile(path.Join(*fDocpath, stem + doctype.Ext()), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
       if err != nil {
         fmt.Printf("* * * Could not open documentation output: %v\n", err)
         return
@@ -158,6 +161,13 @@ func main() {
     if (options & (test.OptionDisplayRequests | test.OptionDisplayResponses)) != 0 {
       if len(results) > 0 {
         fmt.Println()
+      }
+    }
+    
+    if out != nil {
+      err := out.Close()
+      if err != nil {
+        fmt.Printf("* * * Could not close documentation writer: %v\n", err)
       }
     }
     
