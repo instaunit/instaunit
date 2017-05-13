@@ -11,7 +11,7 @@ Read more about [HUnit](https://github.com/bww/hunit).
 
 ## Contents
 
-* [GET /example/:entity_name](#get-exampleentityname)
+* [GET /example/:entity_name](#get-exampleentity_name)
 * [GET https://raw.githubusercontent.com/bww/hunit/master/example/entity.json](#get-httpsrawgithubusercontentcombwwhunitmasterexampleentityjson)
 
 ## GET /example/:entity_name
@@ -33,29 +33,29 @@ Origin: localhost
 
 ```http
 HTTP/1.1 200 OK
-X-Xss-Protection: 1; mode=block
 Accept-Ranges: bytes
-Date: Sat, 13 May 2017 21:47:54 GMT
 Via: 1.1 varnish
-X-Fastly-Request-Id: 687a9fe1ef6bb1433ed197a39dc32ce9b4a51872
-X-Geo-Block-List: 
-X-Github-Request-Id: 23C4:3F31:4241A99:44D7165:59177F09
 X-Cache: HIT
-X-Timer: S1494712074.244150,VS0,VE0
-Vary: Authorization,Accept-Encoding
-Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
-X-Content-Type-Options: nosniff
-Etag: "97a3ed924dddfaaaa2c566cf556e9fa1379cbd02"
-Cache-Control: max-age=300
-X-Served-By: cache-sjc3151-SJC
-X-Cache-Hits: 1
-Strict-Transport-Security: max-age=31536000
-X-Frame-Options: deny
-Content-Type: text/plain; charset=utf-8
+X-Geo-Block-List: 
 Connection: keep-alive
-Access-Control-Allow-Origin: *
-Expires: Sat, 13 May 2017 21:52:54 GMT
+X-Timer: S1494712410.609448,VS0,VE0
+Vary: Authorization,Accept-Encoding
+X-Fastly-Request-Id: 5f4c13598bd1c6959fb1ef73597824e7fcd88bc7
 Source-Age: 0
+Etag: "97a3ed924dddfaaaa2c566cf556e9fa1379cbd02"
+Date: Sat, 13 May 2017 21:53:29 GMT
+X-Content-Type-Options: nosniff
+Content-Type: text/plain; charset=utf-8
+X-Served-By: cache-sjc3642-SJC
+X-Cache-Hits: 1
+Access-Control-Allow-Origin: *
+Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
+Strict-Transport-Security: max-age=31536000
+Cache-Control: max-age=300
+X-Github-Request-Id: A372:3F31:4246163:44DBB97:59178058
+Expires: Sat, 13 May 2017 21:58:29 GMT
+X-Frame-Options: deny
+X-Xss-Protection: 1; mode=block
 
 Here's a simple
 response from the
@@ -80,29 +80,29 @@ Origin: localhost
 
 ```http
 HTTP/1.1 200 OK
-Accept-Ranges: bytes
-Connection: keep-alive
-X-Fastly-Request-Id: b20480fde11abae2a39f46668b2715c76236ce49
-X-Xss-Protection: 1; mode=block
-Etag: "f69bdd0be1577adf16208754ae8f62cd6e7fcb1a"
-Content-Type: text/plain; charset=utf-8
-Date: Sat, 13 May 2017 21:47:54 GMT
-X-Served-By: cache-sjc3151-SJC
 X-Cache: MISS
-X-Timer: S1494712074.281772,VS0,VE92
-Vary: Authorization,Accept-Encoding
+X-Cache-Hits: 0
+Access-Control-Allow-Origin: *
 Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
 Strict-Transport-Security: max-age=31536000
-X-Frame-Options: deny
-Access-Control-Allow-Origin: *
-X-Github-Request-Id: 6C04:0218:6990CA:6EF727:59177F0A
-Expires: Sat, 13 May 2017 21:52:54 GMT
+Etag: "f69bdd0be1577adf16208754ae8f62cd6e7fcb1a"
+Accept-Ranges: bytes
+Date: Sat, 13 May 2017 21:53:29 GMT
+X-Timer: S1494712410.639929,VS0,VE96
 X-Content-Type-Options: nosniff
 Cache-Control: max-age=300
-X-Geo-Block-List: 
+X-Github-Request-Id: 1448:0220:4A5C770:4D60120:59178058
+Connection: keep-alive
+X-Served-By: cache-sjc3642-SJC
+X-Xss-Protection: 1; mode=block
 Via: 1.1 varnish
-X-Cache-Hits: 0
+Expires: Sat, 13 May 2017 21:58:29 GMT
 Source-Age: 0
+X-Frame-Options: deny
+Content-Type: text/plain; charset=utf-8
+X-Geo-Block-List: 
+Vary: Authorization,Accept-Encoding
+X-Fastly-Request-Id: 20242363a93ef617565fac8d7ec029ed3553a915
 
 {
   "/": false,
