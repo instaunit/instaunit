@@ -70,7 +70,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   }
   
   for _, e := range context.Gendoc {
-    err := e.Finish(s)
+    err := e.Finalize(s)
     if err != nil {
       return nil, err
     }

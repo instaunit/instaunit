@@ -15,7 +15,7 @@ import (
 type Generator interface {
   Init(*test.Suite)(error)
   Case(test.Config, test.Case, *http.Request, string, *http.Response, []byte)(error)
-  Finish(*test.Suite)(error)
+  Finalize(*test.Suite)(error)
 }
 
 /**

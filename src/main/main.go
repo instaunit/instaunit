@@ -36,6 +36,7 @@ func main() {
   fDoctype          := cmdline.String   ("doc:type",            coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"),            "The format to generate documentation in.")
   fDocInclHTTP      := cmdline.Bool     ("doc:include-http",    strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")),               "Include HTTP in request and response examples (as opposed to just routes and entities).")
   fDocFormatEntity  := cmdline.Bool     ("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")),            "Pretty-print supported request and response entities in documentation output.")
+  fDocAnchorStyle   := cmdline.String   ("doc:anchor-style",    os.Getenv("HUNIT_DOC_ANCHOR_STYLE"),                          "The style of anchor to use when generating internal links.")
   fDebug            := cmdline.Bool     ("debug",               strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose          := cmdline.Bool     ("verbose",             strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
   cmdline.Var        (&headerSpecs,      "header",                                                                            "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
@@ -67,6 +68,9 @@ func main() {
   }
   if *fDocFormatEntity {
     config.Doc.FormatEntities = true
+  }
+  if *fDocAnchorStyle != "" {
+    config.Doc.AnchorStyle = test.ParseAnchorStyle(*fDocAnchorStyle)
   }
   
   var globalHeaders map[string]string

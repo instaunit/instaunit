@@ -40,7 +40,24 @@ func (g *Generator) Init(suite *test.Suite) error {
 /**
  * Finish a suite
  */
-func (g *Generator) Finish(suite *test.Suite) error {
+func (g *Generator) Finalize(suite *test.Suite) error {
+  var err error
+  
+  err = g.prefix(g.w, suite)
+  if err != nil {
+    return err
+  }
+  
+  err = g.contents(g.w, suite)
+  if err != nil {
+    return err
+  }
+  
+  _, err = g.w.Write(g.b.Bytes())
+  if err != nil {
+    return err
+  }
+  
   return nil
 }
 
@@ -80,12 +97,13 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
   var err error
   var doc string
   
-  if suite.Title != "" {
-    doc += fmt.Sprintf("# %s\n\n", strings.TrimSpace(suite.Title))
+  doc += "## Contents\n\n"
+  
+  for s, t := range g.sections {
+    doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(t), s)
   }
-  if suite.Comments != "" {
-    doc += strings.TrimSpace(suite.Comments) +"\n\n"
-  }
+
+  doc += "\n"
   
   _, err = fmt.Fprint(w, doc)
   if err != nil {
@@ -112,7 +130,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
   doc += fmt.Sprintf("## %s\n\n", t)
   var s string
   s, g.slugs = slug.Github(t, g.slugs)
-  fmt.Println(">>> >>> >>>", s)
+  g.sections[s] = t
   
   if c.Comments != "" {
     doc += strings.TrimSpace(c.Comments) +"\n\n"

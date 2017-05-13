@@ -14,21 +14,22 @@ import (
  */
 type Config struct {
   Doc struct {
-    FormatEntities      bool  `yaml:"format-entities"`
-    IncludeRequestHTTP  bool  `yaml:"doc-include-request-http"`
-    IncludeResponseHTTP bool  `yaml:"doc-include-response-http"`
-    IncludeHTTP         bool  `yaml:"doc-include-http"`
-  }                           `yaml:",inline"`
+    AnchorStyle         AnchorStyle `yaml:"anchor-style"`
+    FormatEntities      bool        `yaml:"format-entities"`
+    IncludeRequestHTTP  bool        `yaml:"doc-include-request-http"`
+    IncludeResponseHTTP bool        `yaml:"doc-include-response-http"`
+    IncludeHTTP         bool        `yaml:"doc-include-http"`
+  }                                 `yaml:",inline"`
 }
 
 /**
  * A test suite
  */
 type Suite struct {
-  Title       string      `yaml:"title"`
-  Comments    string      `yaml:"doc"`
-  Cases       []Case      `yaml:"tests"`
-  Config      Config      `yaml:"options"`
+  Title         string      `yaml:"title"`
+  Comments      string      `yaml:"doc"`
+  Cases         []Case      `yaml:"tests"`
+  Config        Config      `yaml:"options"`
 }
 
 /**
