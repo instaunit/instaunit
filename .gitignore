@@ -4,4 +4,4 @@
 **/bin/
 
 # Apple garbage
-.DS_Store
+**/.DS_Store

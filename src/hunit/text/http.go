@@ -9,9 +9,70 @@ import (
 )
 
 /**
+ * HTTP writing config
+ */
+type HttpConfig struct {
+  RewriteHeaders          map[string]string   `yaml:"rewrite-headers"`
+  SuppressHeaders         []string            `yaml:"suppress-headers"`
+  AllowHeaders            []string            `yaml:"allow-headers"`
+}
+
+/**
+ * Initialize patterns, etc
+ */
+/*
+func (c *HttpConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+  err := unmarshal(c)
+  if err != nil {
+    return err
+  }
+  return nil
+}
+*/
+
+/**
+ * Obtain a header value, accounting for rewrite rules
+ */
+func (c HttpConfig) Header(n string, v []string) []string {
+  
+  // first, suppress specifically excluded headers
+  for _, e := range c.SuppressHeaders {
+    if strings.EqualFold(e, n) {
+      return nil
+    }
+  }
+  
+  // then, if allowed headers are defined, all others are suppressed
+  // an empty list is allowed and excludes all headers
+  if c.AllowHeaders != nil {
+    allow := false
+    for _, e := range c.AllowHeaders {
+      if strings.EqualFold(e, n) {
+        allow = true; break
+      }
+    }
+    if !allow {
+      return nil
+    }
+  }
+  
+  // finally, rewrite headers
+  if c.RewriteHeaders != nil {
+    for k, r := range c.RewriteHeaders {
+      if strings.EqualFold(k, n) {
+        return []string{r}
+      }
+    }
+  }
+  
+  // if none of that applies, just return the default value
+  return v
+}
+
+/**
  * Write a request to the specified output
  */
-func WriteRequest(w io.Writer, req *http.Request, entity string) error {
+func WriteRequest(w io.Writer, conf HttpConfig, req *http.Request, entity string) error {
   var dump string
   
   if req != nil {
@@ -20,14 +81,16 @@ func WriteRequest(w io.Writer, req *http.Request, entity string) error {
     if q := req.URL.RawQuery; q != "" { dump += "?"+ q }
     dump += " "+ req.Proto +"\n"
     
-    dump += "Host: "+ req.URL.Host +"\n"
+    req.Header.Set("Host", req.URL.Host)
     for k, v := range req.Header {
-      dump += k +": "
-      for i, e := range v {
-        if i > 0 { dump += "," }
-        dump += e
+      if v = conf.Header(k, v); v != nil {
+        dump += k +": "
+        for i, e := range v {
+          if i > 0 { dump += "," }
+          dump += e
+        }
+        dump += "\n"
       }
-      dump += "\n"
     }
   }
   
@@ -47,19 +110,21 @@ func WriteRequest(w io.Writer, req *http.Request, entity string) error {
 /**
  * Write a response to the specified output
  */
-func WriteResponse(w io.Writer, rsp *http.Response, entity []byte) error {
+func WriteResponse(w io.Writer, conf HttpConfig, rsp *http.Response, entity []byte) error {
   var dump string
   
   if rsp != nil {
     dump += rsp.Proto +" "+ rsp.Status +"\n"
     
     for k, v := range rsp.Header {
-      dump += k +": "
-      for i, e := range v {
-        if i > 0 { dump += "," }
-        dump += e
+      if v = conf.Header(k, v); v != nil {
+        dump += k +": "
+        for i, e := range v {
+          if i > 0 { dump += "," }
+          dump += e
+        }
+        dump += "\n"
       }
-      dump += "\n"
     }
   }
   

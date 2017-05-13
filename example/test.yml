@@ -16,9 +16,24 @@ doc: |
   
   Read more about [HUnit](https://github.com/bww/hunit).
 
+# We can define a variety of options for running tests in this suite and
+# generating documentation. Generally speaking, these options override their
+# global counterparts which are set when running HUnit.
 options:
-  doc-include-response-http: y
+  # Pretty-print supported entity types in generated documentation to make
+  # them more legible since services generally return a much more compactly
+  # formatted version
   format-entities: y
+  
+  # Selectively rewrite headers in documentation output
+  rewrite-headers:
+    Host: api.example.com
+
+  # Suppress rewrite headers in documentation output
+  suppress-headers:
+    - X-Cache
+    - X-Served-By
+    - X-Github-Request-Id
 
 # When any of the above fields are present, the tests section introduces
 # a sequence of test cases. If you don't need to include a documentation

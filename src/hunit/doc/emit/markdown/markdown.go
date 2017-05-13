@@ -147,7 +147,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
         fmt.Println("* * * Invalid request entity could not be formatted: %v", t)
       }
     }
-    err = text.WriteRequest(b, req, reqdata)
+    err = text.WriteRequest(b, conf.Doc.HttpConfig, req, reqdata)
     if err != nil {
       return err
     }
@@ -170,7 +170,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
         fmt.Println("* * * Invalid entity could not be formatted: %v", t)
       }
     }
-    err = text.WriteResponse(b, rsp, rspdata)
+    err = text.WriteResponse(b, conf.Doc.HttpConfig, rsp, rspdata)
     if err != nil {
       return err
     }
