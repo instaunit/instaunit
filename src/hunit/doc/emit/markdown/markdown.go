@@ -8,26 +8,53 @@ import (
   "net/http"
   "hunit/test"
   "hunit/text"
+  "hunit/text/slug"
 )
 
 /**
  * A markdown documentation generator
  */
 type Generator struct {
-  w io.Writer
+  w         io.Writer
+  b         *bytes.Buffer
+  sections  map[string]string
+  slugs     map[string]int
+  
 }
 
 /**
  * Produce a new emitter
  */
 func New(w io.Writer) *Generator {
-  return &Generator{w}
+  return &Generator{w, nil, make(map[string]string), nil}
+}
+
+/**
+ * Init a suite
+ */
+func (g *Generator) Init(suite *test.Suite) error {
+  g.b = &bytes.Buffer{}
+  return nil
+}
+
+/**
+ * Finish a suite
+ */
+func (g *Generator) Finish(suite *test.Suite) error {
+  return nil
+}
+
+/**
+ * Generate documentation
+ */
+func (g *Generator) Case(conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+  return g.generate(g.b, conf, c, req, reqdata, rsp, rspdata)
 }
 
 /**
  * Generate documentation preamble
  */
-func (g *Generator) Prefix(suite *test.Suite) error {
+func (g *Generator) prefix(w io.Writer, suite *test.Suite) error {
   var err error
   var doc string
   
@@ -38,7 +65,7 @@ func (g *Generator) Prefix(suite *test.Suite) error {
     doc += strings.TrimSpace(suite.Comments) +"\n\n"
   }
   
-  _, err = fmt.Fprint(g.w, doc)
+  _, err = fmt.Fprint(w, doc)
   if err != nil {
     return err
   }
@@ -47,24 +74,45 @@ func (g *Generator) Prefix(suite *test.Suite) error {
 }
 
 /**
- * Generate documentation suffix
+ * Table of contents
  */
-func (g *Generator) Suffix(suite *test.Suite) error {
+func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
+  var err error
+  var doc string
+  
+  if suite.Title != "" {
+    doc += fmt.Sprintf("# %s\n\n", strings.TrimSpace(suite.Title))
+  }
+  if suite.Comments != "" {
+    doc += strings.TrimSpace(suite.Comments) +"\n\n"
+  }
+  
+  _, err = fmt.Fprint(w, doc)
+  if err != nil {
+    return err
+  }
+  
   return nil
 }
 
 /**
  * Generate documentation
  */
-func (g *Generator) Generate(conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
   var err error
   var doc string
   
+  var t string
   if c.Title != "" {
-    doc += fmt.Sprintf("## %s\n\n", strings.TrimSpace(c.Title))
+    t = strings.TrimSpace(c.Title)
   }else{
-    doc += fmt.Sprintf("## %s %s\n\n", c.Request.Method, c.Request.URL)
+    t = fmt.Sprintf("%s %s", c.Request.Method, c.Request.URL)
   }
+  
+  doc += fmt.Sprintf("## %s\n\n", t)
+  var s string
+  s, g.slugs = slug.Github(t, g.slugs)
+  fmt.Println(">>> >>> >>>", s)
   
   if c.Comments != "" {
     doc += strings.TrimSpace(c.Comments) +"\n\n"
@@ -116,7 +164,7 @@ func (g *Generator) Generate(conf test.Config, c test.Case, req *http.Request, r
     }
   }
   
-  _, err = fmt.Fprint(g.w, doc +"\n\n")
+  _, err = fmt.Fprint(g.b, doc +"\n\n")
   if err != nil {
     return err
   }

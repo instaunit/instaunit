@@ -1,11 +1,9 @@
 
-export GOPATH := $(GOPATH):$(PWD)
+TEST_PKGS = ./rand ./qname ./uuid ./slug
 
-.PHONY: all deps test
+.PHONY: all test
 
 all: test
 
-deps:
-
 test:
-	go test -test.v ./rand ./qname ./uuid
+	go test -test.v $(TEST_PKGS)

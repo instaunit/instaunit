@@ -13,6 +13,9 @@ PRODUCT		:= $(TARGETS)/$(NAME)
 # sources
 SRC = $(shell find src -name \*.go -print)
 
+# tests
+TEST_PKGS = hunit hunit/text/slug
+
 .PHONY: all build test clean
 
 all: build
@@ -23,7 +26,7 @@ $(PRODUCT): $(SRC)
 build: $(PRODUCT) ## Build the service
 
 test: ## Run tests
-	go test -test.v hunit
+	go test -test.v $(TEST_PKGS)
 
 clean: ## Delete the built product and any generated files
 	rm -rf $(TARGETS)

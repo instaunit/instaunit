@@ -55,7 +55,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   c := context.Subcontext(make(map[string]interface{}))
   
   for _, e := range context.Gendoc {
-    err := e.Prefix(s)
+    err := e.Init(s)
     if err != nil {
       return nil, err
     }
@@ -70,7 +70,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   }
   
   for _, e := range context.Gendoc {
-    err := e.Suffix(s)
+    err := e.Finish(s)
     if err != nil {
       return nil, err
     }
@@ -291,7 +291,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   // generate documentation if necessary
   if c.Documented() && len(context.Gendoc) > 0 {
     for _, e := range context.Gendoc {
-      err := e.Generate(context.Config, c, req, reqdata, rsp, rspdata)
+      err := e.Case(context.Config, c, req, reqdata, rsp, rspdata)
       if err != nil {
         return nil, fmt.Errorf("Could not generate documentation: %v", err)
       }
