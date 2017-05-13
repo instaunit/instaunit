@@ -18,6 +18,8 @@ func Github(t string, c map[string]int) (string, map[string]int) {
   for _, e := range t {
     if unicode.IsLetter(e) || unicode.IsDigit(e) {
       s += string(unicode.ToLower(e))
+    }else if e == '_' {
+      s += string(e)
     }else if unicode.IsSpace(e) && !ps {
       s += "-"
     }
