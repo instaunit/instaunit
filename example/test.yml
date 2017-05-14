@@ -22,23 +22,28 @@ doc: |
 options:
   # Pretty-print supported entity types in generated documentation to make
   # them more legible since services generally return a much more compactly
-  # formatted version
+  # formatted version.
   format-entities: y
   
-  # Selectively rewrite headers in documentation output
+  # Selectively rewrite headers in documentation output. Headers which are
+  # rewritten will be modified when present, but they will not be added to
+  # every request.
   rewrite-headers:
     Host: api.example.com
-
-  # Suppress rewrite headers in documentation output
+  
+  # Exclude specific headers from documentation output. Any other headers
+  # not listed here will be retained.
   suppress-headers:
     - X-Cache
     - X-Served-By
     - X-Github-Request-Id
-
-  # Allow only these headers in documentation output
-  suppress-headers:
+  
+  # Allow only these headers in documentation output. All other headers will
+  # be excluded.
+  allow-headers:
     - Host
     - Content-Type
+    - Content-Length
 
 # When any of the above fields are present, the tests section introduces
 # a sequence of test cases. If you don't need to include a documentation

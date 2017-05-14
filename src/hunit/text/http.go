@@ -46,6 +46,7 @@ func (c HttpConfig) Header(n string, v []string) []string {
   // an empty list is allowed and excludes all headers
   if c.AllowHeaders != nil {
     allow := false
+    fmt.Println(">>> >>> >>>", c.AllowHeaders)
     for _, e := range c.AllowHeaders {
       if strings.EqualFold(e, n) {
         allow = true; break
