@@ -17,6 +17,7 @@ type Config struct {
   Doc struct {
     AnchorStyle         AnchorStyle       `yaml:"anchor-style"`
     FormatEntities      bool              `yaml:"format-entities"`
+    TableOfContents     bool              `yaml:"table-of-contents"`
     HttpConfig          text.HttpConfig   `yaml:",inline"`
   }                                       `yaml:",inline"`
 }

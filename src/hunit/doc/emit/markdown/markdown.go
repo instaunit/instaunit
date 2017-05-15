@@ -18,6 +18,7 @@ type Generator struct {
   w         io.Writer
   b         *bytes.Buffer
   sections  map[string]string
+  ordered   []string
   slugs     map[string]int
   
 }
@@ -26,7 +27,7 @@ type Generator struct {
  * Produce a new emitter
  */
 func New(w io.Writer) *Generator {
-  return &Generator{w, nil, make(map[string]string), nil}
+  return &Generator{w, nil, make(map[string]string), nil, nil}
 }
 
 /**
@@ -48,9 +49,11 @@ func (g *Generator) Finalize(suite *test.Suite) error {
     return err
   }
   
-  err = g.contents(g.w, suite)
-  if err != nil {
-    return err
+  if suite.Config.Doc.TableOfContents {
+    err = g.contents(g.w, suite)
+    if err != nil {
+      return err
+    }
   }
   
   _, err = g.w.Write(g.b.Bytes())
@@ -97,12 +100,17 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
   var err error
   var doc string
   
+  if g.ordered == nil {
+    return nil
+  }
+  
   doc += "## Contents\n\n"
   
-  for s, t := range g.sections {
+  for _, s := range g.ordered {
+    t := g.sections[s]
     doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(t), s)
   }
-
+  
   doc += "\n"
   
   _, err = fmt.Fprint(w, doc)
@@ -131,6 +139,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
   var s string
   s, g.slugs = slug.Github(t, g.slugs)
   g.sections[s] = t
+  g.ordered = append(g.ordered, s)
   
   if c.Comments != "" {
     doc += strings.TrimSpace(c.Comments) +"\n\n"
@@ -144,7 +153,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
       if err == nil {
         reqdata = string(f)
       }else if err != nil && err != text.ErrUnsupportedContentType {
-        fmt.Println("* * * Invalid request entity could not be formatted: %v", t)
+        fmt.Printf("* * * Invalid request entity could not be formatted: %v\n", t)
       }
     }
     err = text.WriteRequest(b, conf.Doc.HttpConfig, req, reqdata)
@@ -167,7 +176,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
       if err == nil {
         rspdata = f
       }else if err != nil && err != text.ErrUnsupportedContentType {
-        fmt.Println("* * * Invalid entity could not be formatted: %v", t)
+        fmt.Printf("* * * Invalid entity could not be formatted: %v\n", t)
       }
     }
     err = text.WriteResponse(b, conf.Doc.HttpConfig, rsp, rspdata)

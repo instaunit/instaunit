@@ -25,6 +25,9 @@ options:
   # formatted version.
   format-entities: y
   
+  # Build a table-of-contents for all the endpoints in this suite.
+  table-of-contents: y
+  
   # Selectively rewrite headers in documentation output. Headers which are
   # rewritten will be modified when present, but they will not be added to
   # every request.
