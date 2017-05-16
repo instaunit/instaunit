@@ -432,7 +432,7 @@ var (
 // RandomDockerName generates a random name in the general style of Docker container names.
 func RandomDockerName() (string, string) {
   var l, r string
-  for i := 0; i < 10; i++ { // don't try more than 10 times to save Woz
+  for i := 0; i < 10; i++ { // try at most 10 times to spare Woz
     l = left[rand.Intn(len(left))]
     r = right[rand.Intn(len(right))]
     if l == "boring" && r == "wozniak" /* Steve Wozniak is not boring */ {

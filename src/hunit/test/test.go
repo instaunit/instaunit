@@ -19,6 +19,14 @@ const (
 )
 
 /**
+ * Basic credentials
+ */
+type BasicCredentials struct {
+  Username    string              `yaml:"username"`
+  Password    string              `yaml:"password"`
+}
+
+/**
  * A test request
  */
 type Request struct {
@@ -27,6 +35,7 @@ type Request struct {
   Headers     map[string]string   `yaml:"headers"`
   Entity      string              `yaml:"entity"`
   Format      string              `yaml:"format"`
+  BasicAuth   *BasicCredentials   `yaml:"basic-auth"`
 }
 
 /**
