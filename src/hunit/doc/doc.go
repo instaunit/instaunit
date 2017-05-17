@@ -6,6 +6,7 @@ import (
   "net/http"
   "hunit/test"
   "hunit/doc/emit"
+  "hunit/doc/emit/edf"
   "hunit/doc/emit/markdown"
 )
 
@@ -25,6 +26,8 @@ func New(t emit.Doctype, o io.Writer) (Generator, error) {
   switch t {
     case emit.DoctypeMarkdown:
       return Generator(markdown.New(o)), nil
+    case emit.DoctypeEDF:
+      return Generator(edf.New(o)), nil
     default:
       return nil, fmt.Errorf("Unsupported doctype: %v", t)
   }

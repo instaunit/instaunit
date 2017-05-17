@@ -11,17 +11,19 @@ type Doctype uint32
 
 const (
   DoctypeMarkdown Doctype = iota
-  DoctypeConfluence
+  DoctypeEDF
   DoctypeInvalid
 )
 
 var doctypeNames = []string{
   "markdown",
+  "edf",
   "<invalid>",
 }
 
 var doctypeExts = []string{
   ".md",
+  ".yml",
   ".???",
 }
 
@@ -32,6 +34,8 @@ func ParseDoctype(s string) (Doctype, error) {
   switch s {
     case "markdown":
       return DoctypeMarkdown, nil
+    case "edf":
+      return DoctypeEDF, nil
     default:
       return DoctypeInvalid, fmt.Errorf("Unsupported type: %v", s)
   }
