@@ -1,0 +1,95 @@
+title: Some Example Tests
+doc: "This suite-level documentation is copied to the top of the generated\ndocumentation
+  file, when documentation is generated.\n  \n  * The first example thing,\n  * The
+  second example thing,\n  * The third and final example thing.\n\nRead more about
+  [HUnit](https://github.com/bww/hunit).\n"
+tests:
+- gendoc: true
+  title: GET /example/:entity_name
+  doc: |
+    Fetch the *entity text* from Github.
+
+    The entity text is just some example text used to illustrate how literal
+    entites can be compared in a test case using [*HUnit*](https://github.com/bww/hunit).
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+    headers:
+      Origin: localhost
+  response:
+    status: 200
+    headers:
+      Accept-Ranges: bytes
+      Access-Control-Allow-Origin: '*'
+      Cache-Control: max-age=300
+      Connection: keep-alive
+      Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
+      Content-Type: text/plain; charset=utf-8
+      Date: Wed, 17 May 2017 00:37:16 GMT
+      Etag: '"97a3ed924dddfaaaa2c566cf556e9fa1379cbd02"'
+      Expires: Wed, 17 May 2017 00:42:16 GMT
+      Source-Age: "219"
+      Strict-Transport-Security: max-age=31536000
+      Vary: Authorization,Accept-Encoding
+      Via: 1.1 varnish
+      X-Cache: HIT
+      X-Cache-Hits: "2"
+      X-Content-Type-Options: nosniff
+      X-Fastly-Request-Id: 6b137adf565d53dc02b4ac86b6571f3414b2752b
+      X-Frame-Options: deny
+      X-Geo-Block-List: ""
+      X-Github-Request-Id: 8A1A:34B4:50D797A:53F06A1:591B9A60
+      X-Served-By: cache-jfk8142-JFK
+      X-Timer: S1494981436.337296,VS0,VE0
+      X-Xss-Protection: 1; mode=block
+    entity: |
+      Here's a simple
+      response from the
+      server.
+- gendoc: true
+  doc: "An entity \n"
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.json
+    headers:
+      Origin: localhost
+  response:
+    status: 200
+    headers:
+      Accept-Ranges: bytes
+      Access-Control-Allow-Origin: '*'
+      Cache-Control: max-age=300
+      Connection: keep-alive
+      Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
+      Content-Type: text/plain; charset=utf-8
+      Date: Wed, 17 May 2017 00:37:16 GMT
+      Etag: '"f69bdd0be1577adf16208754ae8f62cd6e7fcb1a"'
+      Expires: Wed, 17 May 2017 00:42:16 GMT
+      Source-Age: "219"
+      Strict-Transport-Security: max-age=31536000
+      Vary: Authorization,Accept-Encoding
+      Via: 1.1 varnish
+      X-Cache: HIT
+      X-Cache-Hits: "1"
+      X-Content-Type-Options: nosniff
+      X-Fastly-Request-Id: bb9d26f6f28c0104ddae232c0e05c0a8a043ab88
+      X-Frame-Options: deny
+      X-Geo-Block-List: ""
+      X-Github-Request-Id: E46E:02E8:3FC4A78:42925AA:591B9A60
+      X-Served-By: cache-jfk8142-JFK
+      X-Timer: S1494981436.361639,VS0,VE6
+      X-Xss-Protection: 1; mode=block
+    entity: '{"z": "Hello, this is the value","a": 123,"/": false}'
+    compare: semantic
+    format: application/json
+options:
+  anchor-style: github
+  format-entities: true
+  table-of-contents: true
+  rewrite-headers:
+    Host: api.example.com
+  suppress-headers: []
+  allow-headers:
+  - Host
+  - Content-Type
+  - Content-Length

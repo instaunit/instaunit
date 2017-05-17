@@ -23,7 +23,7 @@ var doctypeNames = []string{
 
 var doctypeExts = []string{
   ".md",
-  ".yml",
+  ".edf",
   ".???",
 }
 
