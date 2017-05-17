@@ -153,9 +153,9 @@ tests:
         This entity is not correct. But we can use it to demonstrate
         interpolating variables, such as from the environment: ${env.USER}; and
         using special functions to generate content, like a random person name,
-        (which randomly combines one of the most popular U.S. first names from
+        which randomly combines one of the most popular U.S. first names from
         1916-2017, according to the Social Security Administration, and the last
-        name of a famous scientist): ${std.RandomName()}.
+        name of a famous scientist: ${std.RandomName()}.
   
   # This one compares entities semantically. The entities are unmarshaled into
   # objects and the objects are compared. This allows you to ignore insignificant
