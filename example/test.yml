@@ -86,7 +86,7 @@ tests:
       entity: |+
         Here's a simple
         response from the
-        server.      
+        server.
 
   # This test is documented and should succeed
   - 
@@ -139,24 +139,24 @@ tests:
       url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
       # Automatically generate the `Authorization` header for a Basic HTTP Auth
       # request using the provided username and password.
-      basic-auth:
-        username: joeblow
-        password: 5ecr3t!
       headers:
         Origin: localhost
     
     response:
-      status: 201 # wrong
+      status: 201 # wrong, will cause errors
       headers:
         # Reference the content type from the previous request, which has the
         # identifier 'first'. The response object represents the actual response
         # from the server rather than the expected response defined above.
         Content-Type: ${first.response.headers["Content-Type"]}
-      entity: |+  # wrong
-        Here is a simple
-        response from the
-        server. ${std.RandomString(10)}
-
+      entity: |+  # wrong, will cause errors
+        This entity is not correct. But we can use it to demonstrate
+        interpolating variables, such as from the environment: ${env.USER}; and
+        using special functions to generate content, like a random person name,
+        (which randomly combines one of the most popular U.S. first names from
+        1916-2017, according to the Social Security Administration, and the last
+        name of a famous scientist): ${std.RandomName()}.
+  
   # This one compares entities semantically. The entities are unmarshaled into
   # objects and the objects are compared. This allows you to ignore insignificant
   # differences like whitespace, formatting, and property order.
