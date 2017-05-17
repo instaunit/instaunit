@@ -32,10 +32,10 @@ type BasicCredentials struct {
 type Request struct {
   Method      string              `yaml:"method"`
   URL         string              `yaml:"url"`
-  Headers     map[string]string   `yaml:"headers"`
-  Entity      string              `yaml:"entity"`
-  Format      string              `yaml:"format"`
-  BasicAuth   *BasicCredentials   `yaml:"basic-auth"`
+  Headers     map[string]string   `yaml:"headers,omitempty"`
+  Entity      string              `yaml:"entity,omitempty"`
+  Format      string              `yaml:"format,omitempty"`
+  BasicAuth   *BasicCredentials   `yaml:"basic-auth,omitempty"`
 }
 
 /**
@@ -43,21 +43,21 @@ type Request struct {
  */
 type Response struct {
   Status      int                 `yaml:"status"`
-  Headers     map[string]string   `yaml:"headers"`
-  Entity      string              `yaml:"entity"`
-  Comparison  Comparison          `yaml:"compare"`
-  Format      string              `yaml:"format"`
+  Headers     map[string]string   `yaml:"headers,omitempty"`
+  Entity      string              `yaml:"entity,omitempty"`
+  Comparison  Comparison          `yaml:"compare,omitempty"`
+  Format      string              `yaml:"format,omitempty"`
 }
 
 /**
  * A test case
  */
 type Case struct {
-  Id        string                `yaml:"id"`
-  Wait      time.Duration         `yaml:"wait"`
+  Id        string                `yaml:"id,omitempty"`
+  Wait      time.Duration         `yaml:"wait,omitempty"`
   Gendoc    bool                  `yaml:"gendoc"`
-  Title     string                `yaml:"title"`
-  Comments  string                `yaml:"doc"`
+  Title     string                `yaml:"title,omitempty"`
+  Comments  string                `yaml:"doc,omitempty"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
 }

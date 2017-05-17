@@ -26,8 +26,8 @@ type Config struct {
  * A test suite
  */
 type Suite struct {
-  Title         string      `yaml:"title"`
-  Comments      string      `yaml:"doc"`
+  Title         string      `yaml:"title,omitempty"`
+  Comments      string      `yaml:"doc,omitempty"`
   Cases         []Case      `yaml:"tests"`
   Config        Config      `yaml:"options"`
 }
