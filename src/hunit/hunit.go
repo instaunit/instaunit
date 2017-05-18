@@ -12,6 +12,7 @@ import (
   "hunit/doc"
   "hunit/test"
   "hunit/text"
+  "encoding/base64"
 )
 
 /**
@@ -164,6 +165,18 @@ func RunTest(c test.Case, context Context) (*Result, error) {
       }
       req.Header.Add(k, v)
     }
+  }
+  
+  if c.Request.BasicAuth != nil {
+    u, err := interpolateIfRequired(context, c.Request.BasicAuth.Username)
+    if err != nil {
+      return result.Error(err), nil
+    }
+    p, err := interpolateIfRequired(context, c.Request.BasicAuth.Password)
+    if err != nil {
+      return result.Error(err), nil
+    }
+    req.Header.Set("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(u +":"+ p))))
   }
   
   if reqdata != "" {

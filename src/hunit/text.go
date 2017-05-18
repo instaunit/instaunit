@@ -1,7 +1,9 @@
 package hunit
 
 import (
+  "os"
   "fmt"
+  "strings"
   "hunit/test"
   "hunit/runtime"
   "github.com/bww/epl"
@@ -10,14 +12,30 @@ import (
 const whitespace = " \n\r\t\v"
 
 /**
+ * Map the environment
+ */
+func mapenv(v []string) map[string]string {
+  env := make(map[string]string)
+  for _, e := range v {
+    if x := strings.Index(e, "="); x > 0 {
+      env[e[:x]] = e[x+1:]
+    }else{
+      env[e] = ""
+    }
+  }
+  return env
+}
+
+/**
  * Produce a context with the standard library included
  */
-func contextWithStdlib(v map[string]interface{}) interface{} {
+func runtimeContext(v map[string]interface{}, e []string) interface{} {
   c := make(map[string]interface{})
   for k, v := range v {
     c[k] = v
   }
   c["std"] = runtime.Stdlib
+  c["env"] = mapenv(e)
   return c
 }
 
@@ -26,7 +44,7 @@ func contextWithStdlib(v map[string]interface{}) interface{} {
  */
 func interpolateIfRequired(c Context, s string) (string, error) {
   if (c.Options & test.OptionInterpolateVariables) == test.OptionInterpolateVariables {
-    return interpolate(s, "${", "}", contextWithStdlib(c.Variables))
+    return interpolate(s, "${", "}", runtimeContext(c.Variables, os.Environ()))
   }else{
     return s, nil
   }

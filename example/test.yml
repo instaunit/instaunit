@@ -16,9 +16,37 @@ doc: |
   
   Read more about [HUnit](https://github.com/bww/hunit).
 
+# We can define a variety of options for running tests in this suite and
+# generating documentation. Generally speaking, these options override their
+# global counterparts which are set when running HUnit.
 options:
-  doc-include-response-http: y
+  # Pretty-print supported entity types in generated documentation to make
+  # them more legible since services generally return a much more compactly
+  # formatted version.
   format-entities: y
+  
+  # Build a table-of-contents for all the endpoints in this suite.
+  table-of-contents: y
+  
+  # Selectively rewrite headers in documentation output. Headers which are
+  # rewritten will be modified when present, but they will not be added to
+  # every request.
+  rewrite-headers:
+    Host: api.example.com
+  
+  # Allow only these headers in documentation output. All other headers will
+  # be excluded.
+  allow-headers:
+    - Host
+    - Content-Type
+    - Content-Length
+  
+  # Or, we can exclude specific headers from documentation output. Any other
+  # headers not listed here will be retained.
+  # suppress-headers:
+  #   - X-Cache
+  #   - X-Served-By
+  #   - X-Sensitive-Header
 
 # When any of the above fields are present, the tests section introduces
 # a sequence of test cases. If you don't need to include a documentation
@@ -58,7 +86,7 @@ tests:
       entity: |+
         Here's a simple
         response from the
-        server.      
+        server.
 
   # This test is documented and should succeed
   - 
@@ -109,21 +137,26 @@ tests:
     request:
       method: GET
       url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+      # Automatically generate the `Authorization` header for a Basic HTTP Auth
+      # request using the provided username and password.
       headers:
         Origin: localhost
     
     response:
-      status: 201 # wrong
+      status: 201 # wrong, will cause errors
       headers:
         # Reference the content type from the previous request, which has the
         # identifier 'first'. The response object represents the actual response
         # from the server rather than the expected response defined above.
         Content-Type: ${first.response.headers["Content-Type"]}
-      entity: |+  # wrong
-        Here is a simple
-        response from the
-        server. ${std.RandomString(10)}
-
+      entity: |+  # wrong, will cause errors
+        This entity is not correct. But we can use it to demonstrate
+        interpolating variables, such as from the environment: ${env.USER}; and
+        using special functions to generate content, like a random person name,
+        which randomly combines one of the most popular U.S. first names from
+        1916-2017, according to the Social Security Administration, and the last
+        name of a famous scientist: ${std.RandomName()}.
+  
   # This one compares entities semantically. The entities are unmarshaled into
   # objects and the objects are compared. This allows you to ignore insignificant
   # differences like whitespace, formatting, and property order.
