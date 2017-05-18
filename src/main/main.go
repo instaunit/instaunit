@@ -35,6 +35,7 @@ func main() {
   fGendoc           := cmdline.Bool     ("gendoc",              strToBool(os.Getenv("HUNIT_GENDOC")),                         "Generate documentation.")
   fDocpath          := cmdline.String   ("doc:output",          coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"),            "The directory in which generated documentation should be written.")
   fDoctype          := cmdline.String   ("doc:type",            coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"),            "The format to generate documentation in.")
+  fDocInclHTTP      := cmdline.Bool     ("doc:include-http",    strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")),               "Include HTTP in request and response examples (as opposed to just routes and entities).")
   fDocFormatEntity  := cmdline.Bool     ("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")),            "Pretty-print supported request and response entities in documentation output.")
   fDebug            := cmdline.Bool     ("debug",               strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose          := cmdline.Bool     ("verbose",             strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
@@ -62,6 +63,9 @@ func main() {
   }
   
   var config test.Config
+  if *fDocInclHTTP {
+    config.Doc.IncludeHTTP = true
+  }
   if *fDocFormatEntity {
     config.Doc.FormatEntities = true
   }

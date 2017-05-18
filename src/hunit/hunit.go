@@ -175,7 +175,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   }
   if (context.Options & test.OptionDisplayRequests) == test.OptionDisplayRequests {
     b := &bytes.Buffer{}
-    err = text.WriteRequest(b, text.HttpConfig{}, req, reqdata)
+    err = text.WriteRequest(b, req, reqdata)
     if err != nil {
       return result.Error(err), nil
     }
@@ -259,7 +259,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   
   if (context.Options & test.OptionDisplayResponses) == test.OptionDisplayResponses {
 		b := &bytes.Buffer{}
-		err = text.WriteResponse(b, text.HttpConfig{}, rsp, rspdata)
+		err = text.WriteResponse(b, rsp, rspdata)
     if err != nil {
       return result.Error(err), nil
     }
