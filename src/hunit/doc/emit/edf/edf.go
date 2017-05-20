@@ -2,6 +2,7 @@ package edf
 
 import (
   "io"
+  "strings"
   "net/http"
   "hunit/test"
 )
@@ -67,11 +68,13 @@ func (g *Generator) Case(conf test.Config, c test.Case, req *http.Request, reqda
   c.Response.Headers = make(map[string]string)
   
   for k, v := range rsp.Header {
-    var x string
-    if len(v) > 0 {
-      x = v[0]
+    if !strings.EqualFold("Authorization", k) { // not that there would be...
+      var x string
+      if len(v) > 0 {
+        x = v[0]
+      }
+      c.Response.Headers[k] = x
     }
-    c.Response.Headers[k] = x
   }
   
   g.suite.Cases = append(g.suite.Cases, c)

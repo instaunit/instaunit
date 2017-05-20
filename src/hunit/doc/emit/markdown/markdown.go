@@ -20,7 +20,6 @@ type Generator struct {
   sections  map[string]string
   ordered   []string
   slugs     map[string]int
-  
 }
 
 /**

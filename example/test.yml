@@ -137,8 +137,6 @@ tests:
     request:
       method: GET
       url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
-      # Automatically generate the `Authorization` header for a Basic HTTP Auth
-      # request using the provided username and password.
       headers:
         Origin: localhost
     

@@ -25,22 +25,22 @@ tests:
       Connection: keep-alive
       Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
       Content-Type: text/plain; charset=utf-8
-      Date: Wed, 17 May 2017 00:37:16 GMT
+      Date: Wed, 17 May 2017 00:46:23 GMT
       Etag: '"97a3ed924dddfaaaa2c566cf556e9fa1379cbd02"'
-      Expires: Wed, 17 May 2017 00:42:16 GMT
-      Source-Age: "219"
+      Expires: Wed, 17 May 2017 00:51:23 GMT
+      Source-Age: "0"
       Strict-Transport-Security: max-age=31536000
       Vary: Authorization,Accept-Encoding
       Via: 1.1 varnish
       X-Cache: HIT
-      X-Cache-Hits: "2"
+      X-Cache-Hits: "1"
       X-Content-Type-Options: nosniff
-      X-Fastly-Request-Id: 6b137adf565d53dc02b4ac86b6571f3414b2752b
+      X-Fastly-Request-Id: df3314e4b9f4880c8f0596e31ffa65c269527f6d
       X-Frame-Options: deny
       X-Geo-Block-List: ""
-      X-Github-Request-Id: 8A1A:34B4:50D797A:53F06A1:591B9A60
-      X-Served-By: cache-jfk8142-JFK
-      X-Timer: S1494981436.337296,VS0,VE0
+      X-Github-Request-Id: F8A6:34B7:1426176:14FDC1B:591B9D5E
+      X-Served-By: cache-jfk8140-JFK
+      X-Timer: S1494981983.265872,VS0,VE0
       X-Xss-Protection: 1; mode=block
     entity: |
       Here's a simple
@@ -62,22 +62,22 @@ tests:
       Connection: keep-alive
       Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
       Content-Type: text/plain; charset=utf-8
-      Date: Wed, 17 May 2017 00:37:16 GMT
+      Date: Wed, 17 May 2017 00:46:23 GMT
       Etag: '"f69bdd0be1577adf16208754ae8f62cd6e7fcb1a"'
-      Expires: Wed, 17 May 2017 00:42:16 GMT
-      Source-Age: "219"
+      Expires: Wed, 17 May 2017 00:51:23 GMT
+      Source-Age: "0"
       Strict-Transport-Security: max-age=31536000
       Vary: Authorization,Accept-Encoding
       Via: 1.1 varnish
-      X-Cache: HIT
-      X-Cache-Hits: "1"
+      X-Cache: MISS
+      X-Cache-Hits: "0"
       X-Content-Type-Options: nosniff
-      X-Fastly-Request-Id: bb9d26f6f28c0104ddae232c0e05c0a8a043ab88
+      X-Fastly-Request-Id: 47ac1e58fa85ab2fc34cbbbd31f86ba3850e7588
       X-Frame-Options: deny
       X-Geo-Block-List: ""
-      X-Github-Request-Id: E46E:02E8:3FC4A78:42925AA:591B9A60
-      X-Served-By: cache-jfk8142-JFK
-      X-Timer: S1494981436.361639,VS0,VE6
+      X-Github-Request-Id: 75AC:02E6:25564FD:2705312:591B9D5F
+      X-Served-By: cache-jfk8140-JFK
+      X-Timer: S1494981983.293569,VS0,VE28
       X-Xss-Protection: 1; mode=block
     entity: '{"z": "Hello, this is the value","a": 123,"/": false}'
     compare: semantic
