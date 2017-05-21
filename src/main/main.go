@@ -7,6 +7,8 @@ import (
   "flag"
   "path"
   "strings"
+  "archive/zip"
+  
   "hunit"
   "hunit/test"
   "hunit/text"
@@ -36,6 +38,7 @@ func main() {
   fDocpath          := cmdline.String   ("doc:output",          coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"),            "The directory in which generated documentation should be written.")
   fDoctype          := cmdline.String   ("doc:type",            coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"),            "The format to generate documentation in.")
   fDocFormatEntity  := cmdline.Bool     ("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")),            "Pretty-print supported request and response entities in documentation output.")
+  fDocArchive       := cmdline.String   ("doc:archive",         os.Getenv("HUNIT_DOC_ARCHIVE"),                               "Write documentation files into a single archive with the specified name.")
   fDebug            := cmdline.Bool     ("debug",               strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose          := cmdline.Bool     ("verbose",             strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
   cmdline.Var        (&headerSpecs,      "header",                                                                            "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
@@ -96,6 +99,16 @@ func main() {
     docname = make(map[string]int)
   }
   
+  var archive *zip.Writer
+  if *fGendoc && *fDocArchive != "" {
+    out, err := os.OpenFile(path.Join(*fDocpath, *fDocArchive), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
+    if err != nil {
+      fmt.Printf("* * * Could not open documentation output: %v\n", err)
+      return
+    }
+    archive = zip.NewWriter(out)
+  }
+  
   success := true
   for _, e := range cmdline.Args() {
     base := path.Base(e)
@@ -129,10 +142,19 @@ func main() {
       }
       docname[stem] = n + 1
       
-      out, err = os.OpenFile(path.Join(*fDocpath, stem + doctype.Ext()), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
-      if err != nil {
-        fmt.Printf("* * * Could not open documentation output: %v\n", err)
-        return
+      if archive == nil {
+        out, err = os.OpenFile(path.Join(*fDocpath, stem + doctype.Ext()), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
+        if err != nil {
+          fmt.Printf("* * * Could not open documentation output: %v\n", err)
+          return
+        }
+      }else{
+        w, err := archive.Create(stem + doctype.Ext())
+        if err != nil {
+          fmt.Printf("* * * Could not open documentation output: %v\n", err)
+          return
+        }
+        out = nopWriteCloser{w}
       }
       
       gen, err := doc.New(doctype, out)
@@ -181,6 +203,11 @@ func main() {
     
   }
   
+  if archive != nil {
+    archive.Flush()
+    archive.Close()
+  }
+  
   fmt.Println()
   if errors > 0 {
     fmt.Printf("ERRORS! %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
@@ -195,6 +222,16 @@ func main() {
   }else{
     fmt.Printf("SUCCESS! All %d tests passed.\n", tests)
   }
+}
+
+// A no-op write closer
+type nopWriteCloser struct {
+  io.Writer
+}
+
+// Nop
+func (c nopWriteCloser) Close() error {
+  return nil
 }
 
 /**
