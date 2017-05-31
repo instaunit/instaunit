@@ -3,6 +3,7 @@ package hunit
 import (
   "fmt"
   "strings"
+  "unicode"
   "hunit/test"
   "encoding/json"
 )
@@ -31,8 +32,8 @@ func literalEntitiesEqual(context Context, contentType string, expected []byte, 
   }
   
   if (context.Options & test.OptionEntityTrimTrailingWhitespace) == test.OptionEntityTrimTrailingWhitespace {
-    e = strings.TrimRight(string(expected), whitespace)
-    a = strings.TrimRight(string(abytes), whitespace)
+    e = strings.TrimRightFunc(string(expected), unicode.IsSpace)
+    a = strings.TrimRightFunc(string(abytes), unicode.IsSpace)
   }else{
     e = expected
     a = abytes

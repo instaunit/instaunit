@@ -14,7 +14,9 @@ PRODUCT		:= $(TARGETS)/$(NAME)
 SRC = $(shell find src -name \*.go -print)
 
 # tests
-TEST_PKGS = hunit hunit/text/slug
+TEST_PKGS = hunit \
+						hunit/expr \
+						hunit/text/slug
 
 .PHONY: all build test clean
 
