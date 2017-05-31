@@ -24,7 +24,7 @@ const ws = " \n\r\t\v"
  */
 func main() {
   var tests, failures, errors int
-  var headerSpecs flagList
+  var headerSpecs, serviceSpecs flagList
   
   cmdline           := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
   fBaseURL          := cmdline.String   ("base-url",            coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
@@ -39,6 +39,7 @@ func main() {
   fDebug            := cmdline.Bool     ("debug",               strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fVerbose          := cmdline.Bool     ("verbose",             strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
   cmdline.Var        (&headerSpecs,      "header",                                                                            "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
+  cmdline.Var        (&serviceSpecs,     "service",                                                                           "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
   cmdline.Parse(os.Args[1:])
   
   DEBUG = *fDebug
