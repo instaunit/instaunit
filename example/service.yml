@@ -18,7 +18,7 @@
     headers:
       Content-Type: application/json; charset=utf-8
     # The entity to send in response
-    entity: |+
+    entity: |
       {
         "color": "blue",
         "height": 100,

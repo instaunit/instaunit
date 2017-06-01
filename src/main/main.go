@@ -6,12 +6,15 @@ import (
   "fmt"
   "flag"
   "path"
+  "time"
   "strings"
   "hunit"
   "hunit/test"
   "hunit/text"
   "hunit/doc"
   "hunit/doc/emit"
+  "hunit/service"
+  "hunit/service/backend/rest"
 )
 
 var DEBUG bool
@@ -23,6 +26,13 @@ const ws = " \n\r\t\v"
  * You know what it does
  */
 func main() {
+  os.Exit(app())
+}
+
+/**
+ * You know what it does
+ */
+func app() int {
   var tests, failures, errors int
   var headerSpecs, serviceSpecs flagList
   
@@ -74,7 +84,7 @@ func main() {
       x := strings.Index(e, ":")
       if x < 1 {
         fmt.Printf("* * * Invalid header: %v\n", e)
-        return
+        return 1
       }
       globalHeaders[strings.TrimSpace(e[:x])] = strings.TrimSpace(e[x+1:])
     }
@@ -87,14 +97,43 @@ func main() {
     doctype, err = emit.ParseDoctype(*fDoctype)
     if err != nil {
       fmt.Printf("* * * Invalid documentation type: %v\n", err)
-      return
+      return 1
     }
     err = os.MkdirAll(*fDocpath, 0755)
     if err != nil {
       fmt.Printf("* * * Could not create documentation base: %v\n", err)
-      return
+      return 1
     }
     docname = make(map[string]int)
+  }
+  
+  services := 0
+  for _, e := range serviceSpecs {
+    conf, err := service.ParseConfig(e)
+    if err != nil {
+      fmt.Printf("* * * Could not create mock service: %v\n", err)
+      return 1
+    }
+    svc, err := rest.New(conf)
+    if err != nil {
+      fmt.Printf("* * * Could not create mock service: %v\n", err)
+      return 1
+    }
+    err = svc.StartService()
+    if err != nil {
+      fmt.Printf("* * * Could not start mock service: %v\n", err)
+      return 1
+    }
+    defer func(s service.Service, c service.Config){
+      fmt.Println("STOP SERVICE")
+      c.Resource.Close()
+      s.StopService()
+    }(svc, conf)
+  }
+  
+  // give service a second to settle
+  if services > 0 {
+    <-time.After(time.Second)
   }
   
   success := true
@@ -133,13 +172,13 @@ func main() {
       out, err = os.OpenFile(path.Join(*fDocpath, stem + doctype.Ext()), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
       if err != nil {
         fmt.Printf("* * * Could not open documentation output: %v\n", err)
-        return
+        return 1
       }
       
       gen, err := doc.New(doctype, out)
       if err != nil {
         fmt.Printf("* * * Could create documentation generator: %v\n", err)
-        return
+        return 1
       }
       
       gendoc = []doc.Generator{gen} // just one for now
@@ -185,17 +224,18 @@ func main() {
   fmt.Println()
   if errors > 0 {
     fmt.Printf("ERRORS! %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
-    os.Exit(1)
+    return 1
   }
   if !success {
     fmt.Printf("FAILURES! %d of %d tests failed.\n", failures, tests)
-    os.Exit(1)
+    return 1
   }
   if tests == 1 {
     fmt.Printf("SUCCESS! The test passed.\n")
   }else{
     fmt.Printf("SUCCESS! All %d tests passed.\n", tests)
   }
+  return 0
 }
 
 /**
