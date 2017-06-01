@@ -2,23 +2,12 @@ package text
 
 import (
   "fmt"
-  "strings"
   "encoding/json"
 )
 
-/**
- * A type error
- */
-type contentTypeError string
-
-func (e contentTypeError) Error() string {
-  return string(e)
-}
-
-func IsContentTypeError(e error) bool {
-  _, ok := e.(contentTypeError)
-  return ok
-}
+var (
+  ErrUnsupportedContentType = fmt.Errorf("Unsupported content type for entity formatting")
+)
 
 // formats entities
 type entityFormatter func([]byte)([]byte, error)
@@ -32,13 +21,12 @@ var stdEntityFormatters = map[string]entityFormatter {
  * Format an entity, if possible
  */
 func FormatEntity(entity []byte, contentType string) ([]byte, error) {
-  contentType = strings.TrimSpace(contentType)
   for k, f := range stdEntityFormatters {
     if MatchesContentType(k, contentType) {
       return f(entity)
     }
   }
-  return nil, contentTypeError(fmt.Sprintf("Unsupported content type: %v", contentType))
+  return nil, ErrUnsupportedContentType
 }
 
 /**

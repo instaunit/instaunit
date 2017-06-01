@@ -3,7 +3,6 @@ package test
 import (
   "os"
   "io/ioutil"
-  "hunit/text"
 )
 
 import (
@@ -15,11 +14,12 @@ import (
  */
 type Config struct {
   Doc struct {
-    AnchorStyle         AnchorStyle       `yaml:"anchor-style"`
-    FormatEntities      bool              `yaml:"format-entities"`
-    TableOfContents     bool              `yaml:"table-of-contents"`
-    HttpConfig          text.HttpConfig   `yaml:",inline"`
-  }                                       `yaml:",inline"`
+    AnchorStyle         AnchorStyle `yaml:"anchor-style"`
+    FormatEntities      bool        `yaml:"format-entities"`
+    IncludeRequestHTTP  bool        `yaml:"doc-include-request-http"`
+    IncludeResponseHTTP bool        `yaml:"doc-include-response-http"`
+    IncludeHTTP         bool        `yaml:"doc-include-http"`
+  }                                 `yaml:",inline"`
 }
 
 /**
