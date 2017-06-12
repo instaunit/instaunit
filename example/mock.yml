@@ -1,0 +1,28 @@
+
+# A mock endpoint that will respond for: `GET /projects/*/detail`
+- 
+  endpoint:
+    # The HTTP methods to accept
+    methods:
+      - GET
+    # The path to match for this endpoint
+    path: /projects/*/detail
+    # Arbitrary headers to require in order to match this request
+    headers:
+      Origin: localhost
+  
+  response:
+    # The status code sent in our response.
+    status: 200
+    # Headers sent in our response.
+    headers:
+      Content-Type: application/json; charset=utf-8
+    # The entity to send in response
+    entity: |
+      {
+        "color": "blue",
+        "height": 100,
+        "width": 50,
+        "depth": 475,
+        "in_stock": true
+      }

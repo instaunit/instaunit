@@ -132,11 +132,12 @@ func app() int {
       c.Resource.Close()
       s.StopService()
     }(svc, conf)
+    services++
   }
   
   // give service a second to settle
   if services > 0 {
-    <-time.After(time.Second)
+    <-time.After(time.Second / 2)
   }
   
   success := true
@@ -222,6 +223,11 @@ func app() int {
       }
     }
     
+  }
+  
+  if tests < 1 && services > 0 {
+    fmt.Println("No tests; running services until we're interrupted...")
+    <- make(chan struct{})
   }
   
   fmt.Println()
