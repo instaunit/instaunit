@@ -132,7 +132,7 @@ func app() int {
       c.Resource.Close()
       s.StopService()
     }(svc, conf)
-    fmt.Printf("-----> Service %v (%v)\n", conf.Addr, conf.Path)
+    fmt.Printf("----> Service %v (%v)\n", conf.Addr, conf.Path)
     services++
   }
   
@@ -227,7 +227,7 @@ func app() int {
   }
   
   if tests < 1 && services > 0 {
-    fmt.Println("=====> No tests; running services until we're interrupted...")
+    fmt.Println("====> No tests; running services until we're interrupted...")
     <- make(chan struct{})
   }
   
