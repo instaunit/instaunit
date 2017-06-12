@@ -226,7 +226,7 @@ func app() int {
   }
   
   if tests < 1 && services > 0 {
-    fmt.Println("No tests; running services until we're interrupted...")
+    fmt.Println("=====> No tests; running services until we're interrupted...")
     <- make(chan struct{})
   }
   
