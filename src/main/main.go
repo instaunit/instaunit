@@ -129,7 +129,6 @@ func app() int {
       return 1
     }
     defer func(s service.Service, c service.Config){
-      fmt.Println("STOP SERVICE")
       c.Resource.Close()
       s.StopService()
     }(svc, conf)
