@@ -48,7 +48,7 @@ func (s *restService) StartService() error {
   
   go func(){
     err := s.server.ListenAndServe()
-    if err != nil {
+    if err != nil && err != http.ErrServerClosed {
       panic(err)
     }
   }()
