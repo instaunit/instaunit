@@ -132,6 +132,7 @@ func app() int {
       c.Resource.Close()
       s.StopService()
     }(svc, conf)
+    fmt.Printf("-----> Service %v (%v)\n", conf.Addr, conf.Path)
     services++
   }
   

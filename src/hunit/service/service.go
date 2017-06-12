@@ -16,6 +16,7 @@ type Service interface {
 // Service config
 type Config struct {
   Addr      string
+  Path      string
   Resource  io.ReadCloser
 }
 
@@ -41,6 +42,7 @@ func ParseConfig(s string) (Config, error) {
   }
   
   conf.Addr = p[0]
+  conf.Path = p[1]
   conf.Resource = f
   
   return conf, nil
