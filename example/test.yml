@@ -60,6 +60,11 @@ tests:
     # tests can refer to the response from this test.
     id: first
     
+    # Repeat this test three times. This can be used, e.g., to populate some
+    # data with with generated inputs for subsequent tests. It doesn't really
+    # make much sense here...
+    repeat: 3
+    
     request:
       # The HTTP method to use
       method: GET

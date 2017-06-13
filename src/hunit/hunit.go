@@ -63,11 +63,17 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   }
   
   for _, e := range s.Cases {
-    r, err := RunTest(e, c)
-    if err != nil {
-      return nil, err
+    n := e.Repeat
+    if n < 1 {
+      n = 1
     }
-    results = append(results, r)
+    for i := 0; i < n; i++ {
+      r, err := RunTest(e, c)
+      if err != nil {
+        return nil, err
+      }
+      results = append(results, r)
+    }
   }
   
   for _, e := range context.Gendoc {

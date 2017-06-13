@@ -55,6 +55,7 @@ type Response struct {
 type Case struct {
   Id        string                `yaml:"id"`
   Wait      time.Duration         `yaml:"wait"`
+  Repeat    int                   `yaml:"repeat"`
   Gendoc    bool                  `yaml:"gendoc"`
   Title     string                `yaml:"title"`
   Comments  string                `yaml:"doc"`
