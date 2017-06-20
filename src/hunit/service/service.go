@@ -4,12 +4,14 @@ import (
   "os"
   "io"
   "fmt"
+  "net"
+  "strconv"
   "strings"
 )
 
 // A service
 type Service interface {
-  StartService()(int, error)
+  StartService()(error)
   StopService()(error)
 }
 
@@ -18,6 +20,16 @@ type Config struct {
   Addr      string
   Path      string
   Resource  io.ReadCloser
+}
+
+func freePort() int {
+  listener, err := net.Listen("tcp", ":0")
+  if err != nil {
+    panic(err)
+  }
+  defer listener.Close()
+
+  return listener.Addr().(*net.TCPAddr).Port 
 }
 
 // Parse configuration
@@ -37,7 +49,7 @@ func ParseConfig(s string) (Config, error) {
     srcPath = p[1]
   } else if len(p) == 1 {
     // bind the service to port 0, a random free port from 1024 to 65535 will be selected
-    port = ":0"
+    port = strconv.Itoa(freePort())
     srcPath = p[0]
   } else {
     return conf, fmt.Errorf("Invalid service: %v", s)
@@ -48,7 +60,7 @@ func ParseConfig(s string) (Config, error) {
     return conf, err
   }
 
-  conf.Addr = port
+  conf.Addr = ":" + port
   conf.Path = srcPath
   conf.Resource = f
   
