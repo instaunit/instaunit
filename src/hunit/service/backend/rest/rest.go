@@ -2,6 +2,7 @@ package rest
 
 import (
   "fmt"
+  "net"
   "time"
   "path"
   "strings"
@@ -33,9 +34,9 @@ func New(conf service.Config) (service.Service, error) {
 }
 
 // Start the service
-func (s *restService) StartService() error {
+func (s *restService) StartService() (int, error) {
   if s.server != nil {
-    return fmt.Errorf("Service is running")
+    return 0, fmt.Errorf("Service is running")
   }
   
   s.server = &http.Server{
@@ -45,15 +46,19 @@ func (s *restService) StartService() error {
     WriteTimeout: ioTimeout,
     MaxHeaderBytes: 1 << 20,
   }
-  
+
+  listener, err := net.Listen("tcp", s.server.Addr)
+  if err != nil {
+    return 0, err
+  }
+
+  port := listener.Addr().(*net.TCPAddr).Port 
+
   go func(){
-    err := s.server.ListenAndServe()
-    if err != nil && err != http.ErrServerClosed {
-      panic(err)
-    }
+    panic(s.server.Serve(listener))
   }()
   
-  return nil
+  return port, nil
 }
 
 // Stop the service

@@ -123,7 +123,7 @@ func app() int {
       fmt.Printf("* * * Could not create mock service: %v\n", err)
       return 1
     }
-    err = svc.StartService()
+    port, err := svc.StartService()
     if err != nil {
       fmt.Printf("* * * Could not start mock service: %v\n", err)
       return 1
@@ -132,7 +132,7 @@ func app() int {
       c.Resource.Close()
       s.StopService()
     }(svc, conf)
-    fmt.Printf("----> Service %v (%v)\n", conf.Addr, conf.Path)
+    fmt.Printf("----> Service %v (%v)\n", port, conf.Path)
     services++
   }
   
