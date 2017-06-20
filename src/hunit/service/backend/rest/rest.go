@@ -56,7 +56,10 @@ func (s *restService) StartService() (int, error) {
   port := listener.Addr().(*net.TCPAddr).Port 
 
   go func(){
-    panic(s.server.Serve(listener))
+    err := s.server.Serve(listener)
+    if err != nil && err != http.ErrServerClosed {
+      panic(err)
+    }
   }()
   
   return port, nil
