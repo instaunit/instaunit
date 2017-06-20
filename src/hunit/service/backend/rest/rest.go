@@ -51,6 +51,7 @@ func (s *restService) StartService() (int, error) {
   if err != nil {
     return 0, err
   }
+  defer listener.Close()
 
   port := listener.Addr().(*net.TCPAddr).Port 
 
