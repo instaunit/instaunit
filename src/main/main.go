@@ -18,7 +18,16 @@ import (
 )
 
 import (
+  "github.com/fatih/color"
   "github.com/bww/go-util/debug"
+)
+
+var (
+  colorErr    = []color.Attribute{color.FgYellow}
+  colorSuite  = []color.Attribute{color.Bold}
+  colorOk     = []color.Attribute{color.FgCyan}
+  colorFail   = []color.Attribute{color.FgRed}
+  colorDetail = []color.Attribute{color.Faint}
 )
 
 /**
@@ -86,7 +95,7 @@ func app() int {
     for _, e := range headerSpecs {
       x := strings.Index(e, ":")
       if x < 1 {
-        fmt.Printf("* * * Invalid header: %v\n", e)
+        color.New(colorErr...).Printf("* * * Invalid header: %v\n", e)
         return 1
       }
       globalHeaders[strings.TrimSpace(e[:x])] = strings.TrimSpace(e[x+1:])
@@ -99,12 +108,12 @@ func app() int {
     var err error
     doctype, err = emit.ParseDoctype(*fDoctype)
     if err != nil {
-      fmt.Printf("* * * Invalid documentation type: %v\n", err)
+      color.New(colorErr...).Printf("* * * Invalid documentation type: %v\n", err)
       return 1
     }
     err = os.MkdirAll(*fDocpath, 0755)
     if err != nil {
-      fmt.Printf("* * * Could not create documentation base: %v\n", err)
+      color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
       return 1
     }
     docname = make(map[string]int)
@@ -114,17 +123,17 @@ func app() int {
   for _, e := range serviceSpecs {
     conf, err := service.ParseConfig(e)
     if err != nil {
-      fmt.Printf("* * * Could not create mock service: %v\n", err)
+      color.New(colorErr...).Printf("* * * Could not create mock service: %v\n", err)
       return 1
     }
     svc, err := rest.New(conf)
     if err != nil {
-      fmt.Printf("* * * Could not create mock service: %v\n", err)
+      color.New(colorErr...).Printf("* * * Could not create mock service: %v\n", err)
       return 1
     }
     err = svc.StartService()
     if err != nil {
-      fmt.Printf("* * * Could not start mock service: %v\n", err)
+      color.New(colorErr...).Printf("* * * Could not start mock service: %v\n", err)
       return 1
     }
     defer func(s service.Service, c service.Config){
@@ -143,19 +152,19 @@ func app() int {
   success := true
   for _, e := range cmdline.Args() {
     base := path.Base(e)
-    fmt.Printf("====> %v", base)
+    color.New(colorSuite...).Printf("====> %v", base)
     
     cdup := config // copy global configs and update them
     suite, err := test.LoadSuiteFromFile(&cdup, e)
     if err != nil {
       fmt.Println()
-      fmt.Printf("* * * Could not load test suite: %v\n", err)
+      color.New(colorErr...).Printf("* * * Could not load test suite: %v\n", err)
       errors++
       continue
     }
     
     if suite.Title != "" {
-      fmt.Printf(" (%v)\n", suite.Title)
+      color.New(colorSuite...).Printf(" (%v)\n", suite.Title)
     }else{
       fmt.Println()
     }
@@ -175,22 +184,22 @@ func app() int {
       
       out, err = os.OpenFile(path.Join(*fDocpath, stem + doctype.Ext()), os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0644)
       if err != nil {
-        fmt.Printf("* * * Could not open documentation output: %v\n", err)
+        color.New(colorErr...).Printf("* * * Could not open documentation output: %v\n", err)
         return 1
       }
       
       gen, err := doc.New(doctype, out)
       if err != nil {
-        fmt.Printf("* * * Could create documentation generator: %v\n", err)
+        color.New(colorErr...).Printf("* * * Could create documentation generator: %v\n", err)
         return 1
       }
       
       gendoc = []doc.Generator{gen} // just one for now
     }
     
-    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: DEBUG, Gendoc: gendoc, Config: cdup})
+    results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: debug.DEBUG, Gendoc: gendoc, Config: cdup})
     if err != nil {
-      fmt.Printf("* * * Could not run test suite: %v\n", err)
+      color.New(colorErr...).Printf("* * * Could not run test suite: %v\n", err)
       errors++
     }
     
@@ -203,13 +212,19 @@ func app() int {
     if out != nil {
       err := out.Close()
       if err != nil {
-        fmt.Printf("* * * Could not close documentation writer: %v\n", err)
+        color.New(colorErr...).Printf("* * * Could not close documentation writer: %v\n", err)
       }
     }
     
     var count int
     for _, r := range results {
-      fmt.Printf("----> %v", r.Name)
+      var w *color.Color
+      if r.Success {
+        w = color.New(colorOk...)
+      }else{
+        w = color.New(colorFail...)
+      }
+      w.Printf("----> %v", r.Name)
       tests++
       if !r.Success {
         success = false
@@ -218,7 +233,7 @@ func app() int {
       if r.Errors != nil {
         for _, e := range r.Errors {
           count++
-          fmt.Println(text.IndentWithOptions(fmt.Sprintf("      #%d %v\n", count, e), "           ", 0))
+          fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %v\n", count, e), "             ", 0))
         }
       }
     }
@@ -226,23 +241,26 @@ func app() int {
   }
   
   if tests < 1 && services > 0 {
-    fmt.Println("====> No tests; running services until we're interrupted...")
+    color.New(colorSuite...).Println("====> No tests; running services until we're interrupted...")
     <- make(chan struct{})
   }
   
   fmt.Println()
   if errors > 0 {
-    fmt.Printf("ERRORS! %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
+    color.New(color.BgRed, color.FgWhite).Printf("ERRORS!")
+    fmt.Printf(" %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
     return 1
   }
   if !success {
-    fmt.Printf("FAILURES! %d of %d tests failed.\n", failures, tests)
+    color.New(color.BgRed, color.FgWhite).Printf("FAILURES!")
+    fmt.Printf(" %d of %d tests failed.\n", failures, tests)
     return 1
   }
+  color.New(color.BgGreen, color.FgWhite).Printf("SUCCESS!")
   if tests == 1 {
-    fmt.Printf("SUCCESS! The test passed.\n")
+    fmt.Printf(" The test passed.\n")
   }else{
-    fmt.Printf("SUCCESS! All %d tests passed.\n", tests)
+    fmt.Printf(" All %d tests passed.\n", tests)
   }
   return 0
 }
