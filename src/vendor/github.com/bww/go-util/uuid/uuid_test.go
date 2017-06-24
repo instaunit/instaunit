@@ -47,9 +47,9 @@ var testsUUID = []struct {
 
 func TestPredefinedUUID(t *testing.T) {
   for i := range testsUUID {
-    uuid, err := ParseUUID(testsUUID[i].input)
+    uuid, err := Parse(testsUUID[i].input)
     if err != nil {
-      t.Errorf("ParseUUID #%d: %v", i, err)
+      t.Errorf("Parse #%d: %v", i, err)
       continue
     }
 
@@ -89,27 +89,27 @@ func TestPredefinedUUID(t *testing.T) {
 }
 
 func TestInvalidUUIDCharacter(t *testing.T) {
-  _, err := ParseUUID("z4f00409-cef8-4822-802c-deb20704c365")
+  _, err := Parse("z4f00409-cef8-4822-802c-deb20704c365")
   if err == nil || !strings.Contains(err.Error(), "invalid UUID") {
     t.Fatalf("expected invalid UUID error, got '%v' ", err)
   }
 }
 
 func TestInvalidUUIDLength(t *testing.T) {
-  _, err := ParseUUID("4f00")
+  _, err := Parse("4f00")
   if err == nil || !strings.Contains(err.Error(), "invalid UUID") {
     t.Fatalf("expected invalid UUID error, got '%v' ", err)
   }
 
-  _, err = UUIDFromBytes(TimeUUID().Bytes()[:15])
+  _, err = FromBytes(Time().Bytes()[:15])
   if err == nil || err.Error() != "UUIDs must be exactly 16 bytes long" {
     t.Fatalf("expected error '%v', got '%v'", "UUIDs must be exactly 16 bytes long", err)
   }
 }
 
-func TestRandomUUID(t *testing.T) {
+func TestRandom(t *testing.T) {
   for i := 0; i < 20; i++ {
-    uuid := RandomUUID()
+    uuid := Random()
     if variant := uuid.Variant(); variant != VariantIETF {
       t.Errorf("wrong variant. expected %d got %d", VariantIETF, variant)
     }
@@ -119,8 +119,8 @@ func TestRandomUUID(t *testing.T) {
   }
 }
 
-func TestRandomUUIDInvalidAPICalls(t *testing.T) {
-  uuid := RandomUUID()
+func TestRandomInvalidAPICalls(t *testing.T) {
+  uuid := Random()
   if node := uuid.Node(); node != nil {
     t.Fatalf("expected nil, got %v", node)
   }
@@ -133,27 +133,27 @@ func TestRandomUUIDInvalidAPICalls(t *testing.T) {
   }
 }
 
-func TestUUIDFromTime(t *testing.T) {
+func TestFromTime(t *testing.T) {
   date := time.Date(1982, 5, 5, 12, 34, 56, 400, time.UTC)
-  uuid := UUIDFromTime(date)
+  uuid := FromTime(date)
 
   if uuid.Time() != date {
     t.Errorf("embedded time incorrect. Expected %v got %v", date, uuid.Time())
   }
 }
 
-func TestParseUUID(t *testing.T) {
-  uuid, _ := ParseUUID("486f3a88-775b-11e3-ae07-d231feb1dc81")
+func TestParse(t *testing.T) {
+  uuid, _ := Parse("486f3a88-775b-11e3-ae07-d231feb1dc81")
   if uuid.Time() != time.Date(2014, 1, 7, 5, 19, 29, 222516000, time.UTC) {
     t.Errorf("Expected date of 1/7/2014 at 5:19:29.222516, got %v", uuid.Time())
   }
 }
 
-func TestTimeUUID(t *testing.T) {
+func TestTime(t *testing.T) {
   var node []byte
   timestamp := int64(0)
   for i := 0; i < 20; i++ {
-    uuid := TimeUUID()
+    uuid := Time()
 
     if variant := uuid.Variant(); variant != VariantIETF {
       t.Errorf("wrong variant. expected %d got %d", VariantIETF, variant)

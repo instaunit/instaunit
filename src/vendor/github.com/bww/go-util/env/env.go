@@ -2,6 +2,7 @@ package env
 
 import (
   "os"
+  "path"
 )
 
 import (
@@ -16,17 +17,33 @@ const (
  * Immutable variables
  */
 var (
+  prefix  string
   environ string
+  home    string
 )
 
 /**
  * Setup immutable environment variables
  */
 func init() {
-  if v := os.Getenv("ENVIRON"); v != "" {
+  if v := os.Getenv("GOUTIL_PREFIX"); v != "" {
+    prefix = v
+  }
+  if v := os.Getenv("GOUTIL_ENVIRON"); v != "" {
+    environ = v
+  }else if v = os.Getenv(prefix +"ENVIRON"); v != "" {
     environ = v
   }else{
     environ = "devel"
+  }
+  if v := os.Getenv("GOUTIL_HOME"); v != "" {
+    home = v
+  }else if v = os.Getenv(prefix +"HOME"); prefix != "" && v != "" {
+    home = v
+  }else if h, err := os.Executable(); err == nil {
+    home = path.Dir(path.Dir(h))
+  }else{
+    home = "."
   }
 }
 
@@ -35,6 +52,65 @@ func init() {
  */
 func Environ() string {
   return environ
+}
+
+/**
+ * Determine the product home directory
+ */
+func Home() string {
+  return home
+}
+
+/**
+ * Resource path under product
+ */
+func Resource(p ...string) string {
+  return path.Join(append([]string{home}, p...)...)
+}
+
+/**
+ * Path under product bin
+ */
+func Bin(p ...string) string {
+  var b []string
+  if v := os.Getenv("GOUTIL_BIN"); v != "" {
+    b = []string{v}
+  }else if v = os.Getenv(prefix +"BIN"); v != "" {
+    b = []string{v}
+  }else{
+    b = []string{home, "bin"}
+  }
+  return path.Join(append(b, p...)...)
+}
+
+/**
+ * Path under product etc
+ */
+func Etc(p ...string) string {
+  var b []string
+  if v := os.Getenv("GOUTIL_ETC"); v != "" {
+    b = []string{v}
+  }else if v = os.Getenv(prefix +"ETC"); v != "" {
+    b = []string{v}
+  }else{
+    b = []string{home, "etc"}
+  }
+  return path.Join(append(b, p...)...)
+}
+
+/**
+ * Path under product web
+ */
+func Web(p ...string) string {
+  var b []string
+  if v := os.Getenv("GOUTIL_WEB"); v != "" {
+    b = []string{v}
+  }else if v = os.Getenv(prefix +"WEB"); v != "" {
+    b = []string{v}
+  }else{
+    b = []string{home, "web"}
+  }
+  return path.Join(append(b, p...)...)
 }
 
 /**

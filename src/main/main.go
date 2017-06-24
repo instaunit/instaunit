@@ -17,10 +17,9 @@ import (
   "hunit/service/backend/rest"
 )
 
-var DEBUG bool
-var VERBOSE bool
-
-const ws = " \n\r\t\v"
+import (
+  "github.com/bww/go-util/debug"
+)
 
 /**
  * You know what it does
@@ -53,8 +52,8 @@ func app() int {
   cmdline.Var        (&serviceSpecs,     "service",                                                                           "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
   cmdline.Parse(os.Args[1:])
   
-  DEBUG = *fDebug
-  VERBOSE = *fVerbose
+  debug.DEBUG = *fDebug
+  debug.VERBOSE = *fVerbose
   
   var options test.Options
   if *fTrimEntity {
@@ -69,7 +68,7 @@ func app() int {
   if *fDumpResponse {
     options |= test.OptionDisplayResponses
   }
-  if VERBOSE {
+  if debug.VERBOSE {
     options |= test.OptionDisplayRequests | test.OptionDisplayResponses
   }
   

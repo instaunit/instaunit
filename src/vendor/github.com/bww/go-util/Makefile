@@ -1,5 +1,10 @@
 
-TEST_PKGS = ./rand ./qname ./uuid ./slug
+TEST_PKGS = ./env \
+						./text \
+						./rand \
+						./qname \
+						./uuid \
+						./slug
 
 .PHONY: all test
 

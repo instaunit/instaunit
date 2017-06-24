@@ -1,4 +1,4 @@
-package util
+package qname
 
 import (
   "testing"
