@@ -45,24 +45,26 @@ func app() int {
   var headerSpecs, serviceSpecs flagList
   
   cmdline           := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-  fBaseURL          := cmdline.String   ("base-url",            coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
-  fExpandVars       := cmdline.Bool     ("expand",              strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true),              "Expand variables in test cases.")
-  fTrimEntity       := cmdline.Bool     ("entity:trim",         strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
-  fDumpRequest      := cmdline.Bool     ("dump:request",        strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")),                  "Dump requests to standard output as they are processed.")
-  fDumpResponse     := cmdline.Bool     ("dump:response",       strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")),                 "Dump responses to standard output as they are processed.")
-  fGendoc           := cmdline.Bool     ("gendoc",              strToBool(os.Getenv("HUNIT_GENDOC")),                         "Generate documentation.")
-  fDocpath          := cmdline.String   ("doc:output",          coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"),            "The directory in which generated documentation should be written.")
-  fDoctype          := cmdline.String   ("doc:type",            coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"),            "The format to generate documentation in.")
-  fDocInclHTTP      := cmdline.Bool     ("doc:include-http",    strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")),               "Include HTTP in request and response examples (as opposed to just routes and entities).")
-  fDocFormatEntity  := cmdline.Bool     ("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")),            "Pretty-print supported request and response entities in documentation output.")
-  fDebug            := cmdline.Bool     ("debug",               strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
-  fVerbose          := cmdline.Bool     ("verbose",             strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
-  cmdline.Var        (&headerSpecs,      "header",                                                                            "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
-  cmdline.Var        (&serviceSpecs,     "service",                                                                           "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
+  fBaseURL          := cmdline.String   ("base-url",              coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"),   "The base URL for requests.")
+  fExpandVars       := cmdline.Bool     ("expand",                strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true),              "Expand variables in test cases.")
+  fTrimEntity       := cmdline.Bool     ("entity:trim",           strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true),              "Trim trailing whitespace from entities.")
+  fDumpRequest      := cmdline.Bool     ("dump:request",          strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")),                  "Dump requests to standard output as they are processed.")
+  fDumpResponse     := cmdline.Bool     ("dump:response",         strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")),                 "Dump responses to standard output as they are processed.")
+  fGendoc           := cmdline.Bool     ("gendoc",                strToBool(os.Getenv("HUNIT_GENDOC")),                         "Generate documentation.")
+  fDocpath          := cmdline.String   ("doc:output",            coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"),            "The directory in which generated documentation should be written.")
+  fDoctype          := cmdline.String   ("doc:type",              coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"),            "The format to generate documentation in.")
+  fDocInclHTTP      := cmdline.Bool     ("doc:include-http",      strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")),               "Include HTTP in request and response examples (as opposed to just routes and entities).")
+  fDocFormatEntity  := cmdline.Bool     ("doc:format-entities",   strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")),            "Pretty-print supported request and response entities in documentation output.")
+  fDebug            := cmdline.Bool     ("debug",                 strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
+  fColor            := cmdline.Bool     ("color",                 strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal.")
+  fVerbose          := cmdline.Bool     ("verbose",               strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
+  cmdline.Var        (&headerSpecs,      "header",                                                                              "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
+  cmdline.Var        (&serviceSpecs,     "service",                                                                             "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
   cmdline.Parse(os.Args[1:])
   
   debug.DEBUG = *fDebug
   debug.VERBOSE = *fVerbose
+  color.NoColor = !*fColor
   
   var options test.Options
   if *fTrimEntity {
