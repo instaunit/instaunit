@@ -65,7 +65,7 @@ $ instaunit test.yml
 
 Documentation can be generated for the endpoints in your tests by passing the `-gendoc` flag. When set, tests are run and their input and output are automatically incorporated into documentation as examples.
 
-Currently, documentation can be documented as [Markdown](https://en.wikipedia.org/wiki/Markdown) (which, of course, can easily be converted to HTML). We'd be [interested to hear](https://github.com/instaunit/instaunit/issues) about other documentation formats that may be worth supporting.
+Currently, documentation can be generated as [Markdown](https://en.wikipedia.org/wiki/Markdown) (which, of course, can easily be converted to HTML). We'd be [interested to hear](https://github.com/instaunit/instaunit/issues) about other documentation formats that may be worth supporting.
 
 Refer to [`example/docs`](https://github.com/instaunit/instaunit/blob/master/example/docs) for an example of the docs generated for the example tests.
 
