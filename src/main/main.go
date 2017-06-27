@@ -258,7 +258,7 @@ func app() int {
     fmt.Printf(" %d of %d tests failed.\n", failures, tests)
     return 1
   }
-  color.New(color.BgGreen, color.FgWhite).Printf("SUCCESS!")
+  color.New(color.BgGreen, color.FgBlack).Printf("SUCCESS!")
   if tests == 1 {
     fmt.Printf(" The test passed.\n")
   }else{

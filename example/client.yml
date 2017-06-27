@@ -1,10 +1,6 @@
 # These tests run against the mock service
 
 - 
-  # Test cases can have an optional identifier, in which case subsequent
-  # tests can refer to the response from this test.
-  id: first
-  
   request:
     method: GET
     url: /projects/${std.RandomString(10)}/detail

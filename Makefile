@@ -1,6 +1,6 @@
 
 # the product we're building
-NAME := hunit
+NAME := instaunit
 # the product's main package
 MAIN := ./src/main
 # fix our gopath

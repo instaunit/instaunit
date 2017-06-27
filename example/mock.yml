@@ -1,16 +1,22 @@
 
 # A mock endpoint that will respond for: `GET /projects/*/detail`
 - 
+  # This is the endpoint we will respond for
   endpoint:
-    # The HTTP methods to accept
+    # The HTTP methods to accept. You can specify as many as you like.
     methods:
       - GET
-    # The path to match for this endpoint
+    # The path to match for this endpoint. You can use the  wildcards
+    # '*' to match a whole path component and '?' to match a single
+    # non-slash character. The full details of path matching are
+    # described here: https://golang.org/pkg/path/#Match
     path: /projects/*/detail
-    # Arbitrary headers to require in order to match this request
+    # We can require that arbitrary headers are set in order for the
+    # request to match this endpoint.
     headers:
       Origin: localhost
   
+  # This is the response we send back
   response:
     # The status code sent in our response.
     status: 200

@@ -14,11 +14,11 @@ doc: |
     * The second example thing,
     * The third and final example thing.
   
-  Read more about [HUnit](https://github.com/bww/hunit).
+  Read more about [Instaunit](https://github.com/instaunit/instaunit).
 
 # We can define a variety of options for running tests in this suite and
 # generating documentation. Generally speaking, these options override their
-# global counterparts which are set when running HUnit.
+# global counterparts which are set when running Instaunit.
 options:
   # Pretty-print supported entity types in generated documentation to make
   # them more legible since services generally return a much more compactly
@@ -54,7 +54,7 @@ options:
 # begin this document as a sequence of tests.
 tests:
   
-  # This one is pretty self-explanatory and should pass
+  # This test is just a test. It's pretty self-explanatory and should pass.
   - 
     # Test cases can have an optional identifier, in which case subsequent
     # tests can refer to the response from this test.
@@ -69,9 +69,9 @@ tests:
       # The HTTP method to use
       method: GET
       # The URL to make our request to. You can also provide a relative URL and
-      # set the -base-url flag when running HUnit to specify a base for all
+      # set the -base-url flag when running Instaunit to specify a base for all
       # relative URLs. Absolute URLs (those with a scheme) will not be affected.
-      url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+      url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/entity.txt
       # Arbitrary headers to set in our request
       headers:
         Origin: localhost
@@ -93,7 +93,7 @@ tests:
         response from the
         server.
 
-  # This test is documented and should succeed
+  # This test is also documented and should succeed.
   - 
     # Generate documentation for this endpoint, using the request and response
     # as examples, if the -gendoc flag is set.
@@ -110,7 +110,7 @@ tests:
       Fetch the *entity text* from Github.
       
       The entity text is just some example text used to illustrate how literal
-      entites can be compared in a test case using [*HUnit*](https://github.com/bww/hunit).
+      entites can be compared in a test case using [*Instaunit*](https://github.com/instaunit/instaunit).
     
     # If a documentation title is provided, it is used to describe the endpoint
     # in generated documentation. If omitted, the endpoint is inferred from the
@@ -119,7 +119,7 @@ tests:
     
     request:
       method: GET
-      url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+      url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/entity.txt
       headers:
         Origin: localhost
     
@@ -141,7 +141,7 @@ tests:
     
     request:
       method: GET
-      url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.txt
+      url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/entity.txt
       # Automatically generate the `Authorization` header for a Basic HTTP Auth
       # request using the provided username and password.
       headers:
@@ -176,7 +176,7 @@ tests:
     
     request:
       method: GET
-      url: https://raw.githubusercontent.com/bww/hunit/master/example/entity.json
+      url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/entity.json
       headers:
         Origin: localhost
     
