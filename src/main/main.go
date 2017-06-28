@@ -249,16 +249,16 @@ func app() int {
   
   fmt.Println()
   if errors > 0 {
-    color.New(color.BgRed, color.FgWhite).Printf("ERRORS!")
+    color.New(color.BgRed, color.Bold, color.FgBlack).Printf(" ERRORS! ")
     fmt.Printf(" %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
     return 1
   }
   if !success {
-    color.New(color.BgRed, color.FgWhite).Printf("FAILURES!")
+    color.New(color.BgRed, color.Bold, color.FgBlack).Printf(" FAILURES! ")
     fmt.Printf(" %d of %d tests failed.\n", failures, tests)
     return 1
   }
-  color.New(color.BgGreen, color.FgBlack).Printf("SUCCESS!")
+  color.New(color.BgGreen, color.Bold, color.FgBlack).Printf(" SUCCESS! ")
   if tests == 1 {
     fmt.Printf(" The test passed.\n")
   }else{
