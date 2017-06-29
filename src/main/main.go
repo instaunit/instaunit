@@ -25,8 +25,6 @@ import (
 var (
   colorErr    = []color.Attribute{color.FgYellow}
   colorSuite  = []color.Attribute{color.Bold}
-  colorOk     = []color.Attribute{color.FgCyan}
-  colorFail   = []color.Attribute{color.FgRed}
   colorDetail = []color.Attribute{color.Faint}
 )
 
@@ -152,6 +150,7 @@ func app() int {
   }
   
   success := true
+  start := time.Now()
   for _, e := range cmdline.Args() {
     base := path.Base(e)
     color.New(colorSuite...).Printf("====> %v", base)
@@ -220,13 +219,11 @@ func app() int {
     
     var count int
     for _, r := range results {
-      var w *color.Color
       if r.Success {
-        w = color.New(colorOk...)
+        color.New(color.FgCyan).Printf("----> %v", r.Name)
       }else{
-        w = color.New(colorFail...)
+        color.New(color.FgRed).Printf("----> %v", r.Name)
       }
-      w.Printf("----> %v", r.Name)
       tests++
       if !r.Success {
         success = false
@@ -247,19 +244,27 @@ func app() int {
     <- make(chan struct{})
   }
   
+  duration := time.Since(start)
   fmt.Println()
+  
   if errors > 0 {
     color.New(color.BgHiRed, color.Bold, color.FgBlack).Printf(" ERRORS! ")
     fmt.Printf(" %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
     return 1
   }
+  
+  fmt.Printf("Finished in %v.\n\n", duration)
+  
   if !success {
     color.New(color.BgHiRed, color.Bold, color.FgBlack).Printf(" FAIL! ")
     fmt.Printf(" %d of %d tests failed.\n", failures, tests)
     return 1
   }
+  
   color.New(color.BgHiGreen, color.Bold, color.FgBlack).Printf(" PASS! ")
-  if tests == 1 {
+  if tests == 0 {
+    fmt.Printf(" Hmm, nothing to do, really...\n")
+  }else if tests == 1 {
     fmt.Printf(" The test passed.\n")
   }else{
     fmt.Printf(" All %d tests passed.\n", tests)
