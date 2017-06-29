@@ -3,6 +3,7 @@ package rest
 import (
   "io"
   "time"
+  "net/url"
   "io/ioutil"
 )
 
@@ -17,6 +18,8 @@ type Request struct {
   Methods     []string            `yaml:"methods"`
   methods     map[string]struct{}
   Path        string              `yaml:"path"`
+  path        string
+  params      url.Values
   Headers     map[string]string   `yaml:"headers"`
   Entity      string              `yaml:"entity"`
 }

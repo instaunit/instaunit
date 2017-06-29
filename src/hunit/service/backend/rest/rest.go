@@ -6,6 +6,8 @@ import (
   "path"
   "strings"
   "strconv"
+  "reflect"
+  "net/url"
   "net/http"
   "hunit/service"
 )
@@ -72,20 +74,35 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
   // match endpoints
   for _, e := range s.suite.Endpoints {
     if r := e.Request; r != nil {
+      
       if r.methods == nil {
         r.methods = make(map[string]struct{})
         for _, x := range r.Methods {
           r.methods[strings.ToLower(x)] = struct{}{}
         }
       }
+      
+      if r.params == nil {
+        r.params = make(url.Values)
+        u, err := url.Parse(r.Path)
+        if err == nil {
+          r.params = u.Query()
+          r.path = u.Path
+        }else{
+          r.path = r.Path // just use the full path for matching if the path doesn't parse
+        }
+      }
+      
       if _, ok := r.methods[strings.ToLower(req.Method)]; ok {
-        if match, err := path.Match(r.Path, req.URL.Path); err != nil {
+        match, err := path.Match(r.path, req.URL.Path)
+        if err != nil {
           fmt.Printf("* * * Invalid path pattern: %v: %v\n", req.URL, err)
-        }else if match {
+        }else if match && paramsMatch(r.params, req.URL.Query()) {
           s.handleRequest(rsp, req, e)
           return
         }
       }
+      
     }
   }
   
@@ -117,4 +134,18 @@ func (s *restService) handleRequest(rsp http.ResponseWriter, req *http.Request, 
       }
     }
   }
+}
+
+// All the parameters in a must be present in b; b may have extra params
+func paramsMatch(a, b url.Values) bool {
+  for k, v := range a {
+    c, ok := b[k]
+    if !ok {
+      return false
+    }
+    if !reflect.DeepEqual(v, c) {
+      return false
+    }
+  }
+  return true
 }

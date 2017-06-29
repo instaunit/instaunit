@@ -32,3 +32,23 @@
         "depth": 475,
         "in_stock": true
       }
+
+# This one will respond for: `GET /users/*?pretty=true`
+- 
+  endpoint:
+    methods:
+      - GET
+    # The path to match for this endpoint. We can require that certain
+    # parameters are matched in order to match this path. If the patch
+    # matches but the query string does not, we'll get a 404.
+    path: /users/*?pretty=true
+  
+  # This is the response we send back
+  response:
+    status: 200
+    headers:
+      Content-Type: application/json; charset=utf-8
+    entity: |
+      {
+        "name": "Joe Blow"
+      }
