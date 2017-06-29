@@ -189,16 +189,12 @@ func RunTest(c test.Case, context Context) (*Result, error) {
     req.Header.Add("Content-Length", strconv.FormatInt(int64(len(reqdata)), 10))
   }
   
-  if (context.Options & (test.OptionDisplayRequests | test.OptionDisplayResponses)) != 0 {
-    fmt.Println()
-  }
-  if (context.Options & test.OptionDisplayRequests) == test.OptionDisplayRequests {
-    b := &bytes.Buffer{}
-    err = text.WriteRequest(b, req, reqdata)
-    if err != nil {
-      return result.Error(err), nil
-    }
-    fmt.Println(text.Indent(string(b.Bytes()), "> "))
+  reqbuf := &bytes.Buffer{}
+  err = text.WriteRequest(reqbuf, req, reqdata)
+  if err != nil {
+    return result.Error(err), nil
+  }else{
+    result.Reqdata = reqbuf.Bytes()
   }
   
   rsp, err := client.Do(req)
@@ -276,18 +272,16 @@ func RunTest(c test.Case, context Context) (*Result, error) {
     }
   }
   
-  if (context.Options & test.OptionDisplayResponses) == test.OptionDisplayResponses {
-		b := &bytes.Buffer{}
-		err = text.WriteResponse(b, rsp, rspdata)
-    if err != nil {
-      return result.Error(err), nil
-    }
-    fmt.Println(text.Indent(string(b.Bytes()), "< "))
+	rspbuf := &bytes.Buffer{}
+	err = text.WriteResponse(rspbuf, rsp, rspdata)
+  if err != nil {
+    return result.Error(err), nil
+  }else{
+    result.Rspdata = rspbuf.Bytes()
   }
   
   // add to our context if we have an identifier
   if c.Id != "" {
-    
     headers := make(map[string]string)
     for k, v := range rsp.Header {
       if len(v) > 0 {
@@ -304,7 +298,6 @@ func RunTest(c test.Case, context Context) (*Result, error) {
         "status": rsp.StatusCode,
       },
     }
-    
   }
   
   // generate documentation if necessary

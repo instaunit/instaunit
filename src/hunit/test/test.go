@@ -16,6 +16,8 @@ const (
   OptionInterpolateVariables          = 1 << 2
   OptionDisplayRequests               = 1 << 3
   OptionDisplayResponses              = 1 << 4
+  OptionDisplayRequestsOnFailure      = 1 << 5
+  OptionDisplayResponsesOnFailure     = 1 << 6
 )
 
 /**

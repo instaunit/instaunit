@@ -81,6 +81,9 @@ func app() int {
     options |= test.OptionDisplayRequests | test.OptionDisplayResponses
   }
   
+  options |= test.OptionDisplayRequestsOnFailure
+  options |= test.OptionDisplayResponsesOnFailure
+  
   var config test.Config
   if *fDocInclHTTP {
     config.Doc.IncludeHTTP = true
@@ -232,8 +235,23 @@ func app() int {
       if r.Errors != nil {
         for _, e := range r.Errors {
           count++
-          fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %v\n", count, e), "             ", 0))
+          fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %v", count, e), "             ", 0))
+          fmt.Println()
         }
+      }
+      preq := (options & test.OptionDisplayRequests) == test.OptionDisplayRequests || (!r.Success && (options & test.OptionDisplayRequestsOnFailure) == test.OptionDisplayRequestsOnFailure)
+      prsp := (options & test.OptionDisplayResponses) == test.OptionDisplayResponses || (!r.Success && (options & test.OptionDisplayResponsesOnFailure) == test.OptionDisplayResponsesOnFailure)
+      if preq {
+        fmt.Println(text.Indent(string(r.Reqdata), "      > "))
+      }
+      if preq && prsp {
+        fmt.Println("      * ")
+      }
+      if prsp {
+        fmt.Println(text.Indent(string(r.Rspdata), "      < "))
+      }
+      if preq || prsp {
+        fmt.Println("\n")
       }
     }
     

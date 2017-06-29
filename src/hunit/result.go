@@ -4,9 +4,10 @@ package hunit
  * A test result
  */
 type Result struct {
-  Name      string
-  Success   bool
-  Errors    []error
+  Name              string
+  Success           bool
+  Errors            []error
+  Reqdata, Rspdata  []byte
 }
 
 /**
