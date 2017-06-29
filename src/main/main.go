@@ -239,8 +239,8 @@ func app() int {
           fmt.Println()
         }
       }
-      preq := (options & test.OptionDisplayRequests) == test.OptionDisplayRequests || (!r.Success && (options & test.OptionDisplayRequestsOnFailure) == test.OptionDisplayRequestsOnFailure)
-      prsp := (options & test.OptionDisplayResponses) == test.OptionDisplayResponses || (!r.Success && (options & test.OptionDisplayResponsesOnFailure) == test.OptionDisplayResponsesOnFailure)
+      preq := len(r.Reqdata) > 0 && ((options & test.OptionDisplayRequests) == test.OptionDisplayRequests || (!r.Success && (options & test.OptionDisplayRequestsOnFailure) == test.OptionDisplayRequestsOnFailure))
+      prsp := len(r.Rspdata) > 0 && ((options & test.OptionDisplayResponses) == test.OptionDisplayResponses || (!r.Success && (options & test.OptionDisplayResponsesOnFailure) == test.OptionDisplayResponsesOnFailure))
       if preq {
         fmt.Println(text.Indent(string(r.Reqdata), "      > "))
       }
