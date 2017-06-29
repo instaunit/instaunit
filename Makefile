@@ -14,9 +14,12 @@ PRODUCT := $(TARGETS)/$(NAME)
 VERSION 				?= $(shell git log --pretty=format:'%h' -n 1)
 RELEASE_TARGETS	 = $(PWD)/target/$(GOOS)_$(GOARCH)
 RELEASE_PRODUCT	 = instaunit-$(VERSION)
-RELEASE_ARCHIVE	 = $(RELEASE_PRODUCT).tgz
+RELEASE_ARCHIVE	 = $(RELEASE_PRODUCT)-$(GOOS)-$(GOARCH).tgz
 RELEASE_PACKAGE	 = $(RELEASE_TARGETS)/$(RELEASE_ARCHIVE)
 RELEASE_BINARY   = $(RELEASE_TARGETS)/$(RELEASE_PRODUCT)/bin/$(NAME)
+
+# build and install
+PREFIX ?= /usr/local
 
 # sources
 SRC = $(shell find src -name \*.go -print)
@@ -26,7 +29,7 @@ TEST_PKGS = hunit \
 						hunit/expr \
 						hunit/text/slug
 
-.PHONY: all test clean release build build_darwin_amd64 build_linux_amd64 build_freebsd_amd64
+.PHONY: all test clean install release build build_darwin_amd64 build_linux_amd64 build_freebsd_amd64
 
 all: build
 
@@ -45,6 +48,9 @@ release: ## Build for all supported architectures
 	make build_release GOOS=darwin GOARCH=amd64
 	make build_release GOOS=linux GOARCH=amd64
 	make build_release GOOS=freebsd GOARCH=amd64
+
+install: build ## Build and install
+	install -m 0755 $(PRODUCT) $(PREFIX)/bin/
 
 test: ## Run tests
 	go test -test.v $(TEST_PKGS)
