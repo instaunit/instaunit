@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# defaults
+formula_path="./instaunit.rb"
+
+# arguments
+while [[ $# -gt 1 ]]; do
+  key="$1"
+  case $key in
+      -v|--version)
+        release_version="$2"
+        shift;;
+      -o|--output)
+        formula_path="$2"
+        shift;;
+      *)
+        break;;
+  esac
+  shift # past argument or value
+done
+
+# make sure we have valid state
+if [ -z "$release_version" ]; then
+  echo "No version specified (use: -v <version>)"
+  exit -1
+fi
+
+# archive
+if [ ! -f "$1" ]; then
+  echo "No archive provided"
+  exit -1
+fi
+
+sha256=$(openssl dgst -sha256 "$1")
+sha256=${sha256#* }
+
+cat <<FORMULA> "$formula_path"
+
+class Instaunit < Formula
+  homepage "https://github.com/instaunit/instaunit"
+  url "https://github.com/instaunit/instaunit/releases/download/${release_version}/instaunit-${release_version}-${GOOS}-${GOARCH}.tgz"
+  sha256 "${sha256}"
+  
+  def install
+    system "make", "install", "PREFIX=#{prefix}"
+  end
+end
+FORMULA

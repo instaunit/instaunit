@@ -43,11 +43,12 @@ $(RELEASE_PACKAGE): $(SRC)
 	(cd $(RELEASE_TARGETS) && tar -zcf $(RELEASE_ARCHIVE) $(RELEASE_PRODUCT))
 
 build_release: $(RELEASE_PACKAGE)
+	if [ "$(GOOS)" = "darwin" ]; then $(PWD)/tools/update-formula -v $(VERSION) -o $(PWD)/formula/instaunit.rb $(RELEASE_PACKAGE); fi
 
 release: ## Build for all supported architectures
-	make build_release GOOS=darwin GOARCH=amd64
 	make build_release GOOS=linux GOARCH=amd64
 	make build_release GOOS=freebsd GOARCH=amd64
+	make build_release GOOS=darwin GOARCH=amd64
 
 install: build ## Build and install
 	install -m 0755 $(PRODUCT) $(PREFIX)/bin/
