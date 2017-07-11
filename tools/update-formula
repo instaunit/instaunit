@@ -43,7 +43,7 @@ class Instaunit < Formula
   version "${release_version}"
   
   def install
-    system "make", "install", "PREFIX=#{prefix}"
+    system "install", "-d", "-m", "0755", "bin", "#{prefix}/bin"
   end
 end
 FORMULA
