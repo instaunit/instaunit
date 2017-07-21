@@ -197,7 +197,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
   
   if req != nil {
     b := &bytes.Buffer{}
-    if conf.Doc.FormatEntities {
+    if len(reqdata) > 0 && conf.Doc.FormatEntities {
       t := text.Coalesce(c.Request.Format, req.Header.Get("Content-Type"))
       f, err := text.FormatEntity([]byte(reqdata), t)
       if err == nil {
@@ -220,7 +220,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
   
   if rsp != nil {
     b := &bytes.Buffer{}
-    if conf.Doc.FormatEntities {
+    if len(rspdata) > 0 && conf.Doc.FormatEntities {
       t := text.Coalesce(c.Response.Format, rsp.Header.Get("Content-Type"))
       f, err := text.FormatEntity(rspdata, t)
       if err == nil {
