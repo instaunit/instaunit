@@ -3,6 +3,7 @@ package markdown
 import (
   "io"
   "fmt"
+  "sort"
   "bytes"
   "strings"
   "net/http"
@@ -138,15 +139,22 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
   
   if c.Params != nil {
     types, maxkey, maxtype := false, 5, 5
-    
     var tmap map[string]string
+    
     params := make(map[string]string)
+    keys := make([]string, len(c.Params))
+    i := 0
+    for k, _ := range c.Params {
+      keys[i] = k; i++
+    }
+    sort.Strings(keys)
+    
     for k, v := range c.Params {
       t := strings.TrimSpace(k)
+      v  = strings.TrimSpace(v)
       if l := len(t); l > maxkey {
         maxkey = l
       }
-      v = strings.TrimSpace(v)
       if v[0] == '`' {
         types = true
         x := strings.Index(v[1:], "`") + 1
@@ -176,11 +184,13 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
       f = fmt.Sprintf("| %%%ds | %%5s |\n", maxkey)
     }
     
-    for k, v := range params {
+    for _, k := range keys {
+      t := strings.TrimSpace(k)
+      v := strings.TrimSpace(params[k])
       if types {
-        doc += fmt.Sprintf(f, strings.TrimSpace(k), tmap[k], strings.TrimSpace(v))
+        doc += fmt.Sprintf(f, "`"+ t +"`", tmap[k], v)
       }else{
-        doc += fmt.Sprintf(f, strings.TrimSpace(k), strings.TrimSpace(v))
+        doc += fmt.Sprintf(f, "`"+ t +"`", v)
       }
     }
   }

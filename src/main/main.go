@@ -164,7 +164,7 @@ func app() int {
       fmt.Println()
       color.New(colorErr...).Printf("* * * Could not load test suite: %v\n", err)
       errors++
-      continue
+      break
     }
     
     if suite.Title != "" {
@@ -257,7 +257,7 @@ func app() int {
     
   }
   
-  if tests < 1 && services > 0 {
+  if tests < 1 && errors < 1 && services > 0 {
     color.New(colorSuite...).Println("====> No tests; running services until we're interrupted...")
     <- make(chan struct{})
   }
