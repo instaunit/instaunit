@@ -2,6 +2,7 @@ package runtime
 
 import (
   "fmt"
+  "net/url"
   "strings"
 )
 
@@ -30,4 +31,14 @@ func (s stdlib) RandomIdent() string {
 func (s stdlib) RandomName() string {
   n := PersonName(2)
   return fmt.Sprintf("%s %s", strings.Title(n[0]), strings.Title(n[1]))
+}
+
+// Escape a URL query component
+func (s stdlib) QueryEscape(v string) string {
+  return url.QueryEscape(v)
+}
+
+// Unescape a URL component
+func (s stdlib) QueryUnescape(v string) (string, error) {
+  return url.QueryUnescape(v)
 }
