@@ -28,9 +28,23 @@ func (s stdlib) RandomIdent() string {
 }
 
 // Generate a random person name
-func (s stdlib) RandomName() string {
-  n := PersonName(2)
-  return fmt.Sprintf("%s %s", strings.Title(n[0]), strings.Title(n[1]))
+func (s stdlib) RandomPersonName() string {
+  return fmt.Sprintf("%s %s", strings.Title(firstName()), strings.Title(lastName()))
+}
+
+// Generate a random person first name
+func (s stdlib) RandomFirstName() string {
+  return strings.Title(firstName())
+}
+
+// Generate a random scientist last name
+func (s stdlib) RandomLastName() string {
+  return strings.Title(lastName())
+}
+
+// Generate a random name
+func (s stdlib) RandomCompanyName() string {
+  return companyName()
 }
 
 // Escape a URL query component
