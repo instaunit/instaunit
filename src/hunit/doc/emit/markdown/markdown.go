@@ -136,6 +136,55 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
     doc += strings.TrimSpace(c.Comments) +"\n\n"
   }
   
+  if c.Params != nil {
+    types, maxkey, maxtype := false, 5, 5
+    
+    var tmap map[string]string
+    params := make(map[string]string)
+    for k, v := range c.Params {
+      t := strings.TrimSpace(k)
+      if l := len(t); l > maxkey {
+        maxkey = l
+      }
+      v = strings.TrimSpace(v)
+      if v[0] == '`' {
+        types = true
+        x := strings.Index(v[1:], "`") + 1
+        if x > maxtype {
+          maxtype = x
+        }
+        if tmap == nil {
+          tmap = make(map[string]string)
+        }
+        tmap[k] = v[:x+1]
+        params[k] = v[x+1:]
+      }else{
+        params[k] = v
+      }
+    }
+    
+    doc += "### Query Parameters\n"
+    
+    var f string
+    if types {
+      doc += "| Param | Type | Detail |\n"
+      doc += "|-------|------|--------|\n"
+      f = fmt.Sprintf("| %%%ds | %%%ds | %%5s |\n", maxkey, maxtype)
+    }else{
+      doc += "| Param | Detail |\n"
+      doc += "|-------|--------|\n"
+      f = fmt.Sprintf("| %%%ds | %%5s |\n", maxkey)
+    }
+    
+    for k, v := range params {
+      if types {
+        doc += fmt.Sprintf(f, strings.TrimSpace(k), tmap[k], strings.TrimSpace(v))
+      }else{
+        doc += fmt.Sprintf(f, strings.TrimSpace(k), strings.TrimSpace(v))
+      }
+    }
+  }
+  
   if req != nil {
     b := &bytes.Buffer{}
     if conf.Doc.FormatEntities {

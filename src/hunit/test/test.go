@@ -61,6 +61,7 @@ type Case struct {
   Gendoc    bool                  `yaml:"gendoc"`
   Title     string                `yaml:"title"`
   Comments  string                `yaml:"doc"`
+  Params    map[string]string     `yaml:"params"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
 }
