@@ -25,7 +25,6 @@ import (
 var (
   colorErr    = []color.Attribute{color.FgYellow}
   colorSuite  = []color.Attribute{color.Bold}
-  colorDetail = []color.Attribute{color.Faint}
 )
 
 /**
