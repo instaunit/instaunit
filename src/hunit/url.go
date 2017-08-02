@@ -27,10 +27,6 @@ func mergeQueryParams(u string, p map[string]string, c Context) (string, error) 
   
   q := v.Query()
   for k, v := range p {
-    k, err = interpolateIfRequired(c, k)
-    if err != nil {
-      return "", err
-    }
     v, err = interpolateIfRequired(c, v)
     if err != nil {
       return "", err
