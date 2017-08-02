@@ -64,6 +64,7 @@ type Case struct {
   Params    map[string]string     `yaml:"params"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
+  Vars      map[string]string     `yaml:"vars"`
 }
 
 /**

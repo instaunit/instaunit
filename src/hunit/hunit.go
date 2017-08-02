@@ -15,6 +15,8 @@ import (
   "encoding/base64"
 )
 
+const localVarsId = "vars"
+
 /**
  * HTTP client
  */
@@ -99,6 +101,23 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   // start with an unevaluated result
   result := &Result{Name:fmt.Sprintf("%v %v\n", c.Request.Method, c.Request.URL), Success:true}
   
+  // process variables first, they can be referenced by this case, itself
+  for k, v := range c.Vars {
+    e, err := interpolateIfRequired(context, v)
+    if err != nil {
+      return result.Error(err), nil
+    }
+    var vars map[string]interface{}
+    if x, ok := context.Variables[localVarsId]; ok {
+      vars = x.(map[string]interface{})
+    }else{
+      vars = make(map[string]interface{})
+      context.Variables[localVarsId] = vars
+    }
+    vars[k] = e
+  }
+  
+  // update the method
   method, err := interpolateIfRequired(context, c.Request.Method)
   if err != nil {
     return result.Error(err), nil
