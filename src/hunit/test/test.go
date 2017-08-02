@@ -35,6 +35,7 @@ type Request struct {
   Method      string              `yaml:"method"`
   URL         string              `yaml:"url"`
   Headers     map[string]string   `yaml:"headers"`
+  Params      map[string]string   `yaml:"params"`
   Entity      string              `yaml:"entity"`
   Format      string              `yaml:"format"`
   BasicAuth   *BasicCredentials   `yaml:"basic-auth"`
