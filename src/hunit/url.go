@@ -15,7 +15,7 @@ func isAbsoluteURL(u string) bool {
 }
 
 // Merge query parameters with a map
-func mergeQueryParams(u string, p map[string]string) (string, error) {
+func mergeQueryParams(u string, p map[string]string, c Context) (string, error) {
   if len(p) < 1 {
     return u, nil
   }
@@ -27,6 +27,14 @@ func mergeQueryParams(u string, p map[string]string) (string, error) {
   
   q := v.Query()
   for k, v := range p {
+    k, err = interpolateIfRequired(c, k)
+    if err != nil {
+      return "", err
+    }
+    v, err = interpolateIfRequired(c, v)
+    if err != nil {
+      return "", err
+    }
     q.Add(k, v)
   }
   

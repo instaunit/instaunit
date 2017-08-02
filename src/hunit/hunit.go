@@ -135,11 +135,12 @@ func RunTest(c test.Case, context Context) (*Result, error) {
     url = joinPath(context.BaseURL, c.Request.URL)
   }
   
-  if len(c.Params) > 0 {
-    url, err = mergeQueryParams(url, c.Params)
+  if len(c.Request.Params) > 0 {
+    url, err = mergeQueryParams(url, c.Request.Params, context)
     if err != nil {
       return result.Error(err), nil
     }
+    fmt.Println("YO YO YO", url)
   }
   
   // incrementally update the name as we evaluate it
