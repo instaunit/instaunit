@@ -7,7 +7,20 @@ import (
 )
 
 /**
- * Test UUID resemblance
+ * Test URL resemblance
+ */
+func TestAbsoluteURL(t *testing.T) {
+  assert.Equal(t, true, isAbsoluteURL("http://host"))
+  assert.Equal(t, true, isAbsoluteURL("http://"))
+  assert.Equal(t, true, isAbsoluteURL("a://"))
+  assert.Equal(t, false, isAbsoluteURL("file"))
+  assert.Equal(t, false, isAbsoluteURL("://"))
+  assert.Equal(t, false, isAbsoluteURL("a//"))
+  assert.Equal(t, false, isAbsoluteURL("a:/"))
+}
+
+/**
+ * Test merge query strings
  */
 func TestURLMergeQuery(t *testing.T) {
   r, err := mergeQueryParams("file", map[string]string{"a":"b", "c":"d"})
