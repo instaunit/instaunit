@@ -4,4 +4,6 @@ build/
 **/dist/
 **/target/
 
+*.swp
+
 .DS_Store

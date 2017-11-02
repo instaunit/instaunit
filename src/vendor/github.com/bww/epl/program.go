@@ -719,9 +719,7 @@ func (n *indexNode) exec(runtime *Runtime, context *context) (interface{}, error
   switch deref.Kind() {
     case reflect.String: // character index
       return n.execString(runtime, context, deref, val)
-    case reflect.Array:
-      return n.execArray(runtime, context, deref, val)
-    case reflect.Slice:
+    case reflect.Array, reflect.Slice:
       return n.execArray(runtime, context, deref, val)
     case reflect.Map:
       return n.execMap(runtime, context, deref, val)
@@ -774,7 +772,7 @@ func (n *indexNode) execArray(runtime *Runtime, context *context, val reflect.Va
 func (n *indexNode) execMap(runtime *Runtime, context *context, val reflect.Value, key reflect.Value) (interface{}, error) {
   
   if !key.Type().AssignableTo(val.Type().Key()) {
-    return nil, runtimeErrorf(n.span, "Expression result is not assignable to map key type: %v != %v", key.Type(), val.Type().Key())
+    return nil, runtimeErrorf(n.span, "Expression result is not assignable to map key type: %v != %v for %v", key.Type(), val.Type().Key(), val.Type())
   }
   
   return val.MapIndex(key).Interface(), nil
