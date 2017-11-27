@@ -56,3 +56,23 @@ func (s stdlib) QueryEscape(v string) string {
 func (s stdlib) QueryUnescape(v string) (string, error) {
   return url.QueryUnescape(v)
 }
+
+// Convert a string to lowercase
+func (s stdlib) ToLower(v string) string {
+  return strings.ToLower(v)
+}
+
+// Convert a string to UPPERCASE
+func (s stdlib) ToUpper(v string) string {
+  return strings.ToUpper(v)
+}
+
+// Convert a string to Title Case
+func (s stdlib) ToTitle(v string) string {
+  return strings.ToTitle(v)
+}
+
+// Trim space from both ends of a string
+func (s stdlib) TrimSpace(v string) string {
+  return strings.TrimSpace(v)
+}
