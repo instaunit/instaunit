@@ -48,6 +48,7 @@ type SomeContext struct {
   StringField   string
   IntField      int
   BoolField     bool
+  SliceField    []string
 }
 
 func (c *SomeContext) ErrorMethod() error {
@@ -248,6 +249,7 @@ func TestParse(t *testing.T) {
   // variables using an array subscript operator
   parseAndRun(t, `arr[(0)]`, nil, "Zero")
   parseAndRun(t, `foo.arr[1]`, nil, "One")
+  parseAndRun(t, `foo.cat[0].car`, nil, "Car")
   parseAndRun(t, `foo["arr"][2]`, nil, "Two")
   
   // variables using a string subscript operator
@@ -324,6 +326,7 @@ func parseAndRun(t *testing.T, source string, context interface{}, result interf
       "fix": [3]string{},
       "foo": map[string]interface{}{
         "arr": []string{ "Zero", "One", "Two", "Three" },
+        "cat": []map[string]interface{}{ map[string]interface{}{"car": "Car"} },
         "bat": "This is the value",
         "bar": map[string]interface{}{
           "zar": "Here's the other value",

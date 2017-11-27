@@ -772,7 +772,7 @@ func (n *indexNode) execArray(runtime *Runtime, context *context, val reflect.Va
 func (n *indexNode) execMap(runtime *Runtime, context *context, val reflect.Value, key reflect.Value) (interface{}, error) {
   
   if !key.Type().AssignableTo(val.Type().Key()) {
-    return nil, runtimeErrorf(n.span, "Expression result is not assignable to map key type: %v != %v for %v", key.Type(), val.Type().Key(), val.Type())
+    return nil, runtimeErrorf(n.span, "Expression result is not assignable to map key type: %v != %v", key.Type(), val.Type().Key())
   }
   
   return val.MapIndex(key).Interface(), nil
