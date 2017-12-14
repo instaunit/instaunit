@@ -8,6 +8,7 @@ import (
 
 import (
   "github.com/bww/go-util/rand"
+  "github.com/bww/go-util/uuid"
 )
 
 // The standard library
@@ -45,6 +46,11 @@ func (s stdlib) RandomLastName() string {
 // Generate a random name
 func (s stdlib) RandomCompanyName() string {
   return companyName()
+}
+
+// Generate a random (v4) UUID
+func (s stdlib) RandomUUID() string {
+  return uuid.New().String()
 }
 
 // Escape a URL query component
