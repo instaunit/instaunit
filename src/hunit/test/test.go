@@ -4,6 +4,10 @@ import (
   "time"
 )
 
+import (
+  "gopkg.in/yaml.v2"
+)
+
 /**
  * Options
  */
@@ -65,7 +69,7 @@ type Case struct {
   Params    map[string]string     `yaml:"params"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
-  Vars      map[string]string     `yaml:"vars"`
+  Vars      yaml.MapSlice         `yaml:"vars"`
 }
 
 /**

@@ -102,7 +102,8 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   result := &Result{Name:fmt.Sprintf("%v %v\n", c.Request.Method, c.Request.URL), Success:true}
   
   // process variables first, they can be referenced by this case, itself
-  for k, v := range c.Vars {
+  for _, e := range c.Vars {
+    k, v := e.Key.(string), e.Value.(string)
     e, err := interpolateIfRequired(context, v)
     if err != nil {
       return result.Error(err), nil
