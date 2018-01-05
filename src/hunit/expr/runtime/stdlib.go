@@ -4,9 +4,11 @@ import (
   "fmt"
   "net/url"
   "strings"
+  "reflect"
 )
 
 import (
+  "github.com/bww/epl"
   "github.com/bww/go-util/rand"
   "github.com/bww/go-util/uuid"
 )
@@ -81,4 +83,54 @@ func (s stdlib) ToTitle(v string) string {
 // Trim space from both ends of a string
 func (s stdlib) TrimSpace(v string) string {
   return strings.TrimSpace(v)
+}
+
+// Take any element from a collection
+func (s stdlib) Any(v interface{}) (interface{}, error) {
+  val := reflect.Indirect(reflect.ValueOf(v))
+  switch val.Kind() {
+    case reflect.Array, reflect.Slice:
+      if val.Len() > 0 { return val.Index(0).Interface(), nil }
+    case reflect.Chan:
+      if x, ok := val.TryRecv(); ok { return x.Interface(), nil }
+    case reflect.String:
+      if s := v.(string); len(s) > 0 { return s[0], nil }
+    default:
+      return nil, fmt.Errorf("Invalid type: %T", v)
+  }
+  return nil, nil // no elements
+}
+
+// Filter elements
+func (s stdlib) Filter(v interface{}, f string) ([]interface{}, error) {
+  val := reflect.Indirect(reflect.ValueOf(v))
+  switch val.Kind() {
+    case reflect.Array, reflect.Slice: // Cool
+    default:
+      return nil, fmt.Errorf("Invalid type: %T", v)
+  }
+  
+  prg, err := epl.Compile(f)
+  if err != nil {
+    return nil, fmt.Errorf("Invalid filter:\n%v", err)
+  }
+  
+  sub := make([]interface{}, 0)
+  for i := 0; i < val.Len(); i++ {
+    e := val.Index(i)
+    x := e.Interface()
+    res, err := prg.Exec(x)
+    if err != nil {
+      return nil, fmt.Errorf("Could not filter:\n%v", err)
+    }
+    match, ok := res.(bool)
+    if !ok {
+      return nil, fmt.Errorf("Invalid filter result type: %T", res)
+    }
+    if match {
+      sub = append(sub, x)
+    }
+  }
+  
+  return sub, nil
 }
