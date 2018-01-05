@@ -15,6 +15,10 @@ import (
   "encoding/base64"
 )
 
+import (
+  gtext "github.com/bww/go-util/text"
+)
+
 const localVarsId = "vars"
 
 /**
@@ -103,7 +107,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   
   // process variables first, they can be referenced by this case, itself
   for _, e := range c.Vars {
-    k, v := e.Key.(string), e.Value.(string)
+    k, v := e.Key.(string), gtext.Stringer(e.Value)
     e, err := interpolateIfRequired(context, v)
     if err != nil {
       return result.Error(err), nil
