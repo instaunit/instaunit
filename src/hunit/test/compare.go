@@ -4,9 +4,7 @@ import (
   "fmt"
 )
 
-/**
- * Comparison types
- */
+// Comparison types
 type Comparison uint32
 
 const (
@@ -19,9 +17,7 @@ var comparisonNames = []string{
   "semantic",
 }
 
-/**
- * Stringer
- */
+// Stringer
 func (c Comparison) String() string {
   if c < 0 || c > CompareSemantic {
     return "<invalid>"
@@ -30,16 +26,12 @@ func (c Comparison) String() string {
   }
 }
 
-/**
- * Marshal
- */
+// Marshal
 func (c Comparison) MarshalYAML() (interface{}, error) {
   return c.String(), nil
 }
 
-/**
- * Unmarshal
- */
+// Unmarshal
 func (c *Comparison) UnmarshalYAML(unmarshal func(interface{}) error) error {
   var s string
   err := unmarshal(&s)

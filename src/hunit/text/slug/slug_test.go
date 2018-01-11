@@ -5,9 +5,7 @@ import (
   "github.com/stretchr/testify/assert"
 )
 
-/**
- * Test interpolate
- */
+// Test interpolate
 func TestGithubSlug(t *testing.T) {
   var s string
   var c map[string]int

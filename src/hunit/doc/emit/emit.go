@@ -4,9 +4,7 @@ import (
   "fmt"
 )
 
-/**
- * Documentation format type
- */
+// Documentation format type
 type Doctype uint32
 
 const (
@@ -25,9 +23,7 @@ var doctypeExts = []string{
   ".???",
 }
 
-/**
- * Parse a doctype
- */
+// Parse a doctype
 func ParseDoctype(s string) (Doctype, error) {
   switch s {
     case "markdown":
@@ -37,9 +33,7 @@ func ParseDoctype(s string) (Doctype, error) {
   }
 }
 
-/**
- * Extension
- */
+// Extension
 func (c Doctype) Ext() string {
   if c < 0 || c >= DoctypeInvalid {
     return ""
@@ -48,9 +42,7 @@ func (c Doctype) Ext() string {
   }
 }
 
-/**
- * Stringer
- */
+// Stringer
 func (c Doctype) String() string {
   if c < 0 || c >= DoctypeInvalid {
     return "<invalid>"
@@ -59,16 +51,12 @@ func (c Doctype) String() string {
   }
 }
 
-/**
- * Marshal
- */
+// Marshal
 func (d Doctype) MarshalYAML() (interface{}, error) {
   return d.String(), nil
 }
 
-/**
- * Unmarshal
- */
+// Unmarshal
 func (d *Doctype) UnmarshalYAML(unmarshal func(interface{}) error) error {
   var s string
   err := unmarshal(&s)

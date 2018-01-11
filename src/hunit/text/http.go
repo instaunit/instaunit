@@ -8,9 +8,7 @@ import (
   "net/http"
 )
 
-/**
- * Write a request to the specified output
- */
+// Write a request to the specified output
 func WriteRequest(w io.Writer, req *http.Request, entity string) error {
   var dump string
   
@@ -44,9 +42,7 @@ func WriteRequest(w io.Writer, req *http.Request, entity string) error {
   return nil
 }
 
-/**
- * Write a response to the specified output
- */
+// Write a response to the specified output
 func WriteResponse(w io.Writer, rsp *http.Response, entity []byte) error {
   var dump string
   
@@ -76,16 +72,12 @@ func WriteResponse(w io.Writer, rsp *http.Response, entity []byte) error {
   return nil
 }
 
-/**
- * Determine if the provided request has a particular content type
- */
+// Determine if the provided request has a particular content type
 func HasContentType(req *http.Request, t string) bool {
   return MatchesContentType(t, req.Header.Get("Content-Type"))
 }
 
-/**
- * Determine if the provided request has a particular content type
- */
+// Determine if the provided request has a particular content type
 func MatchesContentType(pattern, contentType string) bool {
   
   // trim off the parameters following ';' if we have any

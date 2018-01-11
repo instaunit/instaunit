@@ -9,18 +9,14 @@ import (
   "hunit/doc/emit/markdown"
 )
 
-/**
- * Implemented by documentation generators
- */
+// Implemented by documentation generators
 type Generator interface {
   Init(*test.Suite)(error)
   Case(test.Config, test.Case, *http.Request, string, *http.Response, []byte)(error)
   Finalize(*test.Suite)(error)
 }
 
-/**
- * Create a documentation emitter
- */
+// Create a documentation emitter
 func New(t emit.Doctype, o io.Writer) (Generator, error) {
   switch t {
     case emit.DoctypeMarkdown:

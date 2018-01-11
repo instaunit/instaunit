@@ -6,9 +6,7 @@ import (
   "github.com/bww/go-util/slug"
 )
 
-/**
- * Generate a Github-style anchor slug
- */
+// Generate a Github-style anchor slug
 func Github(t string, c map[string]int) (string, map[string]int) {
   if c == nil {
     c = make(map[string]int)
@@ -33,9 +31,7 @@ func Github(t string, c map[string]int) (string, map[string]int) {
   return s, c
 }
 
-/**
- * Generate a Rails-style anchor slug
- */
+// Generate a Rails-style anchor slug
 func Rails(t string, c map[string]int) (string, map[string]int) {
   if c == nil {
     c = make(map[string]int)

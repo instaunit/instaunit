@@ -11,9 +11,7 @@ import (
   "gopkg.in/yaml.v2"
 )
 
-/**
- * A request
- */
+// A request
 type Request struct {
   Methods     []string            `yaml:"methods"`
   methods     map[string]struct{}
@@ -24,34 +22,26 @@ type Request struct {
   Entity      string              `yaml:"entity"`
 }
 
-/**
- * A response
- */
+// A response
 type Response struct {
   Status      int                 `yaml:"status"`
   Headers     map[string]string   `yaml:"headers"`
   Entity      string              `yaml:"entity"`
 }
 
-/**
- * An endpoint
- */
+// An endpoint
 type Endpoint struct {
   Wait        time.Duration       `yaml:"wait"`
   Request     *Request            `yaml:"endpoint"`
   Response    *Response           `yaml:"response"`
 }
 
-/**
- * A test suite
- */
+// A test suite
 type Suite struct {
   Endpoints   []Endpoint          `yaml:"endpoints"`
 }
 
-/**
- * Load a test suite
- */
+// Load a test suite
 func LoadSuite(src io.ReadCloser) (*Suite, error) {
   suite := &Suite{}
   var ferr error
@@ -79,9 +69,7 @@ func LoadSuite(src io.ReadCloser) (*Suite, error) {
   return suite, nil
 }
 
-/**
- * Return the first non-nil error or nil if there are none.
- */
+// Return the first non-nil error or nil if there are none.
 func coalesce(err ...error) error {
   for _, e := range err {
     if e != nil {

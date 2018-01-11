@@ -27,16 +27,12 @@ var (
   colorSuite  = []color.Attribute{color.Bold}
 )
 
-/**
- * You know what it does
- */
+// You know what it does
 func main() {
   os.Exit(app())
 }
 
-/**
- * You know what it does
- */
+// You know what it does
 func app() int {
   var tests, failures, errors int
   var headerSpecs, serviceSpecs flagList
@@ -289,29 +285,21 @@ func app() int {
   return 0
 }
 
-/**
- * Flag string list
- */
+// Flag string list
 type flagList []string
 
-/**
- * Set a flag
- */
+// Set a flag
 func (s *flagList) Set(v string) error {
   *s = append(*s, v)
   return nil
 }
 
-/**
- * Describe
- */
+// Describe
 func (s *flagList) String() string {
   return fmt.Sprintf("%+v", *s)
 }
 
-/**
- * Pluralize
- */
+// Pluralize
 func plural(v int, s, p string) string {
   if v == 1 {
     return s
@@ -320,9 +308,7 @@ func plural(v int, s, p string) string {
   }
 }
 
-/**
- * Return the first non-empty string from those provided
- */
+// Return the first non-empty string from those provided
 func coalesce(v... string) string {
   for _, e := range v {
     if e != "" {
@@ -332,9 +318,7 @@ func coalesce(v... string) string {
   return ""
 }
 
-/**
- * String to bool
- */
+// String to bool
 func strToBool(s string, d ...bool) bool {
   if s == "" {
     if len(d) > 0 {

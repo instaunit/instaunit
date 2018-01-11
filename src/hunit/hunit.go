@@ -21,14 +21,10 @@ import (
 
 const localVarsId = "vars"
 
-/**
- * HTTP client
- */
+// HTTP client
 var client = http.Client{Timeout: time.Second * 30}
 
-/**
- * A test context
- */
+// A test context
 type Context struct {
   BaseURL   string
   Options   test.Options
@@ -39,9 +35,7 @@ type Context struct {
   Variables map[string]interface{}
 }
 
-/**
- * Derive a subcontext
- */
+// Derive a subcontext
 func (c Context) Subcontext(vars map[string]interface{}) Context {
   return Context{
     BaseURL: c.BaseURL,
@@ -54,9 +48,7 @@ func (c Context) Subcontext(vars map[string]interface{}) Context {
   }
 }
 
-/**
- * Run a test suite
- */
+// Run a test suite
 func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   results := make([]*Result, 0)
   c := context.Subcontext(make(map[string]interface{}))
@@ -92,9 +84,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   return results, nil
 }
 
-/**
- * Run a test case
- */
+// Run a test case
 func RunTest(c test.Case, context Context) (*Result, error) {
   
   // wait if we need to
@@ -345,9 +335,7 @@ func RunTest(c test.Case, context Context) (*Result, error) {
   return result, nil
 }
 
-/**
- * Join paths
- */
+// Join paths
 func joinPath(a, b string) string {
   if a == "" {
     return b

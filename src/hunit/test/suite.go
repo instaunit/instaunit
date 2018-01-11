@@ -9,9 +9,7 @@ import (
   "gopkg.in/yaml.v2"
 )
 
-/**
- * Suite options
- */
+// Suite options
 type Config struct {
   Doc struct {
     AnchorStyle         AnchorStyle `yaml:"anchor-style"`
@@ -22,9 +20,7 @@ type Config struct {
   }                                 `yaml:",inline"`
 }
 
-/**
- * A test suite
- */
+// A test suite
 type Suite struct {
   Title         string      `yaml:"title"`
   Comments      string      `yaml:"doc"`
@@ -32,9 +28,7 @@ type Suite struct {
   Config        Config      `yaml:"options"`
 }
 
-/**
- * Load a test suite
- */
+// Load a test suite
 func LoadSuiteFromFile(c *Config, p string) (*Suite, error) {
   
   file, err := os.Open(p)
@@ -50,9 +44,7 @@ func LoadSuiteFromFile(c *Config, p string) (*Suite, error) {
   return LoadSuite(c, data)
 }
 
-/**
- * Load a test suite
- */
+// Load a test suite
 func LoadSuite(conf *Config, data []byte) (*Suite, error) {
   var ferr error
   
@@ -76,9 +68,7 @@ func LoadSuite(conf *Config, data []byte) (*Suite, error) {
   return suite, nil
 }
 
-/**
- * Return the first non-nil error or nil if there are none.
- */
+// Return the first non-nil error or nil if there are none.
 func coalesce(err ...error) error {
   for _, e := range err {
     if e != nil {

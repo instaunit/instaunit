@@ -8,9 +8,7 @@ import (
   "gopkg.in/yaml.v2"
 )
 
-/**
- * Options
- */
+// Options
 type Options uint32
 
 const (
@@ -24,20 +22,17 @@ const (
   OptionDisplayResponsesOnFailure     = 1 << 6
 )
 
-/**
- * Basic credentials
- */
+// Basic credentials
 type BasicCredentials struct {
   Username    string              `yaml:"username"`
   Password    string              `yaml:"password"`
 }
 
-/**
- * A test request
- */
+// A test request
 type Request struct {
   Method      string              `yaml:"method"`
   URL         string              `yaml:"url"`
+  Upgrade     string              `yaml:"upgrade"`
   Headers     map[string]string   `yaml:"headers"`
   Params      map[string]string   `yaml:"params"`
   Entity      string              `yaml:"entity"`
@@ -45,9 +40,7 @@ type Request struct {
   BasicAuth   *BasicCredentials   `yaml:"basic-auth"`
 }
 
-/**
- * A test response
- */
+// A test response
 type Response struct {
   Status      int                 `yaml:"status"`
   Headers     map[string]string   `yaml:"headers"`
@@ -56,9 +49,16 @@ type Response struct {
   Format      string              `yaml:"format"`
 }
 
-/**
- * A test case
- */
+// A connection message stream
+type Stream []MessageExchange
+
+// A message exchange consisting of zero or one input and zero or one output
+type MessageExchange struct {
+  Input       *string             `yaml:"input"`
+  Output      *string             `yaml:"output"`
+}
+
+// A test case
 type Case struct {
   Id        string                `yaml:"id"`
   Wait      time.Duration         `yaml:"wait"`
@@ -72,9 +72,7 @@ type Case struct {
   Vars      yaml.MapSlice         `yaml:"vars"`
 }
 
-/**
- * Determine if this case is documented or not
- */
+// Determine if this case is documented or not
 func (c Case) Documented() bool {
   return c.Gendoc || c.Title != "" || c.Comments != ""
 }

@@ -4,9 +4,7 @@ import (
   "fmt"
 )
 
-/**
- * Anchor style
- */
+// Anchor style
 type AnchorStyle uint32
 
 const (
@@ -21,9 +19,7 @@ var anchorStyleNames = []string{
   "<invalid>",
 }
 
-/**
- * Parse an anchor style
- */
+// Parse an anchor style
 func ParseAnchorStyle(s string) AnchorStyle {
   switch s {
     case "github":
@@ -35,9 +31,7 @@ func ParseAnchorStyle(s string) AnchorStyle {
   }
 }
 
-/**
- * Stringer
- */
+// Stringer
 func (c AnchorStyle) String() string {
   if c < 0 || c >= AnchorInvalid {
     return "<invalid>"
@@ -46,16 +40,12 @@ func (c AnchorStyle) String() string {
   }
 }
 
-/**
- * Marshal
- */
+// Marshal
 func (c AnchorStyle) MarshalYAML() (interface{}, error) {
   return c.String(), nil
 }
 
-/**
- * Unmarshal
- */
+// Unmarshal
 func (c *AnchorStyle) UnmarshalYAML(unmarshal func(interface{}) error) error {
   var s string
   err := unmarshal(&s)

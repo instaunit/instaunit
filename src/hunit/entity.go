@@ -8,9 +8,7 @@ import (
   "encoding/json"
 )
 
-/**
- * Compare entities for equality
- */
+// Compare entities for equality
 func entitiesEqual(context Context, comparison test.Comparison, contentType string, expected []byte, actual interface{}) error {
   if comparison == test.CompareSemantic {
     return semanticEntitiesEqual(context, contentType, expected, actual)
@@ -19,9 +17,7 @@ func entitiesEqual(context Context, comparison test.Comparison, contentType stri
   }
 }
 
-/**
- * Compare entities for equality
- */
+// Compare entities for equality
 func literalEntitiesEqual(context Context, contentType string, expected []byte, actual interface{}) error {
   var e, a interface{}
   var ok bool
@@ -46,9 +42,7 @@ func literalEntitiesEqual(context Context, contentType string, expected []byte, 
   }
 }
 
-/**
- * Compare entities for equality
- */
+// Compare entities for equality
 func semanticEntitiesEqual(context Context, contentType string, expected []byte, actual interface{}) error {
   
   e, err := unmarshalEntity(context, contentType, expected)
@@ -63,9 +57,7 @@ func semanticEntitiesEqual(context Context, contentType string, expected []byte,
   }
 }
 
-/**
- * Unmarshal an entity
- */
+// Unmarshal an entity
 func unmarshalEntity(context Context, contentType string, entity []byte) (interface{}, error) {
   
   // trim off the parameters following ';' if we have any
@@ -82,9 +74,7 @@ func unmarshalEntity(context Context, contentType string, entity []byte) (interf
   
 }
 
-/**
- * Unmarshal a JSON entity
- */
+// Unmarshal a JSON entity
 func unmarshalJSONEntity(context Context, entity []byte) (interface{}, error) {
   if entity == nil || len(entity) < 1 {
     return nil, nil
@@ -97,9 +87,7 @@ func unmarshalJSONEntity(context Context, entity []byte) (interface{}, error) {
   return value, nil
 }
 
-/**
- * Compare results
- */
+// Compare results
 func semanticEqual(expected, actual interface{}) bool {
   switch a := actual.(type) {
     

@@ -9,18 +9,14 @@ import (
   "github.com/davecgh/go-spew/spew"
 )
 
-/**
- * An assertion error
- */
+// An assertion error
 type AssertionError struct {
   Expected    interface{}
   Actual      interface{}
   Message     string
 }
 
-/**
- * Error
- */
+// Error
 func (e AssertionError) Error() string {
   
   m := e.Message
@@ -44,9 +40,7 @@ func (e AssertionError) Error() string {
   return m
 }
 
-/**
- * Obtain a value's type and kind
- */
+// Obtain a value's type and kind
 func typeAndKind(v interface{}) (reflect.Type, reflect.Kind) {
   t := reflect.TypeOf(v)
   k := t.Kind()

@@ -5,9 +5,7 @@ import (
   "reflect"
 )
 
-/**
- * Assert equality
- */
+// Assert equality
 func assertEqual(e, a interface{}, m string, x ...interface{}) error {
   if !equalValues(e, a) {
     return &AssertionError{e, a, fmt.Sprintf(m, x...)}
@@ -16,9 +14,7 @@ func assertEqual(e, a interface{}, m string, x ...interface{}) error {
   }
 }
 
-/**
- * Are objects equal
- */
+// Are objects equal
 func equalObjects(expected, actual interface{}) bool {
   if expected == nil || actual == nil {
     return expected == actual
@@ -27,9 +23,7 @@ func equalObjects(expected, actual interface{}) bool {
   }
 }
 
-/**
- * Are objects exactly or semantically equal
- */
+// Are objects exactly or semantically equal
 func equalValues(expected, actual interface{}) bool {
   if equalObjects(expected, actual) {
     return true
