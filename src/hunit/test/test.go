@@ -32,7 +32,6 @@ type BasicCredentials struct {
 type Request struct {
   Method      string              `yaml:"method"`
   URL         string              `yaml:"url"`
-  Upgrade     string              `yaml:"upgrade"`
   Headers     map[string]string   `yaml:"headers"`
   Params      map[string]string   `yaml:"params"`
   Entity      string              `yaml:"entity"`
@@ -47,15 +46,6 @@ type Response struct {
   Entity      string              `yaml:"entity"`
   Comparison  Comparison          `yaml:"compare"`
   Format      string              `yaml:"format"`
-}
-
-// A connection message stream
-type Stream []MessageExchange
-
-// A message exchange consisting of zero or one input and zero or one output
-type MessageExchange struct {
-  Input       *string             `yaml:"input"`
-  Output      *string             `yaml:"output"`
 }
 
 // A test case
