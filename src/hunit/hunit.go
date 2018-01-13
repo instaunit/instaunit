@@ -229,7 +229,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
     if err != nil {
       return result.Error(err), nil, nil
     }
-    monitor := NewStreamMonitor(conn, c.Stream)
+    monitor := NewStreamMonitor(url, context, conn, c.Stream)
     err = monitor.Run(result)
     if err != nil {
       return nil, nil, err

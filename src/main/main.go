@@ -48,6 +48,7 @@ func app() int {
   fDoctype          := cmdline.String   ("doc:type",              coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"),            "The format to generate documentation in.")
   fDocInclHTTP      := cmdline.Bool     ("doc:include-http",      strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")),               "Include HTTP in request and response examples (as opposed to just routes and entities).")
   fDocFormatEntity  := cmdline.Bool     ("doc:format-entities",   strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")),            "Pretty-print supported request and response entities in documentation output.")
+  fIOGracePeriod    := cmdline.Duration ("net:grace-period",      strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")),        "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections.")
   fDebug            := cmdline.Bool     ("debug",                 strToBool(os.Getenv("HUNIT_DEBUG")),                          "Enable debugging mode.")
   fColor            := cmdline.Bool     ("color",                 strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal.")
   fVerbose          := cmdline.Bool     ("verbose",               strToBool(os.Getenv("HUNIT_VERBOSE")),                        "Be more verbose.")
@@ -85,6 +86,9 @@ func app() int {
   }
   if *fDocFormatEntity {
     config.Doc.FormatEntities = true
+  }
+  if *fIOGracePeriod > 0 {
+    config.Net.StreamIOGracePeriod = *fIOGracePeriod
   }
   
   var globalHeaders map[string]string
@@ -328,4 +332,24 @@ func strToBool(s string, d ...bool) bool {
     }
   }
   return strings.EqualFold(s, "t") || strings.EqualFold(s, "true") || strings.EqualFold(s, "y") || strings.EqualFold(s, "yes")
+}
+
+// String to duration
+func strToDuration(s string, d ...time.Duration) time.Duration {
+  if s == "" {
+    if len(d) > 0 {
+      return d[0]
+    }else{
+      return 0
+    }
+  }
+  v, err := time.ParseDuration(s)
+  if err != nil {
+    if len(d) > 0 {
+      return d[0]
+    }else{
+      return 0
+    }
+  }
+  return v
 }

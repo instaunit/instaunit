@@ -10,6 +10,8 @@ import (
 )
 
 import (
+  "github.com/bww/go-util/text"
+  "github.com/bww/go-util/debug"
   "github.com/gorilla/websocket"
 )
 
@@ -21,6 +23,8 @@ type FutureResult interface {
 // Manages a persistent connection and stream exchange tests
 type StreamMonitor struct {
   sync.Mutex
+  url     string
+  context Context
   conn    *websocket.Conn
   stream  test.Stream
   cancel  chan struct{}
@@ -29,8 +33,8 @@ type StreamMonitor struct {
 }
 
 // Create a stream monitor for the provided stream
-func NewStreamMonitor(conn *websocket.Conn, stream test.Stream) *StreamMonitor {
-  return &StreamMonitor{sync.Mutex{}, conn, stream, nil, false, nil}
+func NewStreamMonitor(url string, context Context, conn *websocket.Conn, stream test.Stream) *StreamMonitor {
+  return &StreamMonitor{sync.Mutex{}, url, context, conn, stream, nil, false, nil}
 }
 
 // Run the stream monitor
@@ -60,7 +64,11 @@ func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, cancel cha
         break outer
       }
       b := []byte(*e.Output)
-      fmt.Println(">>> >>> >>>", string(b))
+      if debug.VERBOSE {
+        fmt.Println()
+        fmt.Println("---->", m.url)
+        fmt.Println(text.Indent(string(b), "      > "))
+      }
       for len(b) > 0 {
         n, err := w.Write(b)
         if err != nil {
@@ -86,8 +94,12 @@ func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, cancel cha
         result.Error(err)
         break outer
       }
-      fmt.Println("<<< <<< <<<", string(d))
-      // COMPARE!
+      if debug.VERBOSE {
+        fmt.Println()
+        fmt.Println("---->", m.url)
+        fmt.Println(text.Indent(string(d), "      < "))
+      }
+      result.AssertEqual(*e.Input, string(d), "Websocket messages do not match")
     }
     
     m.Lock()
