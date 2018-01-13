@@ -50,10 +50,14 @@ type Response struct {
 }
 
 // A connection message stream
-type Stream []MessageExchange
+type Stream struct {
+  Mode        IOMode              `yaml:"mode"`
+  Messages    []MessageExchange   `yaml:"messages"`
+}
 
 // A message exchange consisting of zero or one input and zero or one output
 type MessageExchange struct {
+  Wait        time.Duration       `yaml:"wait"`
   Output      *string             `yaml:"send"`
   Input       *string             `yaml:"receive"`
 }
@@ -69,7 +73,7 @@ type Case struct {
   Params    map[string]string     `yaml:"params"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
-  Stream    Stream                `yaml:"websocket"`
+  Stream    *Stream               `yaml:"websocket"`
   Vars      yaml.MapSlice         `yaml:"vars"`
 }
 

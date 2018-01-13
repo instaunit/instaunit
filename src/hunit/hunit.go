@@ -216,6 +216,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
   
   // if we expect a stream, we must set it up and return our future result here
   if c.Stream != nil {
+    messages := c.Stream.Messages
+    if len(messages) < 1 {
+      return result.Error(fmt.Errorf("No messages are exchanged over websocket.")), nil, nil
+    }
+    
     dialer := websocket.Dialer{
       NetDial: func(n, a string) (net.Conn, error) {
         return net.DialTimeout(n, a, time.Second * 3)
@@ -229,12 +234,25 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
     if err != nil {
       return result.Error(err), nil, nil
     }
-    monitor := NewStreamMonitor(url, context, conn, c.Stream)
+    
+    monitor := NewStreamMonitor(url, context, conn, messages)
     err = monitor.Run(result)
     if err != nil {
       return nil, nil, err
     }
-    return nil, monitor, nil
+    
+    switch m := c.Stream.Mode; m {
+      case test.IOModeSync:
+        r, err := monitor.Finish(time.Time{})
+        if err != nil {
+          return result.Error(err), nil, nil
+        }
+        return r, nil, nil
+      case test.IOModeAsync:
+        return nil, monitor, nil
+      default:
+        return nil, nil, fmt.Errorf("No such I/O mode: %v", m)
+    }
   }
   
   var reqdata string

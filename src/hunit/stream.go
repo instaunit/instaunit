@@ -23,18 +23,18 @@ type FutureResult interface {
 // Manages a persistent connection and stream exchange tests
 type StreamMonitor struct {
   sync.Mutex
-  url     string
-  context Context
-  conn    *websocket.Conn
-  stream  test.Stream
-  finish  chan struct{}
-  valid   bool
-  result  *Result
+  url       string
+  context   Context
+  conn      *websocket.Conn
+  messages  []test.MessageExchange
+  finish    chan struct{}
+  valid     bool
+  result    *Result
 }
 
 // Create a stream monitor for the provided stream
-func NewStreamMonitor(url string, context Context, conn *websocket.Conn, stream test.Stream) *StreamMonitor {
-  return &StreamMonitor{sync.Mutex{}, url, context, conn, stream, nil, false, nil}
+func NewStreamMonitor(url string, context Context, conn *websocket.Conn, messages []test.MessageExchange) *StreamMonitor {
+  return &StreamMonitor{sync.Mutex{}, url, context, conn, messages, nil, false, nil}
 }
 
 // Run the stream monitor
@@ -49,14 +49,18 @@ func (m *StreamMonitor) Run(result *Result) error {
   }
   m.valid = true
   m.finish = make(chan struct{})
-  go m.run(m.conn, m.stream, m.finish, result)
+  go m.run(m.conn, m.messages, m.finish, result)
   return nil
 }
 
 // Actually run the stream monitor
-func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, finish chan struct{}, result *Result) {
+func (m *StreamMonitor) run(conn *websocket.Conn, messages []test.MessageExchange, finish chan struct{}, result *Result) {
   outer:
-  for _, e := range stream {
+  for _, e := range messages {
+    if e.Wait > 0 {
+      <-time.After(e.Wait)
+    }
+    
     if e.Output != nil {
       w, err := conn.NextWriter(websocket.TextMessage)
       if err != nil {
