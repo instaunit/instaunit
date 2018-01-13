@@ -27,7 +27,7 @@ type StreamMonitor struct {
   context Context
   conn    *websocket.Conn
   stream  test.Stream
-  cancel  chan struct{}
+  finish  chan struct{}
   valid   bool
   result  *Result
 }
@@ -41,20 +41,20 @@ func NewStreamMonitor(url string, context Context, conn *websocket.Conn, stream 
 func (m *StreamMonitor) Run(result *Result) error {
   m.Lock()
   defer m.Unlock()
-  if m.valid || m.cancel != nil {
+  if m.valid || m.finish != nil {
     return fmt.Errorf("Already started")
   }
   if m.conn == nil {
     return fmt.Errorf("Connection is nil")
   }
   m.valid = true
-  m.cancel = make(chan struct{})
-  go m.run(m.conn, m.stream, m.cancel, result)
+  m.finish = make(chan struct{})
+  go m.run(m.conn, m.stream, m.finish, result)
   return nil
 }
 
 // Actually run the stream monitor
-func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, cancel chan struct{}, result *Result) {
+func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, finish chan struct{}, result *Result) {
   outer:
   for _, e := range stream {
     if e.Output != nil {
@@ -111,7 +111,7 @@ func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, cancel cha
   }
   m.Lock()
   m.result = result
-  close(cancel)
+  close(finish)
   m.Unlock()
 }
 
@@ -123,18 +123,20 @@ func (m *StreamMonitor) Finish(deadline time.Time) (*Result, error) {
   m.valid = false
   c := m.conn
   m.conn = nil
-  x := m.cancel
-  m.cancel = nil
+  x := m.finish
+  m.finish = nil
   m.Unlock()
   if v {
     if c == nil {
       return nil, fmt.Errorf("Monitor is valid but connection is nil")
     }
     if x == nil {
-      return nil, fmt.Errorf("Monitor is valid but canceler nil")
+      return nil, fmt.Errorf("Monitor is valid but finish channel is nil")
     }
-    c.SetWriteDeadline(deadline)
-    c.SetReadDeadline(deadline)
+    if !deadline.IsZero() {
+      c.SetWriteDeadline(deadline)
+      c.SetReadDeadline(deadline)
+    }
     <-x // wait for it to finish...
     c.Close()
   }
