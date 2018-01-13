@@ -54,8 +54,8 @@ type Stream []MessageExchange
 
 // A message exchange consisting of zero or one input and zero or one output
 type MessageExchange struct {
-  Input       *string             `yaml:"input"`
-  Output      *string             `yaml:"output"`
+  Output      *string             `yaml:"send"`
+  Input       *string             `yaml:"receive"`
 }
 
 // A test case
@@ -69,6 +69,7 @@ type Case struct {
   Params    map[string]string     `yaml:"params"`
   Request   Request               `yaml:"request"`
   Response  Response              `yaml:"response"`
+  Stream    Stream                `yaml:"websocket"`
   Vars      yaml.MapSlice         `yaml:"vars"`
 }
 

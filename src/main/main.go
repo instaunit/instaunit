@@ -142,9 +142,9 @@ func app() int {
     services++
   }
   
-  // give service a second to settle
+  // give services a second to settle
   if services > 0 {
-    <-time.After(time.Second / 2)
+    <-time.After(time.Second / 4)
   }
   
   success := true
