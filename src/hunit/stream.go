@@ -62,24 +62,28 @@ func (m *StreamMonitor) run(conn *websocket.Conn, messages []test.MessageExchang
     }
     
     if e.Output != nil {
+      d, err := interpolateIfRequired(m.context, *e.Output)
+      if err != nil {
+        result.Error(err)
+        break outer
+      }
       w, err := conn.NextWriter(websocket.TextMessage)
       if err != nil {
         result.Error(err)
         break outer
       }
-      b := []byte(*e.Output)
       if debug.VERBOSE {
         fmt.Println()
         fmt.Println("---->", m.url)
-        fmt.Println(text.Indent(string(b), "      > "))
+        fmt.Println(text.Indent(d, "      > "))
       }
-      for len(b) > 0 {
-        n, err := w.Write(b)
+      for len(d) > 0 {
+        n, err := w.Write([]byte(d))
         if err != nil {
           result.Error(err)
           break outer
         }
-        b = b[n:]
+        d = d[n:]
       }
     }
     
@@ -103,7 +107,12 @@ func (m *StreamMonitor) run(conn *websocket.Conn, messages []test.MessageExchang
         fmt.Println("---->", m.url)
         fmt.Println(text.Indent(string(d), "      < "))
       }
-      result.AssertEqual(*e.Input, string(d), "Websocket messages do not match")
+      x, err := interpolateIfRequired(m.context, *e.Input)
+      if err != nil {
+        result.Error(err)
+        break outer
+      }
+      result.AssertEqual(x, string(d), "Websocket messages do not match")
     }
     
     m.Lock()

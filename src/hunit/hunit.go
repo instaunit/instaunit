@@ -241,6 +241,17 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
       return nil, nil, err
     }
     
+    // add to our context if we have an identifier
+    if c.Id != "" {
+      context.Variables[c.Id] = map[string]interface{}{
+        "case": c,
+        "websocket": map[string]interface{}{
+          "url": url,
+        },
+      }
+    }
+    
+    // depending on the I/O mode, resolve or return a future
     switch m := c.Stream.Mode; m {
       case test.IOModeSync:
         r, err := monitor.Finish(time.Time{})
@@ -368,13 +379,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
   
   // add to our context if we have an identifier
   if c.Id != "" {
-    headers := make(map[string]string)
-    for k, v := range rsp.Header {
-      if len(v) > 0 {
-        headers[k] = v[0]
-      }
-    }
-    
+    headers := flattenHeader(rsp.Header)
     context.Variables[c.Id] = map[string]interface{}{
       "case": c,
       "response": map[string]interface{}{
@@ -397,6 +402,19 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
   }
   
   return result, nil, nil
+}
+
+// Flatten a header to a one-to-one key-to-value map
+func flattenHeader(header http.Header) map[string]string {
+  f := make(map[string]string)
+  for k, v := range header {
+    if len(v) > 0 {
+      f[k] = v[0]
+    }else{
+      f[k] = ""
+    }
+  }
+  return f
 }
 
 // Join paths
