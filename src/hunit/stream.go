@@ -40,14 +40,17 @@ func (m *StreamMonitor) Run(result *Result) error {
   if m.valid || m.cancel != nil {
     return fmt.Errorf("Already started")
   }
+  if m.conn == nil {
+    return fmt.Errorf("Connection is nil")
+  }
   m.valid = true
   m.cancel = make(chan struct{})
-  go m.run(m.conn, m.stream, result)
+  go m.run(m.conn, m.stream, m.cancel, result)
   return nil
 }
 
 // Actually run the stream monitor
-func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, result *Result) {
+func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, cancel chan struct{}, result *Result) {
   outer:
   for _, e := range stream {
     if e.Output != nil {
@@ -96,28 +99,20 @@ func (m *StreamMonitor) run(conn *websocket.Conn, stream test.Stream, result *Re
   }
   m.Lock()
   m.result = result
-  if m.cancel != nil {
-    close(m.cancel)
-  }
+  close(cancel)
   m.Unlock()
 }
 
 // Finish
 func (m *StreamMonitor) Finish(deadline time.Time) (*Result, error) {
-  var v bool
   
   m.Lock()
-  v = m.valid
-  m.Unlock()
-  if v {
-    return nil, fmt.Errorf("Never started")
-  }
-  
-  m.Lock()
-  c := m.conn
-  x := m.cancel
-  v  = m.valid
+  v := m.valid
   m.valid = false
+  c := m.conn
+  m.conn = nil
+  x := m.cancel
+  m.cancel = nil
   m.Unlock()
   if v {
     if c == nil {
@@ -134,10 +129,8 @@ func (m *StreamMonitor) Finish(deadline time.Time) (*Result, error) {
   
   m.Lock()
   r := m.result
-  v  = r == nil
-  m.cancel = nil
   m.Unlock()
-  if v {
+  if r == nil {
     return nil, fmt.Errorf("No result produced")
   }
   

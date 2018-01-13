@@ -218,6 +218,10 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
         return net.DialTimeout(n, a, time.Second * 3)
       },
     }
+    url, err := urlWithScheme("ws", url)
+    if err != nil {
+      return result.Error(err), nil, nil
+    }
     conn, _, err := dialer.Dial(url, header)
     if err != nil {
       return result.Error(err), nil, nil
