@@ -2,6 +2,7 @@ package test
 
 import (
   "os"
+  "time"
   "io/ioutil"
 )
 
@@ -11,13 +12,16 @@ import (
 
 // Suite options
 type Config struct {
+  Net struct {
+    StreamIOGracePeriod   time.Duration       `yaml:"stream-io-grace-period"`
+  }                                           `yaml:",inline"`
   Doc struct {
-    AnchorStyle         AnchorStyle `yaml:"anchor-style"`
-    FormatEntities      bool        `yaml:"format-entities"`
-    IncludeRequestHTTP  bool        `yaml:"doc-include-request-http"`
-    IncludeResponseHTTP bool        `yaml:"doc-include-response-http"`
-    IncludeHTTP         bool        `yaml:"doc-include-http"`
-  }                                 `yaml:",inline"`
+    AnchorStyle           AnchorStyle         `yaml:"anchor-style"`
+    FormatEntities        bool                `yaml:"format-entities"`
+    IncludeRequestHTTP    bool                `yaml:"doc-include-request-http"`
+    IncludeResponseHTTP   bool                `yaml:"doc-include-response-http"`
+    IncludeHTTP           bool                `yaml:"doc-include-http"`
+  }                                           `yaml:",inline"`
 }
 
 // A test suite

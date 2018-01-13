@@ -91,7 +91,10 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
   }
   
   if len(futures) > 0 {
-    d := time.Now().Add(time.Millisecond * 50)
+    d := time.Now() // no grace period by default
+    if p := context.Config.Net.StreamIOGracePeriod; p > 0 {
+      d = d.Add(p)
+    }
     for _, e := range futures {
       r, err := e.Finish(d)
       if err != nil {
