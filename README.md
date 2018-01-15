@@ -1,6 +1,8 @@
 # Instaunit
 
-Instaunit is a command-line tool that runs tests against HTTP and Websocket APIs. It makes managing your tests simple and declarative.
+### Instaunit is a command-line tool that runs tests against HTTP and Websocket APIs.
+
+It makes managing your tests simple and declarative.
 
 Since tests and documentation are naturally maintained in parallel, Instaunit combines these two highly-related tasks into one. Descriptions can be added to your tests to automatically generate documentation of your endpoints.
 
@@ -18,10 +20,8 @@ Just describe your request, the response you expect, and that's basically it. In
 Refer to the full [`test.yml`](https://github.com/instaunit/instaunit/blob/master/example/test.yml) file for a more complete illustration of test cases.
 
 ```yaml
-- 
-    doc: |
-      Fetch a document from our [Github repo](github.com/instaunit/instaunit).
-    
+tests:
+  -
     request:
       method: GET
       url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/test.txt
@@ -50,9 +50,8 @@ $ instaunit test.yml
              --- Expected
              +++ Actual
              @@ -1,2 +1,2 @@
-             -Heres a simple
-             +Here's a simple
-              response from the
+             -Here's a simple response from the server.
+             +Heres a simple response from the server.
 ```
 
 ## Generating Documentation
