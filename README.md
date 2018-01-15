@@ -1,6 +1,6 @@
 # Instaunit
 
-Instaunit is a command-line tool that runs tests against HTTP APIs. It makes managing your tests simple and declarative without skimping on the features.
+Instaunit is a command-line tool that runs tests against HTTP and Websocket APIs. It makes managing your tests simple and declarative.
 
 Since tests and documentation are naturally maintained in parallel, Instaunit combines these two highly-related tasks into one. Descriptions can be added to your tests to automatically generate documentation of your endpoints.
 
@@ -8,12 +8,12 @@ Since tests and documentation are naturally maintained in parallel, Instaunit c
 
 Tests are described by a simple YAML-based document format. Tests and documentation are managed together.
 
-Just describe your request, the response you expect, and you're done! Instaunit also supports plenty of advanced features if you need them:
+Just describe your request, the response you expect, and that's basically it. Instaunit also supports a bunch of advanced features if you need them:
 
-* Compare entities *semantically* to ignore insignificant differences like whitespace and map key order,
-* Reference the output of previously-run tests from subsequent, dependent tests,
-* Mock services can produce test output to be consumed by your tests via HTTP,
-* Handy functions can generate test input to randomize your tests.
+* **Compare entities semantically** to ignore insignificant differences like whitespace and map key order,
+* Reference the output of previously-run tests to **chain related tests together**,
+* Easily build **mock services** so your tests don't need any external dependencies,
+* Use **convenient, built-in functions** to generate test input and randomize your tests.
 
 Refer to the full [`test.yml`](https://github.com/instaunit/instaunit/blob/master/example/test.yml) file for a more complete illustration of test cases.
 
