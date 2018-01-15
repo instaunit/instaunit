@@ -13,7 +13,7 @@ Just describe your request, the response you expect, and that's basically it. In
 * **Compare entities semantically** to ignore insignificant differences like whitespace and map key order,
 * Reference the output of previously-run tests to **chain related tests together**,
 * Easily build **mock services** so your tests don't need any external dependencies,
-* Use **convenient, built-in functions** to generate test input and randomize your tests.
+* Use **convenient, built-in functions** to generate input and randomize your tests.
 
 Refer to the full [`test.yml`](https://github.com/instaunit/instaunit/blob/master/example/test.yml) file for a more complete illustration of test cases.
 
@@ -25,17 +25,11 @@ Refer to the full [`test.yml`](https://github.com/instaunit/instaunit/blob/maste
     request:
       method: GET
       url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/test.txt
-      headers:
-        Origin: localhost
     
     response:
       status: 200
-      headers:
-        Content-Type: text/plain; charset=utf-8
       entity: |
-        Heres a simple
-        response from the
-        server.      
+        Here's a simple response from the server.
 ```
 
 ## Running Tests
