@@ -21,7 +21,7 @@ Refer to the full [`test.yml`](https://github.com/instaunit/instaunit/blob/maste
 tests:
   -
     doc: A description of this endpoint.
-  	
+    
     request:
       method: GET
       url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/test.txt
