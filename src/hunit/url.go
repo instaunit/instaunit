@@ -37,3 +37,13 @@ func mergeQueryParams(u string, p map[string]string, c Context) (string, error) 
   v.RawQuery = q.Encode()
   return v.String(), nil
 }
+
+// Change a URL scheme
+func urlWithScheme(s, u string) (string, error) {
+  v, err := url.Parse(u)
+  if err != nil {
+    return "", err
+  }
+  v.Scheme = s
+  return v.String(), nil
+}
