@@ -1,8 +1,6 @@
-# Instaunit
+# Instaunit tests your HTTP and Websocket APIs
 
-### Instaunit runs your tests against HTTP and Websocket APIs.
-
-It makes managing your tests simple and declarative. And since tests and documentation are naturally maintained in parallel, Instaunit combines these two highly-related tasks into one: descriptions can be added to your tests to automatically generate documentation of your endpoints.
+Instaunit makes building tests simple and declarative. And since tests and documentation are naturally maintained in parallel, Instaunit combines these two highly-related tasks into one: descriptions can be added to your tests to automatically generate documentation of your endpoints.
 
 ## Describing Tests
 
@@ -10,7 +8,7 @@ Tests are described by a simple YAML-based document format. Just describe your r
 
 * **Compare entities semantically** to ignore insignificant differences like whitespace and map key order,
 * Reference the output of previously-run tests to **chain related tests together**,
-* Easily build **mock services** so your tests don't need any external dependencies,
+* Easily build **mock services** so your tests don't have external dependencies,
 * Use **convenient, built-in functions** to generate input and randomize your tests.
 
 Tests and documentation are maintained together. To generate documentation, simply add descriptions to a representative test case for your endpoint. You can pick and choose which tests generate documentation.
