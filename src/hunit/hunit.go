@@ -119,13 +119,13 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
   result := &Result{Name:fmt.Sprintf("%v %v\n", c.Request.Method, c.Request.URL), Success:true}
   
   // process variables first, they can be referenced by this case, itself
+  var vars map[string]interface{}
   for _, e := range c.Vars {
     k, v := e.Key.(string), gtext.Stringer(e.Value)
     e, err := interpolateIfRequired(context, v)
     if err != nil {
       return result.Error(err), nil, nil
     }
-    var vars map[string]interface{}
     if x, ok := context.Variables[localVarsId]; ok {
       vars = x.(map[string]interface{})
     }else{
@@ -245,6 +245,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
     if c.Id != "" {
       context.Variables[c.Id] = map[string]interface{}{
         "case": c,
+        "vars": dupmap(vars),
         "websocket": map[string]interface{}{
           "url": url,
         },
@@ -382,6 +383,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
     headers := flattenHeader(rsp.Header)
     context.Variables[c.Id] = map[string]interface{}{
       "case": c,
+      "vars": dupmap(vars),
       "response": map[string]interface{}{
         "headers": headers,
         "entity": rspdata,
@@ -415,6 +417,15 @@ func flattenHeader(header http.Header) map[string]string {
     }
   }
   return f
+}
+
+// Duplicate a variable map
+func dupmap(m map[string]interface{}) map[string]interface{} {
+  d := make(map[string]interface{})
+  for k, v := range m {
+    d[k] = v
+  }
+  return d
 }
 
 // Join paths
