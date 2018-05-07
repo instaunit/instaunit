@@ -2,7 +2,7 @@ package main
 
 import (
   "os"
-  "os/exec"
+  osexec "os/exec"
   "io"
   "fmt"
   "flag"
@@ -11,6 +11,7 @@ import (
   "strings"
   
   "hunit"
+  hexec "hunit/exec"
   "hunit/test"
   "hunit/text"
   "hunit/doc"
@@ -175,27 +176,9 @@ func app() int {
       fmt.Println()
     }
     
-    if l := len(suite.Setup); l > 0 {
-      for i, e := range suite.Setup {
-        if e.Command == "" {
-          color.New(colorErr...).Printf("* * * Setup command #%d is empty (did you set 'run'?)", i + 1)
-          continue suites
-        }
-        if e.Display != "" {
-          fmt.Printf("----> %v ", e.Display)
-        }else{
-          fmt.Printf("----> $ %v ", e.Command)
-        }
-        err := e.Exec()
-        if err != nil {
-          fmt.Println()
-          color.New(colorErr...).Printf("* * * Setup command #%d failed: %v\n", i + 1, err)
-          if v, ok := err.(*exec.ExitError); ok && len(v.Stderr) > 0 {
-            fmt.Println(text.Indent(string(v.Stderr), "      < "))
-          }
-          continue suites
-        }
-        color.New(color.Bold, color.FgHiGreen).Println("OK")
+    if len(suite.Setup) > 0 {
+      if execCommands(suite.Setup) != nil {
+        continue suites
       }
     }
     
@@ -314,6 +297,32 @@ func app() int {
     fmt.Printf(" All %d tests passed.\n", tests)
   }
   return 0
+}
+
+// Execute a set of commands
+func execCommands(cmds []hexec.Command) error {
+  for i, e := range cmds {
+    if e.Command == "" {
+      color.New(colorErr...).Printf("* * * Setup command #%d is empty (did you set 'run'?)", i + 1)
+      return fmt.Errorf("Empty command")
+    }
+    if e.Display != "" {
+      fmt.Printf("----> %v ", e.Display)
+    }else{
+      fmt.Printf("----> $ %v ", e.Command)
+    }
+    err := e.Exec()
+    if err != nil {
+      fmt.Println()
+      color.New(colorErr...).Printf("* * * Setup command #%d failed: %v\n", i + 1, err)
+      if v, ok := err.(*osexec.ExitError); ok && len(v.Stderr) > 0 {
+        fmt.Println(text.Indent(string(v.Stderr), "      < "))
+      }
+      return err
+    }
+    color.New(color.Bold, color.FgHiGreen).Println("OK")
+  }
+  return nil
 }
 
 // Flag string list
