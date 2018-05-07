@@ -56,12 +56,11 @@ setup:
   -
     display: A Sweet Command
     run: echo "Run this command, please"
-  - run: Failballs!@
 
 # Run these commands after tests in this suite have completed. This is the
 # counterpart to the `setup` block, used to clean up after tests have run.
-# These items are run unconditionally, regardless of whether any tests have
-# succeeded or failed, or even if any tests were run at all.
+# These items are run if the setup block succeeds, regardless of whether
+# any tests have succeeded or failed, or even if any tests were run at all.
 teardown:
   -
     run: echo "Run this command, please, $USER_NAME"

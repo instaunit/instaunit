@@ -2,7 +2,6 @@ package main
 
 import (
   "os"
-  osexec "os/exec"
   "io"
   "fmt"
   "flag"
@@ -11,7 +10,7 @@ import (
   "strings"
   
   "hunit"
-  hexec "hunit/exec"
+  "hunit/exec"
   "hunit/test"
   "hunit/text"
   "hunit/doc"
@@ -176,12 +175,6 @@ func app() int {
       fmt.Println()
     }
     
-    if len(suite.Setup) > 0 {
-      if execCommands(suite.Setup) != nil {
-        continue suites
-      }
-    }
-    
     var out io.WriteCloser
     var gendoc []doc.Generator
     if *fGendoc {
@@ -208,6 +201,12 @@ func app() int {
       }
       
       gendoc = []doc.Generator{gen} // just one for now
+    }
+    
+    if len(suite.Setup) > 0 {
+      if execCommands(suite.Setup) != nil {
+        continue suites
+      }
     }
     
     results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: debug.DEBUG, Gendoc: gendoc, Config: cdup})
@@ -260,10 +259,15 @@ func app() int {
         fmt.Println(text.Indent(string(r.Rspdata), "      < "))
       }
       if preq || prsp {
-        fmt.Println("\n")
+        fmt.Println()
       }
     }
     
+    if len(suite.Teardown) > 0 {
+      if execCommands(suite.Teardown) != nil {
+        continue suites
+      }
+    }
   }
   
   if tests < 1 && errors < 1 && services > 0 {
@@ -300,8 +304,11 @@ func app() int {
 }
 
 // Execute a set of commands
-func execCommands(cmds []hexec.Command) error {
+func execCommands(cmds []exec.Command) error {
   for i, e := range cmds {
+    if i > 0 && debug.VERBOSE {
+      fmt.Println()
+    }
     if e.Command == "" {
       color.New(colorErr...).Printf("* * * Setup command #%d is empty (did you set 'run'?)", i + 1)
       return fmt.Errorf("Empty command")
@@ -311,16 +318,19 @@ func execCommands(cmds []hexec.Command) error {
     }else{
       fmt.Printf("----> $ %v ", e.Command)
     }
-    err := e.Exec()
+    out, err := e.Exec()
     if err != nil {
       fmt.Println()
       color.New(colorErr...).Printf("* * * Setup command #%d failed: %v\n", i + 1, err)
-      if v, ok := err.(*osexec.ExitError); ok && len(v.Stderr) > 0 {
-        fmt.Println(text.Indent(string(v.Stderr), "      < "))
+      if len(out) > 0 {
+        fmt.Println(text.Indent(string(out), "      < "))
       }
       return err
     }
     color.New(color.Bold, color.FgHiGreen).Println("OK")
+    if debug.VERBOSE && len(out) > 0 {
+      fmt.Println(text.Indent(string(out), "      < "))
+    }
   }
   return nil
 }

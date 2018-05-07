@@ -14,15 +14,16 @@ type Command struct {
 }
 
 // Execute a command
-func (c Command) Exec() error {
+func (c Command) Exec() (string, error) {
   var bash string
   if v := os.Getenv("BASH"); v != "" {
     bash = v
   }else if v, err := exec.LookPath("bash"); err == nil {
     bash = v
   }else{
-    return fmt.Errorf("You must have the Bash Shell in your path somewhere (or set $BASH in your environment)")
+    return "", fmt.Errorf("You must have the Bash Shell in your path somewhere (or set $BASH in your environment)")
   }
+  
   cmd := exec.Command(bash, "-c", c.Command)
   if len(c.Environment) > 0 {
     env := os.Environ()
@@ -31,5 +32,11 @@ func (c Command) Exec() error {
     }
     cmd.Env = env
   }
-  return cmd.Run()
+  
+  out, err := cmd.CombinedOutput()
+  if err != nil {
+    return "", err
+  }
+  
+  return string(out), err
 }
