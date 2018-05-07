@@ -52,10 +52,10 @@ options:
 # used, for example, to initialize external resources so that they're in
 # a consistent state when testing begins.
 setup:
-  - run: echo "Run this command, please"
+  - run: echo "If we're not in verbose mode, we won't even see this. Run with the '-verbose' flag to see command output."
   -
-    display: A Sweet Command
-    run: echo "Run this command, please"
+    run: echo "Here's another command to run"
+    display: If present, this text is displayed instead of the literal command.
 
 # Run these commands after tests in this suite have completed. This is the
 # counterpart to the `setup` block, used to clean up after tests have run.
@@ -63,7 +63,7 @@ setup:
 # any tests have succeeded or failed, or even if any tests were run at all.
 teardown:
   -
-    run: echo "Run this command, please, $USER_NAME"
+    run: echo "The name of the user is $USER_NAME"
     environment:
       USER_NAME: Jab Jazoole
 
