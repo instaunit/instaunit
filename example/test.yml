@@ -48,6 +48,26 @@ options:
   #   - X-Served-By
   #   - X-Sensitive-Header
 
+# Run these commands before starting the tests in this suite. This can be
+# used, for example, to initialize external resources so that they're in
+# a consistent state when testing begins.
+setup:
+  - run: echo "Run this command, please"
+  -
+    display: A Sweet Command
+    run: echo "Run this command, please"
+  - run: Failballs!@
+
+# Run these commands after tests in this suite have completed. This is the
+# counterpart to the `setup` block, used to clean up after tests have run.
+# These items are run unconditionally, regardless of whether any tests have
+# succeeded or failed, or even if any tests were run at all.
+teardown:
+  -
+    run: echo "Run this command, please, $USER_NAME"
+    environment:
+      USER_NAME: Jab Jazoole
+
 # When any of the above fields are present, the tests section introduces
 # a sequence of test cases. If you don't need to include a documentation
 # introduction or title, you can omit title, doc, and tests and simply
@@ -160,7 +180,7 @@ tests:
         using special functions to generate content, like a random person name,
         which randomly combines one of the most popular U.S. first names from
         1916-2017, according to the Social Security Administration, and the last
-        name of a famous scientist: ${std.RandomName()}.
+        name of a famous scientist: ${std.RandomPersonName()}.
   
   # This one compares entities semantically. The entities are unmarshaled into
   # objects and the objects are compared. This allows you to ignore insignificant

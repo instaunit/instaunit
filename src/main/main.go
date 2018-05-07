@@ -2,12 +2,14 @@ package main
 
 import (
   "os"
+  "os/exec"
   "io"
   "fmt"
   "flag"
   "path"
   "time"
   "strings"
+  
   "hunit"
   "hunit/test"
   "hunit/text"
@@ -153,6 +155,7 @@ func app() int {
   
   success := true
   start := time.Now()
+  suites:
   for _, e := range cmdline.Args() {
     base := path.Base(e)
     color.New(colorSuite...).Printf("====> %v", base)
@@ -170,6 +173,30 @@ func app() int {
       color.New(colorSuite...).Printf(" (%v)\n", suite.Title)
     }else{
       fmt.Println()
+    }
+    
+    if l := len(suite.Setup); l > 0 {
+      for i, e := range suite.Setup {
+        if e.Command == "" {
+          color.New(colorErr...).Printf("* * * Setup command #%d is empty (did you set 'run'?)", i + 1)
+          continue suites
+        }
+        if e.Display != "" {
+          fmt.Printf("----> %v ", e.Display)
+        }else{
+          fmt.Printf("----> $ %v ", e.Command)
+        }
+        err := e.Exec()
+        if err != nil {
+          fmt.Println()
+          color.New(colorErr...).Printf("* * * Setup command #%d failed: %v\n", i + 1, err)
+          if v, ok := err.(*exec.ExitError); ok && len(v.Stderr) > 0 {
+            fmt.Println(text.Indent(string(v.Stderr), "      < "))
+          }
+          continue suites
+        }
+        color.New(color.Bold, color.FgHiGreen).Println("OK")
+      }
     }
     
     var out io.WriteCloser

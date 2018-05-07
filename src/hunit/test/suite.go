@@ -4,6 +4,8 @@ import (
   "os"
   "time"
   "io/ioutil"
+  
+  "hunit/exec"
 )
 
 import (
@@ -26,10 +28,12 @@ type Config struct {
 
 // A test suite
 type Suite struct {
-  Title         string      `yaml:"title"`
-  Comments      string      `yaml:"doc"`
-  Cases         []Case      `yaml:"tests"`
-  Config        Config      `yaml:"options"`
+  Title         string            `yaml:"title"`
+  Comments      string            `yaml:"doc"`
+  Cases         []Case            `yaml:"tests"`
+  Config        Config            `yaml:"options"`
+  Setup         []exec.Command    `yaml:"setup"`
+  Teardown      []exec.Command    `yaml:"teardown"`
 }
 
 // Load a test suite
