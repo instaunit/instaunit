@@ -369,6 +369,9 @@ func execCommands(cmds []exec.Command) error {
 		} else {
 			fmt.Printf("----> $ %v ", e.Command)
 		}
+		if debug.VERBOSE {
+			dumpEnv(os.Stdout, e.Environment)
+		}
 
 		out, err := e.Exec()
 		if err != nil {
@@ -406,16 +409,7 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, error) {
 
 	color.New(colorSuite...).Printf("----> $ %v\n", proc)
 	if debug.VERBOSE {
-		wk := 0
-		for k, _ := range cmd.Environment {
-			if l := len(k); l < 40 && l > wk {
-				wk = l
-			}
-		}
-		f := fmt.Sprintf("        %%%ds = %%s\n", wk)
-		for k, v := range cmd.Environment {
-			fmt.Printf(f, k, v)
-		}
+		dumpEnv(os.Stdout, cmd.Environment)
 	}
 
 	if cmd.Wait > 0 {
@@ -488,4 +482,18 @@ func strToDuration(s string, d ...time.Duration) time.Duration {
 		}
 	}
 	return v
+}
+
+// Dump environment pairs
+func dumpEnv(w io.Writer, env map[string]string) {
+	wk := 0
+	for k, _ := range env {
+		if l := len(k); l < 40 && l > wk {
+			wk = l
+		}
+	}
+	f := fmt.Sprintf("        %%%ds = %%s\n", wk)
+	for k, v := range env {
+		fmt.Fprintf(w, f, k, v)
+	}
 }
