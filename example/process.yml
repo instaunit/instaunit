@@ -2,7 +2,16 @@
 
 process:
   run: ls
-  linger: 2s
+  wait: 1s
+  linger: 1s
+  environment:
+    THIS_KEY: this value
+
+setup:
+  - run: ls
+
+teardown:
+  - run: ls
 
 tests:
 

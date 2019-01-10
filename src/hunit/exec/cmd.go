@@ -11,14 +11,18 @@ import (
 	"time"
 )
 
-// Copy the environment in this process as a map
-func Environ() map[string]string {
+// Copy the environment in this process as a map and merge it with the
+// provided set, which takes prescidence
+func Environ(sup map[string]string) map[string]string {
 	env := make(map[string]string)
 	for _, e := range os.Environ() {
-		if n := strings.Index(e, "="); n < 0 {
+		if n := strings.Index(e, "="); n > 0 {
 			k := strings.TrimSpace(e[:n])
 			env[k] = strings.TrimSpace(e[n+1:])
 		}
+	}
+	for k, v := range sup {
+		env[k] = v
 	}
 	return env
 }
@@ -105,12 +109,13 @@ type Command struct {
 	Display     string            `yaml:"display"`
 	Command     string            `yaml:"run"`
 	Environment map[string]string `yaml:"environment"`
+	Wait        time.Duration     `yaml:"wait"`
 	Linger      time.Duration     `yaml:"linger"`
 }
 
 // Create a command that inherits its environment from this process
 func NewCommand(d, c string) Command {
-	return Command{d, c, Environ(), 0}
+	return Command{d, c, Environ(nil), 0, 0}
 }
 
 // Prepare a command but do not execute it
