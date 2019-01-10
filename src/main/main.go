@@ -313,6 +313,14 @@ suites:
 		<-make(chan struct{})
 	}
 
+	if proc != nil {
+		if l := proc.Linger(); l > 0 {
+			color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n", l)
+		}
+		proc.Kill()
+		proc = nil
+	}
+
 	duration := time.Since(start)
 	fmt.Println()
 
@@ -320,14 +328,6 @@ suites:
 		color.New(color.BgHiRed, color.Bold, color.FgBlack).Printf(" ERRORS! ")
 		fmt.Printf(" %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
 		return 1
-	}
-
-	if proc != nil {
-		if l := proc.Linger(); l > 0 {
-			color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n\n", l)
-		}
-		proc.Kill()
-		proc = nil
 	}
 
 	fmt.Printf("Finished in %v.\n\n", duration)
