@@ -160,34 +160,11 @@ func app() int {
 		services++
 	}
 
-	var proc *exec.Process
 	if *fExec != "" {
-		dst, err := os.OpenFile(*fExecLog, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		proc, err := execCommandAsync(exec.NewCommand(*fExec, *fExec), *fExecLog)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not open exec log: %v\n", err)
+			color.New(colorErr...).Printf("* * * %v\n", err)
 			return 1
-		}
-		env, wk := make(map[string]string), 0
-		for _, e := range os.Environ() {
-			if n := strings.Index(e, "="); n < 0 {
-				k := strings.TrimSpace(e[:n])
-				env[k] = strings.TrimSpace(e[n+1:])
-				if l := len(k); l > wk {
-					wk = l
-				}
-			}
-		}
-		proc, err = exec.Command{Command: *fExec, Environment: env}.Start(dst)
-		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not exec process: %v\n", err)
-			return 1
-		}
-		color.New(colorSuite...).Printf("----> %v\n", proc)
-		if debug.VERBOSE {
-			f := fmt.Sprintf("      %%%ds = %%s\n", wk)
-			for k, v := range env {
-				fmt.Printf(f, k, v)
-			}
 		}
 		defer proc.Kill()
 	}
@@ -197,10 +174,19 @@ func app() int {
 		<-time.After(time.Second / 4)
 	}
 
+	var proc *exec.Process
 	success := true
 	start := time.Now()
 suites:
 	for _, e := range cmdline.Args() {
+		if proc != nil {
+			if l := proc.Linger(); l > 0 {
+				color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n", l)
+			}
+			proc.Kill()
+			proc = nil
+		}
+
 		base := path.Base(e)
 		color.New(colorSuite...).Printf("====> %v", base)
 
@@ -249,6 +235,14 @@ suites:
 
 		if len(suite.Setup) > 0 {
 			if execCommands(suite.Setup) != nil {
+				continue suites
+			}
+		}
+
+		if suite.Exec != nil {
+			proc, err = execCommandAsync(*suite.Exec, *fExecLog)
+			if err != nil {
+				color.New(colorErr...).Printf("* * * %v\n", err)
 				continue suites
 			}
 		}
@@ -328,6 +322,14 @@ suites:
 		return 1
 	}
 
+	if proc != nil {
+		if l := proc.Linger(); l > 0 {
+			color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n\n", l)
+		}
+		proc.Kill()
+		proc = nil
+	}
+
 	fmt.Printf("Finished in %v.\n\n", duration)
 
 	if !success {
@@ -347,21 +349,25 @@ suites:
 	return 0
 }
 
-// Execute a set of commands
+// Execute a set of commands in sequence, allowing each to terminate before
+// the next is executed.
 func execCommands(cmds []exec.Command) error {
 	for i, e := range cmds {
 		if i > 0 && debug.VERBOSE {
 			fmt.Println()
 		}
+
 		if e.Command == "" {
 			color.New(colorErr...).Printf("* * * Setup command #%d is empty (did you set 'run'?)", i+1)
 			return fmt.Errorf("Empty command")
 		}
+
 		if e.Display != "" {
 			fmt.Printf("----> %v ", e.Display)
 		} else {
 			fmt.Printf("----> $ %v ", e.Command)
 		}
+
 		out, err := e.Exec()
 		if err != nil {
 			fmt.Println()
@@ -371,12 +377,42 @@ func execCommands(cmds []exec.Command) error {
 			}
 			return err
 		}
+
 		color.New(color.Bold, color.FgHiGreen).Println("OK")
 		if debug.VERBOSE && len(out) > 0 {
 			fmt.Println(text.Indent(string(out), "      < "))
 		}
 	}
 	return nil
+}
+
+// Execute a single command and do not wait for it to terminate
+func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, error) {
+	dst, err := os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("Could not open exec log: %v", err)
+	}
+
+	proc, err := cmd.Start(dst)
+	if err != nil {
+		return nil, fmt.Errorf("Could not exec process: %v", err)
+	}
+
+	color.New(colorSuite...).Printf("----> %v\n", proc)
+	if debug.VERBOSE {
+		wk := 0
+		for k, _ := range cmd.Environment {
+			if l := len(k); l > wk {
+				wk = l
+			}
+		}
+		f := fmt.Sprintf("      %%%ds = %%s\n", wk)
+		for k, v := range cmd.Environment {
+			fmt.Printf(f, k, v)
+		}
+	}
+
+	return proc, nil
 }
 
 // Flag string list
