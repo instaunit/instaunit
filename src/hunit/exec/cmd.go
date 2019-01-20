@@ -101,16 +101,18 @@ type Process struct {
 	cancel  context.CancelFunc
 	redir   io.WriteCloser
 	linger  time.Duration
+	exited  bool
+	status  error
 }
 
-func (p *Process) Redirect(out io.WriteCloser) error {
+func (p *Process) Start(out io.WriteCloser) error {
 	p.Lock()
 	defer p.Unlock()
 	if p.cmd == nil {
 		return fmt.Errorf("No process")
 	}
 	if p.redir != nil {
-		return fmt.Errorf("Output already redirected")
+		return fmt.Errorf("Process already started")
 	}
 
 	stdout, err := p.cmd.StdoutPipe()
@@ -136,7 +138,26 @@ func (p *Process) Redirect(out io.WriteCloser) error {
 	}()
 
 	p.redir = out
+
+	err = p.cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		p.Lock()
+		defer p.Unlock()
+		err := p.cmd.Wait()
+		p.status = err
+	}()
+
 	return nil
+}
+
+func (p Process) Running() bool {
+	p.Lock()
+	defer p.Unlock()
+	return !p.exited
 }
 
 func (p Process) Linger() time.Duration {
@@ -152,16 +173,19 @@ func (p *Process) Kill() error {
 	if p.linger > 0 {
 		<-time.After(p.linger)
 	}
-	if p.cancel != nil {
-		p.cancel()
-	} else {
-		return fmt.Errorf("Process is not cancelable")
+	if !p.exited {
+		if p.cancel != nil {
+			p.cancel()
+		} else {
+			return fmt.Errorf("Process is not cancelable")
+		}
 	}
 	if p.redir != nil {
 		p.redir.Close()
 	}
 	p.cmd = nil // mark the process as cancelled
 	p.redir = nil
+	p.exited = true
 	return nil
 }
 
@@ -234,14 +258,9 @@ func (c Command) Start(out io.WriteCloser) (*Process, error) {
 		return nil, err
 	}
 
-	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, cancel, nil, c.Linger}
+	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, cancel, nil, c.Linger, false, nil}
 
-	err = proc.Redirect(out)
-	if err != nil {
-		return nil, err
-	}
-
-	err = cmd.Start()
+	err = proc.Start(out)
 	if err != nil {
 		return nil, err
 	}
