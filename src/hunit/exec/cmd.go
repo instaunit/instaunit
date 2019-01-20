@@ -39,14 +39,15 @@ func (s prefixWriter) Write(p []byte) (int, error) {
 			if err != nil {
 				return z, err
 			}
-			// don't account for the prefix, presumably would confuse callers if: n > len(p)
+			s.nl = false
+			// don't account for the prefix, this presumably would confuse callers if: n > len(p)
 		}
 		if r == newline {
 			z, err := s.writer.Write([]byte(c[x : i+1]))
 			if err != nil {
 				return z, err
 			}
-			x = i
+			x = i + 1
 			n += z
 			s.nl = true
 		}

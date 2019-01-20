@@ -2,6 +2,7 @@
 
 process:
   run: does not exist
+  # run: cat example/output.txt
   linger: 1s
 
 tests:

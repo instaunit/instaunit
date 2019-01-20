@@ -400,7 +400,7 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, error) {
 			return nil, fmt.Errorf("Could not open exec log: %v", err)
 		}
 	} else {
-		out = colorWriter{exec.NewPrefixWriter(os.Stdout, "      > "), colorSuite}
+		out = exec.NewPrefixWriter(os.Stdout, "      ~ ")
 	}
 
 	proc, err := cmd.Start(out)
