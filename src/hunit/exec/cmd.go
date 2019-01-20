@@ -11,6 +11,70 @@ import (
 	"time"
 )
 
+const newline = '\n'
+
+// A writer that indents lines with a prefix string
+type prefixWriter struct {
+	writer io.Writer
+	prefix string
+	nl     bool
+}
+
+func (s prefixWriter) Write(p []byte) (int, error) {
+	var i, x, n int
+	var r rune
+
+	if s.nl {
+		z, err := s.writer.Write([]byte(s.prefix))
+		if err != nil {
+			return z, err
+		}
+		s.nl = false
+	}
+
+	c := string(p)
+	for i, r = range c {
+		if s.nl {
+			z, err := s.writer.Write([]byte(s.prefix))
+			if err != nil {
+				return z, err
+			}
+			// don't account for the prefix, presumably would confuse callers if: n > len(p)
+		}
+		if r == newline {
+			z, err := s.writer.Write([]byte(c[x : i+1]))
+			if err != nil {
+				return z, err
+			}
+			x = i
+			n += z
+			s.nl = true
+		}
+	}
+
+	if x < i {
+		z, err := s.writer.Write([]byte(c[x:]))
+		if err != nil {
+			return z, err
+		}
+		n += z
+		if c[len(c)-1] == newline {
+			s.nl = true
+		}
+	}
+
+	return n, nil
+}
+
+func (s prefixWriter) Close() error {
+	return nil // do nothing; this is intended to be used with os.Stdout
+}
+
+// Create a prefix writer
+func NewPrefixWriter(w io.Writer, p string) prefixWriter {
+	return prefixWriter{w, p, true}
+}
+
 // Copy the environment in this process as a map and merge it with the
 // provided set, which takes prescidence
 func Environ(sup map[string]string) map[string]string {
@@ -38,7 +102,7 @@ type Process struct {
 	linger  time.Duration
 }
 
-func (p *Process) Redirect(dst io.WriteCloser) error {
+func (p *Process) Redirect(out io.WriteCloser) error {
 	p.Lock()
 	defer p.Unlock()
 	if p.cmd == nil {
@@ -58,19 +122,19 @@ func (p *Process) Redirect(dst io.WriteCloser) error {
 	}
 
 	go func() {
-		_, err := io.Copy(dst, stdout)
+		_, err := io.Copy(out, stdout)
 		if err != nil && err != io.EOF {
 			fmt.Printf("io: %s\n", err)
 		}
 	}()
 	go func() {
-		_, err := io.Copy(dst, stderr)
+		_, err := io.Copy(out, stderr)
 		if err != nil && err != io.EOF {
 			fmt.Printf("io: %s\n", err)
 		}
 	}()
 
-	p.redir = dst
+	p.redir = out
 	return nil
 }
 
@@ -131,9 +195,9 @@ func (c Command) cmd(cxt context.Context) (*exec.Cmd, error) {
 
 	var cmd *exec.Cmd
 	if cxt != nil {
-		cmd = exec.CommandContext(cxt, bash, "-c", c.Command)
+		cmd = exec.CommandContext(cxt, bash, "-e", "-o", "pipefail", "-c", c.Command)
 	} else {
-		cmd = exec.Command(bash, "-c", c.Command)
+		cmd = exec.Command(bash, "-e", "-o", "pipefail", "-c", c.Command)
 	}
 	if len(c.Environment) > 0 {
 		env := os.Environ()
@@ -162,7 +226,7 @@ func (c Command) Exec() (string, error) {
 }
 
 // Start a command
-func (c Command) Start(dst io.WriteCloser) (*Process, error) {
+func (c Command) Start(out io.WriteCloser) (*Process, error) {
 	cxt, cancel := context.WithCancel(context.Background())
 	cmd, err := c.cmd(cxt)
 	if err != nil {
@@ -171,7 +235,7 @@ func (c Command) Start(dst io.WriteCloser) (*Process, error) {
 
 	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, cancel, nil, c.Linger}
 
-	err = proc.Redirect(dst)
+	err = proc.Redirect(out)
 	if err != nil {
 		return nil, err
 	}

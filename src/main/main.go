@@ -53,7 +53,7 @@ func app() int {
 		fDocFormatEntity = cmdline.Bool("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")), "Pretty-print supported request and response entities in documentation output.")
 		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections.")
 		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests. This process will be interrupted after tests have completed.")
-		fExecLog         = cmdline.String("exec:log", coalesce(os.Getenv("HUNIT_EXEC_LOG"), "hunit_exec.log"), "The path to log command output to")
+		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output.")
 		fDebug           = cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode.")
 		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal.")
 		fVerbose         = cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose.")
@@ -65,11 +65,6 @@ func app() int {
 	debug.DEBUG = *fDebug
 	debug.VERBOSE = *fVerbose
 	color.NoColor = !*fColor
-
-	if fExec != nil {
-	}
-	if fExecLog != nil {
-	}
 
 	var options test.Options
 	if *fTrimEntity {
@@ -397,12 +392,18 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, error) {
 		return nil, fmt.Errorf("Empty command (did you set 'run'?)")
 	}
 
-	dst, err := os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("Could not open exec log: %v", err)
+	var out io.WriteCloser
+	if logs != "" {
+		var err error
+		out, err = os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		if err != nil {
+			return nil, fmt.Errorf("Could not open exec log: %v", err)
+		}
+	} else {
+		out = colorWriter{exec.NewPrefixWriter(os.Stdout, "      > "), colorSuite}
 	}
 
-	proc, err := cmd.Start(dst)
+	proc, err := cmd.Start(out)
 	if err != nil {
 		return nil, fmt.Errorf("Could not exec process: %v", err)
 	}
@@ -496,4 +497,13 @@ func dumpEnv(w io.Writer, env map[string]string) {
 	for k, v := range env {
 		fmt.Fprintf(w, f, k, v)
 	}
+}
+
+type colorWriter struct {
+	io.WriteCloser
+	attrs []color.Attribute
+}
+
+func (w colorWriter) Write(p []byte) (int, error) {
+	return color.New(w.attrs...).Fprint(w.WriteCloser, string(p))
 }
