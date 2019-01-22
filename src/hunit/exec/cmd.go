@@ -102,7 +102,8 @@ type Process struct {
 	redir   io.WriteCloser
 	linger  time.Duration
 	exited  bool
-	status  error
+	status  *os.ProcessState
+	monitor chan struct{}
 }
 
 func (p *Process) Start(out io.WriteCloser) error {
@@ -144,23 +145,49 @@ func (p *Process) Start(out io.WriteCloser) error {
 		return err
 	}
 
-	go func() {
+	go func(cmd *exec.Cmd) {
+		cmd.Wait()
 		p.Lock()
 		defer p.Unlock()
-		err := p.cmd.Wait()
-		p.status = err
-	}()
+		p.exited = true
+		p.status = cmd.ProcessState
+		if p.monitor != nil {
+			p.monitor <- struct{}{}
+		}
+	}(p.cmd)
 
 	return nil
 }
 
-func (p Process) Running() bool {
+func (p *Process) Running() bool {
 	p.Lock()
 	defer p.Unlock()
 	return !p.exited
 }
 
-func (p Process) Linger() time.Duration {
+func (p *Process) Monitor() *os.ProcessState {
+	p.Lock()
+	m := p.monitor
+	p.Unlock()
+
+	if m != nil {
+		<-m
+	} else {
+		return p.status
+	}
+
+	p.Lock()
+	defer p.Unlock()
+
+	if p.monitor != nil {
+		close(p.monitor)
+		p.monitor = nil
+	}
+
+	return p.status
+}
+
+func (p *Process) Linger() time.Duration {
 	return p.linger
 }
 
@@ -258,7 +285,7 @@ func (c Command) Start(out io.WriteCloser) (*Process, error) {
 		return nil, err
 	}
 
-	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, cancel, nil, c.Linger, false, nil}
+	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, cancel, nil, c.Linger, false, nil, make(chan struct{}, 1)}
 
 	err = proc.Start(out)
 	if err != nil {

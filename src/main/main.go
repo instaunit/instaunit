@@ -175,10 +175,12 @@ func app() int {
 suites:
 	for _, e := range cmdline.Args() {
 		if proc != nil {
-			if l := proc.Linger(); l > 0 {
-				color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n", l)
+			if proc.Running() {
+				if l := proc.Linger(); l > 0 {
+					color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n", l)
+				}
+				proc.Kill()
 			}
-			proc.Kill()
 			proc = nil
 		}
 
@@ -311,10 +313,12 @@ suites:
 	}
 
 	if proc != nil {
-		if l := proc.Linger(); l > 0 {
-			color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n", l)
+		if proc.Running() {
+			if l := proc.Linger(); l > 0 {
+				color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n", l)
+			}
+			proc.Kill()
 		}
-		proc.Kill()
 		proc = nil
 	}
 
@@ -412,6 +416,11 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, error) {
 	if debug.VERBOSE {
 		dumpEnv(os.Stdout, cmd.Environment)
 	}
+
+	go func() {
+		state := proc.Monitor()
+		color.New(colorSuite...).Printf("----> * %v (pid %d; %s)\n", proc, state.Pid(), state)
+	}()
 
 	if cmd.Wait > 0 {
 		color.New(colorSuite...).Printf("----> Waiting %v for process to settle...\n", cmd.Wait)
