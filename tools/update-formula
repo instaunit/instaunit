@@ -43,7 +43,8 @@ class Instaunit < Formula
   version "${release_version}"
   
   def install
-    system "install", "-d", "-m", "0755", "bin", "#{prefix}/bin"
+    system "install", "-d", "#{bin}"
+    system "install", "-m", "0755", "bin/instaunit", "#{bin}/instaunit"
   end
 end
 FORMULA
