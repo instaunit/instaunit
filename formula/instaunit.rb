@@ -6,7 +6,8 @@ class Instaunit < Formula
   version "v1.0.3"
   
   def install
+    system "pwd"
     system "install", "-d", "#{prefix}/bin"
-    system "install", "-m", "0755", "bin", "#{bin}"
+    system "install", "-m", "0755", "bin/instaunit", "#{bin}/instaunit"
   end
 end
