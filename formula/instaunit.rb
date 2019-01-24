@@ -7,6 +7,6 @@ class Instaunit < Formula
   
   def install
     system "install", "-d", "#{prefix}/bin"
-    system "install", "-m", "0755", "bin/*", "#{prefix}/bin/"
+    system "make", "install"
   end
 end
