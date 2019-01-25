@@ -27,6 +27,7 @@ SRC = $(shell find src -name \*.go -print)
 # tests
 TEST_PKGS = hunit \
 						hunit/expr \
+						hunit/net/await \
 						hunit/text/slug
 
 .PHONY: all test clean install release build build_darwin_amd64 build_linux_amd64 build_freebsd_amd64
