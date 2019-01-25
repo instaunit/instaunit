@@ -36,7 +36,7 @@ func TestAwaitHTTP(t *testing.T) {
 		}
 
 		go srv.ListenAndServe()
-		err := Deps([]string{"http://localhost:9999/"}, time.Minute)
+		err := Await(context.Background(), []string{"http://localhost:9999/"}, time.Minute)
 		srv.Shutdown(context.TODO())
 		assert.Nil(t, err, fmt.Sprint(err))
 	})
@@ -56,7 +56,7 @@ func TestAwaitHTTP(t *testing.T) {
 		}()
 
 		start := time.Now()
-		err := Deps([]string{"http://localhost:9999/"}, time.Minute)
+		err := Await(context.Background(), []string{"http://localhost:9999/"}, time.Minute)
 		srv.Shutdown(context.TODO())
 		assert.Nil(t, err, fmt.Sprint(err))
 		waited := time.Now().Sub(start)
@@ -77,11 +77,42 @@ func TestAwaitHTTP(t *testing.T) {
 			srv.ListenAndServe()
 		}()
 
-		err := Deps([]string{"http://localhost:9999/"}, time.Second)
+		err := Await(context.Background(), []string{"http://localhost:9999/"}, time.Second)
 		srv.Shutdown(context.TODO())
 		if assert.NotNil(t, err, "Expected timeout") {
 			assert.Equal(t, ErrTimeout, err, fmt.Sprint(err))
 		}
+	})
+
+	t.Run("Cancel", func(t *testing.T) {
+		srv := &http.Server{
+			Addr:         ":9999",
+			Handler:      http.HandlerFunc(success),
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+		}
+
+		wait := time.Second * 2
+		cxt, cancel := context.WithCancel(context.Background())
+
+		go func() {
+			time.Sleep(wait)
+			srv.ListenAndServe()
+		}()
+
+		start := time.Now()
+		go func() {
+			time.Sleep(wait / 2)
+			fmt.Println(">>> Cancelling!")
+			cancel()
+		}()
+
+		err := Await(cxt, []string{"http://localhost:9999/"}, time.Minute)
+		srv.Shutdown(context.TODO())
+		assert.Nil(t, err, fmt.Sprint(err))
+		waited := time.Now().Sub(start)
+		fmt.Println(">>> >>>", wait, waited, defaultRetry)
+		assert.Equal(t, true, waited < (wait/2)+defaultRetry)
 	})
 
 }

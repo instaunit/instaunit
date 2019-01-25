@@ -18,7 +18,7 @@ var (
 	ErrUnsupported = fmt.Errorf("Unsupported scheme")
 )
 
-func Deps(ustr []string, timeout time.Duration) error {
+func Await(cxt context.Context, ustr []string, timeout time.Duration) error {
 	deps := make(chan struct{})
 	errs := make(chan error, 1)
 
@@ -31,7 +31,8 @@ func Deps(ustr []string, timeout time.Duration) error {
 		urls[i] = u
 	}
 
-	cxt, cancel := context.WithCancel(context.Background())
+	var cancel context.CancelFunc
+	cxt, cancel = context.WithCancel(cxt)
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
