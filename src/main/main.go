@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -13,13 +14,12 @@ import (
 	"hunit/doc"
 	"hunit/doc/emit"
 	"hunit/exec"
+	"hunit/net/await"
 	"hunit/service"
 	"hunit/service/backend/rest"
 	"hunit/test"
 	"hunit/text"
-)
 
-import (
 	"github.com/bww/go-util/debug"
 	"github.com/fatih/color"
 )
@@ -200,6 +200,23 @@ suites:
 			color.New(colorSuite...).Printf(" (%v)\n", suite.Title)
 		} else {
 			fmt.Println()
+		}
+
+		if deps := suite.Deps; deps != nil {
+			var deadline string
+			if deps.Timeout == 0 {
+				deadline = "forever"
+			} else {
+				deadline = fmt.Sprint(deps.Timeout)
+			}
+			if l := len(deps.Resources); l > 0 {
+				if l == 1 {
+					color.New(colorSuite...).Printf("----> Waiting %s for one dependency...\n", deadline)
+				} else {
+					color.New(colorSuite...).Printf("----> Waiting %s for %d dependencies...\n", deadline, l)
+				}
+				await.Await(context.Background(), deps.Resources, deps.Timeout)
+			}
 		}
 
 		var out io.WriteCloser

@@ -24,6 +24,12 @@ type Config struct {
 	} `yaml:",inline"`
 }
 
+// A set of dependencies
+type Dependencies struct {
+	Resources []string      `yaml:"resources"`
+	Timeout   time.Duration `yaml:"timeout"`
+}
+
 // A test suite
 type Suite struct {
 	Title    string         `yaml:"title"`
@@ -33,6 +39,7 @@ type Suite struct {
 	Setup    []exec.Command `yaml:"setup"`
 	Teardown []exec.Command `yaml:"teardown"`
 	Exec     *exec.Command  `yaml:"process"`
+	Deps     *Dependencies  `yaml:"depends"`
 }
 
 // Load a test suite

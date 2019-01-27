@@ -60,13 +60,22 @@ func Await(cxt context.Context, ustr []string, timeout time.Duration) error {
 		close(deps)
 	}()
 
-	select {
-	case <-deps:
-		break
-	case err := <-errs:
-		return err
-	case <-time.After(timeout):
-		return ErrTimeout
+	if timeout > 0 {
+		select {
+		case <-deps:
+			break
+		case err := <-errs:
+			return err
+		case <-time.After(timeout):
+			return ErrTimeout
+		}
+	} else {
+		select {
+		case <-deps:
+			break
+		case err := <-errs:
+			return err
+		}
 	}
 
 	return nil

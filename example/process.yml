@@ -2,10 +2,14 @@
 
 process:
   run: ls
-  wait: 1s
   linger: 1s
   environment:
     THIS_KEY: this value
+
+depends:
+  timeout: 1m
+  resources:
+    - http://localhost:8000/health
 
 setup:
   - run: ls
