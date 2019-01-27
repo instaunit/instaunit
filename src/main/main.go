@@ -202,28 +202,6 @@ suites:
 			fmt.Println()
 		}
 
-		if deps := suite.Deps; deps != nil {
-			var deadline string
-			if deps.Timeout == 0 {
-				deadline = "forever"
-			} else {
-				deadline = fmt.Sprint(deps.Timeout)
-			}
-			if l := len(deps.Resources); l > 0 {
-				if l == 1 {
-					color.New(colorSuite...).Printf("----> Waiting %s for one dependency...\n", deadline)
-				} else {
-					color.New(colorSuite...).Printf("----> Waiting %s for %d dependencies...\n", deadline, l)
-				}
-				err := await.Await(context.Background(), deps.Resources, deps.Timeout)
-				if err != nil {
-					color.New(colorErr...).Printf("* * * Error waiting for dependencies: %v\n", err)
-					errors++
-					continue
-				}
-			}
-		}
-
 		var out io.WriteCloser
 		var gendoc []doc.Generator
 		if *fGendoc {
@@ -265,6 +243,28 @@ suites:
 			if err != nil {
 				color.New(colorErr...).Printf("* * * %v\n", err)
 				continue suites
+			}
+		}
+
+		if deps := suite.Deps; deps != nil {
+			var deadline string
+			if deps.Timeout == 0 {
+				deadline = "forever"
+			} else {
+				deadline = fmt.Sprint(deps.Timeout)
+			}
+			if l := len(deps.Resources); l > 0 {
+				if l == 1 {
+					color.New(colorSuite...).Printf("----> Waiting %s for one dependency...\n", deadline)
+				} else {
+					color.New(colorSuite...).Printf("----> Waiting %s for %d dependencies...\n", deadline, l)
+				}
+				err := await.Await(context.Background(), deps.Resources, deps.Timeout)
+				if err != nil {
+					color.New(colorErr...).Printf("* * * Error waiting for dependencies: %v\n", err)
+					errors++
+					continue
+				}
 			}
 		}
 
