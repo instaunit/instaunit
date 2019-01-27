@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -13,13 +14,12 @@ import (
 	"hunit/doc"
 	"hunit/doc/emit"
 	"hunit/exec"
+	"hunit/net/await"
 	"hunit/service"
 	"hunit/service/backend/rest"
 	"hunit/test"
 	"hunit/text"
-)
 
-import (
 	"github.com/bww/go-util/debug"
 	"github.com/fatih/color"
 )
@@ -40,20 +40,24 @@ func app() int {
 	var headerSpecs, serviceSpecs flagList
 
 	cmdline := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	fBaseURL := cmdline.String("base-url", coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"), "The base URL for requests.")
-	fExpandVars := cmdline.Bool("expand", strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true), "Expand variables in test cases.")
-	fTrimEntity := cmdline.Bool("entity:trim", strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true), "Trim trailing whitespace from entities.")
-	fDumpRequest := cmdline.Bool("dump:request", strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")), "Dump requests to standard output as they are processed.")
-	fDumpResponse := cmdline.Bool("dump:response", strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")), "Dump responses to standard output as they are processed.")
-	fGendoc := cmdline.Bool("gendoc", strToBool(os.Getenv("HUNIT_GENDOC")), "Generate documentation.")
-	fDocpath := cmdline.String("doc:output", coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"), "The directory in which generated documentation should be written.")
-	fDoctype := cmdline.String("doc:type", coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"), "The format to generate documentation in.")
-	fDocInclHTTP := cmdline.Bool("doc:include-http", strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")), "Include HTTP in request and response examples (as opposed to just routes and entities).")
-	fDocFormatEntity := cmdline.Bool("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")), "Pretty-print supported request and response entities in documentation output.")
-	fIOGracePeriod := cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections.")
-	fDebug := cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode.")
-	fColor := cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal.")
-	fVerbose := cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose.")
+	var (
+		fBaseURL         = cmdline.String("base-url", coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"), "The base URL for requests.")
+		fExpandVars      = cmdline.Bool("expand", strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true), "Expand variables in test cases.")
+		fTrimEntity      = cmdline.Bool("entity:trim", strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true), "Trim trailing whitespace from entities.")
+		fDumpRequest     = cmdline.Bool("dump:request", strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")), "Dump requests to standard output as they are processed.")
+		fDumpResponse    = cmdline.Bool("dump:response", strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")), "Dump responses to standard output as they are processed.")
+		fGendoc          = cmdline.Bool("gendoc", strToBool(os.Getenv("HUNIT_GENDOC")), "Generate documentation.")
+		fDocpath         = cmdline.String("doc:output", coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"), "The directory in which generated documentation should be written.")
+		fDoctype         = cmdline.String("doc:type", coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"), "The format to generate documentation in.")
+		fDocInclHTTP     = cmdline.Bool("doc:include-http", strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")), "Include HTTP in request and response examples (as opposed to just routes and entities).")
+		fDocFormatEntity = cmdline.Bool("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")), "Pretty-print supported request and response entities in documentation output.")
+		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections.")
+		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests. This process will be interrupted after tests have completed.")
+		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output.")
+		fDebug           = cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode.")
+		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal.")
+		fVerbose         = cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose.")
+	)
 	cmdline.Var(&headerSpecs, "header", "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
 	cmdline.Var(&serviceSpecs, "service", "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
 	cmdline.Parse(os.Args[1:])
@@ -140,6 +144,9 @@ func app() int {
 			color.New(colorErr...).Printf("* * * Could not start mock service: %v\n", err)
 			return 1
 		}
+		if debug.VERBOSE {
+			fmt.Println()
+		}
 		defer func(s service.Service, c service.Config) {
 			c.Resource.Close()
 			s.StopService()
@@ -148,15 +155,35 @@ func app() int {
 		services++
 	}
 
-	// give services a second to settle
+	if *fExec != "" {
+		proc, err := execCommandAsync(exec.NewCommand(*fExec, *fExec), *fExecLog)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * %v\n", err)
+			return 1
+		}
+		defer proc.Kill()
+	}
+
+	// give services and processes a second to settle
 	if services > 0 {
 		<-time.After(time.Second / 4)
 	}
 
+	var proc *exec.Process
 	success := true
 	start := time.Now()
 suites:
 	for _, e := range cmdline.Args() {
+		if proc != nil {
+			if proc.Running() {
+				if l := proc.Linger(); l > 0 {
+					color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n", l)
+				}
+				proc.Kill()
+			}
+			proc = nil
+		}
+
 		base := path.Base(e)
 		color.New(colorSuite...).Printf("====> %v", base)
 
@@ -206,6 +233,38 @@ suites:
 		if len(suite.Setup) > 0 {
 			if execCommands(suite.Setup) != nil {
 				continue suites
+			}
+		}
+
+		if suite.Exec != nil {
+			cmd := suite.Exec
+			cmd.Environment = exec.Environ(cmd.Environment)
+			proc, err = execCommandAsync(*cmd, *fExecLog)
+			if err != nil {
+				color.New(colorErr...).Printf("* * * %v\n", err)
+				continue suites
+			}
+		}
+
+		if deps := suite.Deps; deps != nil {
+			var deadline string
+			if deps.Timeout == 0 {
+				deadline = "forever"
+			} else {
+				deadline = fmt.Sprint(deps.Timeout)
+			}
+			if l := len(deps.Resources); l > 0 {
+				if l == 1 {
+					color.New(colorSuite...).Printf("----> Waiting %s for one dependency...\n", deadline)
+				} else {
+					color.New(colorSuite...).Printf("----> Waiting %s for %d dependencies...\n", deadline, l)
+				}
+				err := await.Await(context.Background(), deps.Resources, deps.Timeout)
+				if err != nil {
+					color.New(colorErr...).Printf("* * * Error waiting for dependencies: %v\n", err)
+					errors++
+					continue
+				}
 			}
 		}
 
@@ -275,6 +334,16 @@ suites:
 		<-make(chan struct{})
 	}
 
+	if proc != nil {
+		if proc.Running() {
+			if l := proc.Linger(); l > 0 {
+				color.New(colorSuite...).Printf("----> Waiting %v for process to complete...\n", l)
+			}
+			proc.Kill()
+		}
+		proc = nil
+	}
+
 	duration := time.Since(start)
 	fmt.Println()
 
@@ -303,21 +372,28 @@ suites:
 	return 0
 }
 
-// Execute a set of commands
+// Execute a set of commands in sequence, allowing each to terminate before
+// the next is executed.
 func execCommands(cmds []exec.Command) error {
 	for i, e := range cmds {
 		if i > 0 && debug.VERBOSE {
 			fmt.Println()
 		}
+
 		if e.Command == "" {
 			color.New(colorErr...).Printf("* * * Setup command #%d is empty (did you set 'run'?)", i+1)
 			return fmt.Errorf("Empty command")
 		}
+
 		if e.Display != "" {
 			fmt.Printf("----> %v ", e.Display)
 		} else {
 			fmt.Printf("----> $ %v ", e.Command)
 		}
+		if debug.VERBOSE {
+			dumpEnv(os.Stdout, e.Environment)
+		}
+
 		out, err := e.Exec()
 		if err != nil {
 			fmt.Println()
@@ -327,12 +403,52 @@ func execCommands(cmds []exec.Command) error {
 			}
 			return err
 		}
+
 		color.New(color.Bold, color.FgHiGreen).Println("OK")
 		if debug.VERBOSE && len(out) > 0 {
 			fmt.Println(text.Indent(string(out), "      < "))
 		}
 	}
 	return nil
+}
+
+// Execute a single command and do not wait for it to terminate
+func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, error) {
+	if cmd.Command == "" {
+		return nil, fmt.Errorf("Empty command (did you set 'run'?)")
+	}
+
+	var out io.WriteCloser
+	if logs != "" {
+		var err error
+		out, err = os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		if err != nil {
+			return nil, fmt.Errorf("Could not open exec log: %v", err)
+		}
+	} else {
+		out = exec.NewPrefixWriter(os.Stdout, "      ◇ ")
+	}
+
+	proc, err := cmd.Start(out)
+	if err != nil {
+		return nil, fmt.Errorf("Could not exec process: %v", err)
+	}
+
+	color.New(colorSuite...).Printf("----> $ %v\n", proc)
+	if debug.VERBOSE {
+		dumpEnv(os.Stdout, cmd.Environment)
+	}
+
+	go func() {
+		state := proc.Monitor()
+		color.New(colorSuite...).Printf("----> * %v (pid %d; %s)\n", proc, state.Pid(), state)
+	}()
+
+	if cmd.Wait > 0 {
+		color.New(colorSuite...).Printf("----> Waiting %v for process to settle...\n", cmd.Wait)
+		<-time.After(cmd.Wait)
+	}
+	return proc, nil
 }
 
 // Flag string list
@@ -398,4 +514,27 @@ func strToDuration(s string, d ...time.Duration) time.Duration {
 		}
 	}
 	return v
+}
+
+// Dump environment pairs
+func dumpEnv(w io.Writer, env map[string]string) {
+	wk := 0
+	for k, _ := range env {
+		if l := len(k); l < 40 && l > wk {
+			wk = l
+		}
+	}
+	f := fmt.Sprintf("        %%%ds = %%s\n", wk)
+	for k, v := range env {
+		fmt.Fprintf(w, f, k, v)
+	}
+}
+
+type colorWriter struct {
+	io.WriteCloser
+	attrs []color.Attribute
+}
+
+func (w colorWriter) Write(p []byte) (int, error) {
+	return color.New(w.attrs...).Fprint(w.WriteCloser, string(p))
 }

@@ -2,10 +2,8 @@ package test
 
 import (
 	"time"
-)
 
-import (
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Options
