@@ -1,9 +1,13 @@
 # These tests manage a process that does not exist
 
 process:
-  run: does not exist
-  # run: cat example/output.txt
+  run: cat example/output.txt
   linger: 1s
+
+depends:
+  timeout: 1s
+  resources:
+    - http://localhost:12345/health
 
 tests:
 

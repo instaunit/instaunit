@@ -215,7 +215,12 @@ suites:
 				} else {
 					color.New(colorSuite...).Printf("----> Waiting %s for %d dependencies...\n", deadline, l)
 				}
-				await.Await(context.Background(), deps.Resources, deps.Timeout)
+				err := await.Await(context.Background(), deps.Resources, deps.Timeout)
+				if err != nil {
+					color.New(colorErr...).Printf("* * * Error waiting for dependencies: %v\n", err)
+					errors++
+					continue
+				}
 			}
 		}
 
