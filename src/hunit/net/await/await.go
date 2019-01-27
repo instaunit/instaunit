@@ -75,6 +75,12 @@ func Await(cxt context.Context, ustr []string, timeout time.Duration) error {
 func waitForFile(cxt context.Context, wg *sync.WaitGroup, path string, retry time.Duration) {
 	defer wg.Done()
 	for {
+		select {
+		case <-cxt.Done():
+			return
+		default:
+			// ... continue
+		}
 		_, err := os.Stat(path)
 		if err == nil {
 			return
@@ -93,12 +99,19 @@ func waitForHTTP(cxt context.Context, wg *sync.WaitGroup, endpoint *url.URL, ret
 	}
 
 	for {
+		select {
+		case <-cxt.Done():
+			return
+		default:
+			// ... continue
+		}
+
 		req, err := http.NewRequest("GET", endpoint.String(), nil)
 		if err != nil {
 			time.Sleep(retry)
 		}
 
-		resp, err := client.Do(req)
+		resp, err := client.Do(req.WithContext(cxt))
 		if err != nil { // something else went wrong; just retry?
 			time.Sleep(retry)
 		} else if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
@@ -111,12 +124,19 @@ func waitForHTTP(cxt context.Context, wg *sync.WaitGroup, endpoint *url.URL, ret
 
 func waitForSocket(cxt context.Context, wg *sync.WaitGroup, scheme, addr string, retry time.Duration) {
 	defer wg.Done()
+	dialer := net.Dialer{Timeout: retry}
 	for {
-		conn, err := net.DialTimeout(scheme, addr, retry)
+		select {
+		case <-cxt.Done():
+			return
+		default:
+			// ... continue
+		}
+
+		conn, err := dialer.DialContext(cxt, scheme, addr)
 		if err != nil {
 			time.Sleep(retry)
-		}
-		if conn != nil {
+		} else if conn != nil {
 			return
 		}
 	}
