@@ -426,7 +426,7 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, error) {
 			return nil, fmt.Errorf("Could not open exec log: %v", err)
 		}
 	} else {
-		out = exec.NewPrefixWriter(os.Stdout, "      ~ ")
+		out = exec.NewPrefixWriter(os.Stdout, "      ◇ ")
 	}
 
 	proc, err := cmd.Start(out)
