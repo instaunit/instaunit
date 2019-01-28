@@ -33,7 +33,7 @@ func Await(cxt context.Context, ustr []string, timeout time.Duration) error {
 
 	var cancel context.CancelFunc
 	cxt, cancel = context.WithCancel(cxt)
-	defer cancel()
+	defer cancel() // make sure we stop waiting on return
 
 	wg := &sync.WaitGroup{}
 	go func() {
