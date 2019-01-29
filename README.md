@@ -1,8 +1,8 @@
 # Instaunit tests your service APIs
 
-Instaunit makes building tests for REST and Websocket services simple and declarative. You can use Instaunit locally for development and on your CI infrastructure to run automated tests against your Web services.
+Instaunit makes managing tests for REST and Websocket services simple and declarative. You can use Instaunit locally for development and on your CI infrastructure to run automated tests against your Web services.
 
-And since tests and documentation are naturally maintained in parallel, Instaunit can combine these two highly-related tasks into one: usage detail can be optionally added to your tests to automatically generate documentation of your endpoints.
+Since tests and documentation are naturally maintained in parallel, Instaunit can also combine these two highly-related tasks into one: usage detail can be optionally added to your tests to automatically generate documentation of your endpoints.
 
 ## Describing Tests
 
