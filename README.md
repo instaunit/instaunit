@@ -1,6 +1,8 @@
 # Instaunit tests your service APIs
 
-Instaunit makes building tests for REST and Websocket services simple and declarative. And since tests and documentation are naturally maintained in parallel, Instaunit can combine these two highly-related tasks into one: descriptions can be optionally added to your tests to automatically generate documentation of your endpoints.
+Instaunit makes building tests for REST and Websocket services simple and declarative. You can use Instaunit locally for development and on your CI infrastructure to run automated tests against your Web services.
+
+And since tests and documentation are naturally maintained in parallel, Instaunit can combine these two highly-related tasks into one: usage detail can be optionally added to your tests to automatically generate documentation of your endpoints.
 
 ## Describing Tests
 
@@ -64,18 +66,4 @@ $ instaunit test.yml
              @@ -1,2 +1,2 @@
              -{"status": "Ok"}
              +{"status": "Not great"}
-```
-
-## Generating Documentation
-
-Documentation can be generated for the endpoints in your tests by passing the `-gendoc` flag. When set, tests are run and their input and output are automatically incorporated into documentation as examples.
-
-Currently, documentation can be generated as [Markdown](https://en.wikipedia.org/wiki/Markdown) (which, of course, can easily be converted to HTML). We'd be [interested to hear](https://github.com/instaunit/instaunit/issues) about other documentation formats that may be worth supporting.
-
-Refer to [`example/docs`](https://github.com/instaunit/instaunit/blob/master/example/docs) for an example of the docs generated for the example tests.
-
-```
-$ instaunit -gendoc test.yml
-====> test.yml
-# ...
 ```
