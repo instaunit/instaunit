@@ -19,7 +19,7 @@ tests:
       entity: {"status": "Ok"}
 ```
 
-Instaunit also supports a bunch of advanced features if you need them:
+Instaunit supports a lot of other request properties – from headers to authorization to parameter encoding – as well as a bunch of advanced features if you need them:
 
 * **Compare entities semantically** to ignore insignificant differences like whitespace and map key order,
 * Reference the output of previously-run tests to **chain related tests together**,
