@@ -27,25 +27,6 @@ Instaunit supports a lot of other request properties – from headers to author
 * Declare **mock services** so your tests avoid external dependencies without making code-level changes,
 * Evaluate **expressions and built-in functions** to generate input and randomize your tests.
 
-## Documenting Tests
-
-Tests and documentation are naturally maintained together. To generate documentation, simply add a description to a representative test case for your endpoint. You can pick and choose which tests generate documentation.
-
-Instaunit supports a variety of properties you can include to document a request but all you need to get started is `doc`:
-
-```yaml
-tests:
-  -
-    doc: |
-      About this endpoint. Use _Markdown_ to add formatting!
-    request:
-      method: GET
-      url: https://www.example.com/status
-    response:
-      status: 200
-      entity: {"status": "Ok"}
-```
-
 ## Running Tests
 
 Tests can be run by pointing `instaunit` to a test suite document (or many of them). 
@@ -66,4 +47,23 @@ $ instaunit test.yml
              @@ -1,2 +1,2 @@
              -{"status": "Ok"}
              +{"status": "Not great"}
+```
+
+## Documenting Tests
+
+Tests and documentation are naturally maintained together. To generate documentation, simply add a description to a representative test case for your endpoint. You can pick and choose which tests generate documentation.
+
+Instaunit supports a variety of properties you can include to document a request but all you need to get started is `doc`:
+
+```yaml
+tests:
+  -
+    doc: |
+      About this endpoint. Use _Markdown_ to add formatting!
+    request:
+      method: GET
+      url: https://www.example.com/status
+    response:
+      status: 200
+      entity: {"status": "Ok"}
 ```
