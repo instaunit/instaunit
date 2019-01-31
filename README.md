@@ -4,6 +4,15 @@ Instaunit makes writing tests for REST and Websocket services quick and declarat
 
 Since tests and documentation are naturally maintained in parallel, Instaunit can also combine these two highly-related tasks into one: add optional usage descriptions to your tests and Instaunit can generate documentation for your endpoints, complete with examples.
 
+## Installing Instaunit
+
+You can install Instaunit by:
+
+* [Downloading a binary release](https://github.com/instaunit/instaunit/releases) (Homebrew on MacOS is also supported; see release notes).
+* Cloning this repo and building from source via: `make install`.
+
+Get up and running quickly with our [**Getting Started Tutorial**](https://github.com/instaunit/instaunit/wiki/Getting-Started).
+
 ## Describing Tests
 
 Tests are described by a YAML-based document format. Just describe your request, the response you expect, and that's basically it. Here's a very simple test suite containing a single test case:
@@ -51,7 +60,7 @@ $ instaunit test.yml
 
 ## Documenting Tests
 
-Tests and documentation are naturally maintained together. To generate documentation, simply add a description to a representative test case for your endpoint. You can pick and choose which tests generate documentation.
+Tests and documentation are naturally maintained together: when an endpoint is added or changed you must update your tests as well as the documentation that describes it. To generate documentation, simply add a description to a representative test case for your endpoint. You can pick and choose which tests generate documentation.
 
 Instaunit supports a variety of properties you can include to document a request but all you need to get started is `doc`:
 
