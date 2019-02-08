@@ -99,7 +99,7 @@ func (s *restService) Stop() error {
 func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 
 	// match our internal status endpoint; we don't allow this to be shadowed
-	// by defined endpoints in order to monitor the service.
+	// by defined endpoints so that we can monitor the service.
 	if req.Method == statusMethod && req.URL.Path == statusPath {
 		rsp.Header().Set("Server", "HUnit/1")
 		rsp.Header().Set("Content-Type", "text/plain; charset=utf-8")
