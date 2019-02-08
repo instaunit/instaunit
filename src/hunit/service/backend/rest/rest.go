@@ -1,8 +1,10 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"hunit/service"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -10,10 +12,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"hunit/net/await"
 )
 
 // Don't wait forever
 const ioTimeout = time.Second * 10
+
+// Status
+const (
+	statusMethod = "GET"
+	statusPath   = "/_instaunit/status"
+)
 
 // REST service
 type restService struct {
@@ -35,9 +45,17 @@ func New(conf service.Config) (service.Service, error) {
 }
 
 // Start the service
-func (s *restService) StartService() error {
+func (s *restService) Start() error {
 	if s.server != nil {
 		return fmt.Errorf("Service is running")
+	}
+
+	host, port, err := net.SplitHostPort(s.conf.Addr)
+	if err != nil {
+		return fmt.Errorf("Invalid address: %v", err)
+	}
+	if host == "" {
+		host = "localhost"
 	}
 
 	s.server = &http.Server{
@@ -55,11 +73,20 @@ func (s *restService) StartService() error {
 		}
 	}()
 
+	// wait for our service to start up
+	status := fmt.Sprintf("http://%s:%s%s", host, port, statusPath)
+	err = await.Await(context.Background(), []string{status}, ioTimeout)
+	if err == await.ErrTimeout {
+		return fmt.Errorf("Timed out waiting for service: %s", status)
+	} else if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Stop the service
-func (s *restService) StopService() error {
+func (s *restService) Stop() error {
 	if s.server == nil {
 		return fmt.Errorf("Service is not running")
 	}
@@ -70,6 +97,15 @@ func (s *restService) StopService() error {
 
 // Handle requests
 func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
+
+	// match our internal status endpoint; we don't allow this to be shadowed
+	// by defined endpoints in order to monitor the service.
+	if req.Method == statusMethod && req.URL.Path == statusPath {
+		rsp.Header().Set("Server", "HUnit/1")
+		rsp.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		rsp.WriteHeader(http.StatusOK)
+		return
+	}
 
 	// match endpoints
 	for _, e := range s.suite.Endpoints {

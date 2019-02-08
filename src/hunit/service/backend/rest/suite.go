@@ -38,7 +38,7 @@ type Endpoint struct {
 
 // A test suite
 type Suite struct {
-	Endpoints []Endpoint `yaml:"endpoints"`
+	Endpoints []Endpoint `yaml:"service"`
 }
 
 // Load a test suite

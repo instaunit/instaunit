@@ -1,31 +1,13 @@
 # These tests manage a process that does not exist
-
-process:
-  run: cat example/output.txt
-  linger: 1s
-
-depends:
-  timeout: 1s
-  resources:
-    - http://localhost:12345/health
-
-tests:
-
-  - 
-    request:
-      method: GET
-      url: /projects/${std.RandomString(10)}/detail
-    
-    response:
-      status: 200
-      headers:
-        Content-Type: application/json; charset=utf-8
-      compare: semantic
-      entity: |
-        {
-          "color": "blue",
-          "height": 100,
-          "width": 50,
-          "depth": 475,
-          "in_stock": true
-        }
+-
+  endpoint:
+    methods:
+      - GET
+    path: /*
+  
+  response:
+    status: 200
+    headers:
+      Content-Type: application/json; charset=utf-8
+    entity: |
+      {}

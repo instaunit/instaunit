@@ -9,8 +9,8 @@ import (
 
 // A service
 type Service interface {
-	StartService() error
-	StopService() error
+	Start() error
+	Stop() error
 }
 
 // Service config
