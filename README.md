@@ -1,8 +1,14 @@
 # Instaunit tests your Web APIs
 
-Instaunit makes writing tests for REST and Websocket services quick and declarative. You can use Instaunit locally for development and on your CI infrastructure to run automated tests against your Web services.
+Instaunit is a tool that lets you write integration tests for REST and Websocket services declaratively. You can use Instaunit locally for development and on your CI infrastructure to run automated tests against your Web services.
 
-Since tests and documentation are naturally maintained in parallel, Instaunit can also combine these two highly-related tasks into one: add optional usage descriptions to your tests and Instaunit can generate documentation for your endpoints, complete with examples.
+**Using Instaunit to manage the repetitive details of executing requests and evaluating responses allows you to write tests faster and focus on the business logic of your services.**
+
+Since tests and documentation are naturally maintained in parallel, Instaunit can combine these two highly-related tasks into one: add optional usage descriptions to your tests and Instaunit can generate documentation for your endpoints, complete with examples.
+
+## Getting Started
+
+Get up and running quickly with our [**Getting Started Tutorial**](https://github.com/instaunit/instaunit/wiki/Getting-Started).
 
 ## Installing Instaunit
 
@@ -10,8 +16,6 @@ You can install Instaunit by:
 
 * [Downloading a binary release](https://github.com/instaunit/instaunit/releases) (Homebrew on MacOS is also supported; see release notes).
 * Cloning this repo and building from source via: `make install`.
-
-Get up and running quickly with our [**Getting Started Tutorial**](https://github.com/instaunit/instaunit/wiki/Getting-Started).
 
 ## Describing Tests
 
