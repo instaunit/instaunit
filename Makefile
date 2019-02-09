@@ -24,12 +24,8 @@ PREFIX ?= /usr/local
 
 # sources
 SRC = $(shell find src -name \*.go -print)
-
 # tests
-TEST_PKGS = hunit \
-						hunit/expr \
-						hunit/net/await \
-						hunit/text/slug
+TEST_PKGS = hunit/...
 
 .PHONY: all test clean install release build build_darwin_amd64 build_linux_amd64 build_freebsd_amd64
 
@@ -40,23 +36,27 @@ $(PRODUCT): $(SRC)
 
 build: $(PRODUCT) ## Build the product
 
-$(RELEASE_PACKAGE): $(SRC)
-	go build -o $(RELEASE_BINARY) $(MAIN)
+$(RELEASE_BINARY): $(SRC)
+	go build -ldflags="-X main.version=$(VERSION) -X main.githash=$(GITHASH)" -o $(RELEASE_BINARY) $(MAIN)
+
+$(RELEASE_PACKAGE): $(RELEASE_BINARY)
 	(cd $(RELEASE_TARGETS) && tar -zcf $(RELEASE_ARCHIVE) $(RELEASE_PRODUCT))
 
 build_release: $(RELEASE_PACKAGE)
-	if [ "$(GOOS)" = "darwin" ]; then $(PWD)/tools/update-formula -v $(VERSION) -o $(PWD)/formula/instaunit.rb $(RELEASE_PACKAGE); fi
 
-release: ## Build for all supported architectures
+build_formula: build_release
+	$(PWD)/tools/update-formula -v $(VERSION) -o $(PWD)/formula/instaunit.rb $(RELEASE_PACKAGE)
+
+release: test ## Build for all supported architectures
 	make build_release GOOS=linux GOARCH=amd64
 	make build_release GOOS=freebsd GOARCH=amd64
-	make build_release GOOS=darwin GOARCH=amd64
+	make build_formula GOOS=darwin GOARCH=amd64
 
 install: build ## Build and install
 	install -m 0755 $(PRODUCT) $(PREFIX)/bin/
 
 test: ## Run tests
-	go test -test.v $(TEST_PKGS)
+	go test $(TEST_PKGS)
 
 clean: ## Delete the built product and any generated files
 	rm -rf $(TARGETS)

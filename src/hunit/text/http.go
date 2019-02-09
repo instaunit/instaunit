@@ -95,7 +95,7 @@ func MatchesContentType(pattern, contentType string) bool {
 	// want to, e.g., test for all image types with `image/*`.
 	m, err := path.Match(pattern, contentType)
 	if err != nil {
-		panic(fmt.Errorf("* * * could not match invalid content-type pattern:", pattern))
+		panic(fmt.Errorf("* * * could not match invalid content-type pattern: %s", pattern))
 	}
 
 	return m
