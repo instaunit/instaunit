@@ -11,7 +11,8 @@ TARGETS := $(PWD)/bin
 PRODUCT := $(TARGETS)/$(NAME)
 
 # build and packaging for release
-VERSION 				?= $(shell git log --pretty=format:'%h' -n 1)
+GITHASH					:= $(shell git log --pretty=format:'%h' -n 1)
+VERSION 				?= $(GITHASH)
 RELEASE_TARGETS	 = $(PWD)/target/$(GOOS)_$(GOARCH)
 RELEASE_PRODUCT	 = instaunit-$(VERSION)
 RELEASE_ARCHIVE	 = $(RELEASE_PRODUCT)-$(GOOS)-$(GOARCH).tgz
@@ -35,7 +36,7 @@ TEST_PKGS = hunit \
 all: build
 
 $(PRODUCT): $(SRC)
-	go build -o $@ $(MAIN)
+	go build -ldflags="-X main.version=$(VERSION) -X main.githash=$(GITHASH)" -o $@ $(MAIN)
 
 build: $(PRODUCT) ## Build the product
 

@@ -24,6 +24,11 @@ import (
 	"github.com/fatih/color"
 )
 
+var ( // set at compile time via the linker
+	version = "v0.0.0"
+	githash = "000000"
+)
+
 var (
 	colorErr   = []color.Attribute{color.FgYellow}
 	colorSuite = []color.Attribute{color.Bold}
@@ -57,10 +62,20 @@ func app() int {
 		fDebug           = cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode.")
 		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal.")
 		fVerbose         = cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose.")
+		fVersion         = cmdline.Bool("version", false, "Display the version and exit.")
 	)
 	cmdline.Var(&headerSpecs, "header", "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
 	cmdline.Var(&serviceSpecs, "service", "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
 	cmdline.Parse(os.Args[1:])
+
+	if *fVersion {
+		if version == githash {
+			fmt.Println(version)
+		} else {
+			fmt.Printf("%s (%s)\n", version, githash)
+		}
+		return 0
+	}
 
 	debug.DEBUG = *fDebug
 	debug.VERBOSE = *fVerbose
