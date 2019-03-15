@@ -94,8 +94,10 @@ func waitForFile(cxt context.Context, wg *sync.WaitGroup, path string, retry tim
 		if err == nil {
 			return
 		} else if os.IsNotExist(err) {
+			log("await: No such file: %v", path)
 			time.Sleep(retry)
 		} else { // something else went wrong; just retry?
+			log("await: Could not stat: %v: %v", path, err)
 			time.Sleep(retry)
 		}
 	}
@@ -120,12 +122,14 @@ func waitForHTTP(cxt context.Context, wg *sync.WaitGroup, endpoint *url.URL, ret
 			time.Sleep(retry)
 		}
 
-		resp, err := client.Do(req.WithContext(cxt))
-		if err != nil { // something else went wrong; just retry?
+		rsp, err := client.Do(req.WithContext(cxt))
+		if err != nil {
+			log("await: Could not connect: %v", addr)
 			time.Sleep(retry)
-		} else if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			return
+		} else if rsp.StatusCode >= 200 && rsp.StatusCode < 300 {
+			return // ok, connected
 		} else {
+			log("await: Unexpected status: %v -> %v", addr, rsp.Status)
 			time.Sleep(retry)
 		}
 	}
@@ -145,8 +149,17 @@ func waitForSocket(cxt context.Context, wg *sync.WaitGroup, scheme, addr string,
 		conn, err := dialer.DialContext(cxt, scheme, addr)
 		if err != nil {
 			time.Sleep(retry)
+			log("await: Could not connect: %v", addr)
 		} else if conn != nil {
 			return
 		}
+	}
+}
+
+func log(f string, a ...interface{}) (int, error) {
+	if debug.VERBOSE {
+		return fmt.Printf(f, a...)
+	} else {
+		return 0, nil
 	}
 }
