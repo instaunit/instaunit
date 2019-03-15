@@ -9,6 +9,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/bww/go-util/debug"
 )
 
 const defaultRetry = time.Second
@@ -124,12 +126,12 @@ func waitForHTTP(cxt context.Context, wg *sync.WaitGroup, endpoint *url.URL, ret
 
 		rsp, err := client.Do(req.WithContext(cxt))
 		if err != nil {
-			log("await: Could not connect: %v", addr)
+			log("await: Could not connect: %v", endpoint)
 			time.Sleep(retry)
 		} else if rsp.StatusCode >= 200 && rsp.StatusCode < 300 {
 			return // ok, connected
 		} else {
-			log("await: Unexpected status: %v -> %v", addr, rsp.Status)
+			log("await: Unexpected status: %v -> %v", endpoint, rsp.Status)
 			time.Sleep(retry)
 		}
 	}
