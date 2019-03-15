@@ -160,7 +160,11 @@ func waitForSocket(cxt context.Context, wg *sync.WaitGroup, scheme, addr string,
 
 func log(f string, a ...interface{}) (int, error) {
 	if debug.VERBOSE {
-		return fmt.Printf(f, a...)
+		if l := len(f); l < 1 || f[l-1] != '\n' {
+			return fmt.Printf(f+"\n", a...)
+		} else {
+			return fmt.Printf(f, a...)
+		}
 	} else {
 		return 0, nil
 	}
