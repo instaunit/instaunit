@@ -2,11 +2,9 @@ package hunit
 
 import (
 	"reflect"
-)
 
-import (
 	"github.com/davecgh/go-spew/spew"
-	"github.com/kr/pretty"
+	"github.com/google/go-cmp/cmp"
 )
 
 // An assertion error
@@ -26,12 +24,7 @@ func (e AssertionError) Error() string {
 
 	_, ek := typeAndKind(e.Expected)
 	if ek == reflect.String || ek == reflect.Struct || ek == reflect.Map || ek == reflect.Slice || ek == reflect.Array {
-		d := pretty.Diff(e.Expected, e.Actual)
-		if d != nil && len(d) > 0 {
-			for _, e := range d {
-				m += e + "\n"
-			}
-		}
+		m += cmp.Diff(e.Expected, e.Actual)
 	} else {
 		m += "expected: " + spew.Sdump(e.Expected)
 		m += "  actual: " + spew.Sdump(e.Actual)
