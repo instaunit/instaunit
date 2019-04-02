@@ -111,6 +111,7 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 	for _, e := range s.suite.Endpoints {
 		if r := e.Request; r != nil {
 
+			r.Lock()
 			if r.methods == nil {
 				r.methods = make(map[string]struct{})
 				for _, x := range r.Methods {
@@ -129,7 +130,10 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			if _, ok := r.methods[strings.ToLower(req.Method)]; ok {
+			_, ok := r.methods[strings.ToLower(req.Method)]
+			r.Unlock()
+
+			if ok {
 				match, err := path.Match(r.path, req.URL.Path)
 				if err != nil {
 					fmt.Printf("* * * Invalid path pattern: %v: %v\n", req.URL, err)
