@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"hunit/net/await"
+
+	"github.com/bww/go-util/debug"
 )
 
 // Don't wait forever
@@ -97,6 +99,9 @@ func (s *restService) Stop() error {
 
 // Handle requests
 func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
+	if debug.VERBOSE {
+		fmt.Println(">>> MCH", req.Method, req.URL.Path)
+	}
 
 	// match our internal status endpoint; we don't allow this to be shadowed
 	// by defined endpoints so that we can monitor the service.
@@ -156,6 +161,9 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 
 // Handle requests
 func (s *restService) handleRequest(rsp http.ResponseWriter, req *http.Request, endpoint Endpoint) {
+	if debug.VERBOSE {
+		fmt.Println(">>> CHA", req.Method, req.URL.Path)
+	}
 	if r := endpoint.Response; r != nil {
 		for k, v := range r.Headers {
 			rsp.Header().Add(k, v)

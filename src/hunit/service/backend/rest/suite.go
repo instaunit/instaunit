@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"sync"
 	"time"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 // A request
