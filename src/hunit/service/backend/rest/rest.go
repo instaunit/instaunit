@@ -16,6 +16,7 @@ import (
 	"hunit/net/await"
 
 	"github.com/bww/go-util/debug"
+	humanize "github.com/dustin/go-humanize"
 )
 
 // Don't wait forever
@@ -26,6 +27,8 @@ const (
 	statusMethod = "GET"
 	statusPath   = "/_instaunit/status"
 )
+
+const prefix = "[rest]"
 
 // REST service
 type restService struct {
@@ -100,7 +103,13 @@ func (s *restService) Stop() error {
 // Handle requests
 func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 	if debug.VERBOSE {
-		fmt.Println(">>> MCH", req.Method, req.URL.Path)
+		var dlen string
+		if req.ContentLength < 0 {
+			dlen = "unknown length"
+		} else {
+			dlen = humanize.Bytes(uint64(req.ContentLength))
+		}
+		fmt.Printf("%s -> %s %s (%s)\n", prefix, req.Method, req.URL.Path, dlen)
 	}
 
 	// match our internal status endpoint; we don't allow this to be shadowed
@@ -141,7 +150,7 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 			if ok {
 				match, err := path.Match(r.path, req.URL.Path)
 				if err != nil {
-					fmt.Printf("* * * Invalid path pattern: %v: %v\n", req.URL, err)
+					fmt.Printf("%s * * * Invalid path pattern: %v: %v\n", prefix, req.URL, err)
 				} else if match && paramsMatch(r.params, req.URL.Query()) {
 					s.handleRequest(rsp, req, e)
 					return
@@ -162,7 +171,8 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 // Handle requests
 func (s *restService) handleRequest(rsp http.ResponseWriter, req *http.Request, endpoint Endpoint) {
 	if debug.VERBOSE {
-		fmt.Println(">>> CHA", req.Method, req.URL.Path)
+		start := time.Now()
+		defer fmt.Printf("%s <- (%v) %s %s\n", prefix, time.Since(start), req.Method, req.URL.Path)
 	}
 	if r := endpoint.Response; r != nil {
 		for k, v := range r.Headers {
