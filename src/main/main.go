@@ -81,8 +81,6 @@ func app() int {
 	debug.VERBOSE = debug.VERBOSE || *fVerbose
 	color.NoColor = !*fColor
 
-	fmt.Println(">>> >>> >>>", debug.VERBOSE)
-
 	var options test.Options
 	if *fTrimEntity {
 		options |= test.OptionEntityTrimTrailingWhitespace
