@@ -4,15 +4,15 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
+	"sync"
 	"time"
-)
 
-import (
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // A request
 type Request struct {
+	sync.Mutex
 	Methods []string `yaml:"methods"`
 	methods map[string]struct{}
 	Path    string `yaml:"path"`

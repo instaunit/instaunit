@@ -77,8 +77,8 @@ func app() int {
 		return 0
 	}
 
-	debug.DEBUG = *fDebug
-	debug.VERBOSE = *fVerbose
+	debug.DEBUG = debug.DEBUG || *fDebug
+	debug.VERBOSE = debug.VERBOSE || *fVerbose
 	color.NoColor = !*fColor
 
 	var options test.Options

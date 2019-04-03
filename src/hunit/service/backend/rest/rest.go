@@ -14,6 +14,9 @@ import (
 	"time"
 
 	"hunit/net/await"
+
+	"github.com/bww/go-util/debug"
+	humanize "github.com/dustin/go-humanize"
 )
 
 // Don't wait forever
@@ -24,6 +27,8 @@ const (
 	statusMethod = "GET"
 	statusPath   = "/_instaunit/status"
 )
+
+const prefix = "[rest]"
 
 // REST service
 type restService struct {
@@ -97,6 +102,15 @@ func (s *restService) Stop() error {
 
 // Handle requests
 func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
+	if debug.VERBOSE {
+		var dlen string
+		if req.ContentLength < 0 {
+			dlen = "unknown length"
+		} else {
+			dlen = humanize.Bytes(uint64(req.ContentLength))
+		}
+		fmt.Printf("%s -> %s %s (%s)\n", prefix, req.Method, req.URL.Path, dlen)
+	}
 
 	// match our internal status endpoint; we don't allow this to be shadowed
 	// by defined endpoints so that we can monitor the service.
@@ -111,6 +125,7 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 	for _, e := range s.suite.Endpoints {
 		if r := e.Request; r != nil {
 
+			r.Lock()
 			if r.methods == nil {
 				r.methods = make(map[string]struct{})
 				for _, x := range r.Methods {
@@ -129,10 +144,13 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			if _, ok := r.methods[strings.ToLower(req.Method)]; ok {
+			_, ok := r.methods[strings.ToLower(req.Method)]
+			r.Unlock()
+
+			if ok {
 				match, err := path.Match(r.path, req.URL.Path)
 				if err != nil {
-					fmt.Printf("* * * Invalid path pattern: %v: %v\n", req.URL, err)
+					fmt.Printf("%s * * * Invalid path pattern: %v: %v\n", prefix, req.URL, err)
 				} else if match && paramsMatch(r.params, req.URL.Query()) {
 					s.handleRequest(rsp, req, e)
 					return
@@ -152,6 +170,10 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 
 // Handle requests
 func (s *restService) handleRequest(rsp http.ResponseWriter, req *http.Request, endpoint Endpoint) {
+	if debug.VERBOSE {
+		start := time.Now()
+		defer fmt.Printf("%s <- (%v) %s %s\n", prefix, time.Since(start), req.Method, req.URL.Path)
+	}
 	if r := endpoint.Response; r != nil {
 		for k, v := range r.Headers {
 			rsp.Header().Add(k, v)
