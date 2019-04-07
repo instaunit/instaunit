@@ -455,7 +455,7 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, <-chan stru
 		wout, werr = out, out
 	} else {
 		wout = exec.NewPrefixWriter(syncStdout, "      ◇ ")
-		werr = exec.NewPrefixWriter(syncStdout, color.New(colorErr...).Sprint("      ◇ "))
+		werr = exec.NewPrefixWriter(syncStdout, color.New(color.FgRed).Sprint("      ◆ "))
 	}
 
 	proc, err := cmd.Start(wout, werr)
