@@ -17,6 +17,7 @@ import (
 	"hunit/net/await"
 	"hunit/service"
 	"hunit/service/backend/rest"
+	"hunit/syncio"
 	"hunit/test"
 	"hunit/text"
 
@@ -33,6 +34,8 @@ var (
 	colorErr   = []color.Attribute{color.FgYellow}
 	colorSuite = []color.Attribute{color.Bold}
 )
+
+var syncStdout = syncio.NewWriter(os.Stdout)
 
 // You know what it does
 func main() {
@@ -415,7 +418,7 @@ func execCommands(cmds []*exec.Command) error {
 			fmt.Printf("----> $ %v ", e.Command)
 		}
 		if debug.VERBOSE {
-			dumpEnv(os.Stdout, e.Environment)
+			dumpEnv(syncStdout, e.Environment)
 		}
 
 		out, err := e.Exec()
@@ -442,25 +445,27 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, <-chan stru
 		return nil, nil, fmt.Errorf("Empty command (did you set 'run'?)")
 	}
 
-	var out io.WriteCloser
+	var wout, werr io.WriteCloser
 	if logs != "" {
 		var err error
-		out, err = os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		out, err := os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Could not open exec log: %v", err)
 		}
+		wout, werr = out, out
 	} else {
-		out = exec.NewPrefixWriter(os.Stdout, "      ◇ ")
+		wout = exec.NewPrefixWriter(syncStdout, "      ◇ ")
+		werr = exec.NewPrefixWriter(syncStdout, "      ◇ ")
 	}
 
-	proc, err := cmd.Start(out)
+	proc, err := cmd.Start(wout, werr)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Could not exec process: %v", err)
 	}
 
 	color.New(colorSuite...).Printf("----> $ %v\n", proc)
 	if debug.VERBOSE {
-		dumpEnv(os.Stdout, cmd.Environment)
+		dumpEnv(syncStdout, cmd.Environment)
 	}
 
 	done := make(chan struct{})
