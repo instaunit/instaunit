@@ -17,6 +17,7 @@ import (
 	"hunit/net/await"
 	"hunit/service"
 	"hunit/service/backend/rest"
+	"hunit/syncio"
 	"hunit/test"
 	"hunit/text"
 
@@ -24,10 +25,17 @@ import (
 	"github.com/fatih/color"
 )
 
+var ( // set at compile time via the linker
+	version = "v0.0.0"
+	githash = "000000"
+)
+
 var (
 	colorErr   = []color.Attribute{color.FgYellow}
 	colorSuite = []color.Attribute{color.Bold}
 )
+
+var syncStdout = syncio.NewWriter(os.Stdout)
 
 // You know what it does
 func main() {
@@ -52,18 +60,28 @@ func app() int {
 		fDocInclHTTP     = cmdline.Bool("doc:include-http", strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")), "Include HTTP in request and response examples (as opposed to just routes and entities). Overrides: $HUNIT_DOC_INCLUDE_HTTP.")
 		fDocFormatEntity = cmdline.Bool("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")), "Pretty-print supported request and response entities in documentation output. Overrides: $HUNIT_DOC_FORMAT_ENTITIES.")
 		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections. Overrides: $HUNIT_NET_IO_GRACE_PERIOD.")
-		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
+		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests, usually the program that is being tested. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
 		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output. Overrides: $HUNIT_EXEC_LOG.")
 		fDebug           = cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode. Overrides: $HUNIT_DEBUG.")
 		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal. Overrides: $HUNIT_COLOR_OUTPUT.")
 		fVerbose         = cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_VERBOSE.")
+		fVersion         = cmdline.Bool("version", false, "Display the version and exit.")
 	)
 	cmdline.Var(&headerSpecs, "header", "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
 	cmdline.Var(&serviceSpecs, "service", "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
 	cmdline.Parse(os.Args[1:])
 
-	debug.DEBUG = *fDebug
-	debug.VERBOSE = *fVerbose
+	if *fVersion {
+		if version == githash {
+			fmt.Println(version)
+		} else {
+			fmt.Printf("%s (%s)\n", version, githash)
+		}
+		return 0
+	}
+
+	debug.DEBUG = debug.DEBUG || *fDebug
+	debug.VERBOSE = debug.VERBOSE || *fVerbose
 	color.NoColor = !*fColor
 
 	var options test.Options
@@ -134,12 +152,12 @@ func app() int {
 			color.New(colorErr...).Printf("* * * Could not create mock service: %v\n", err)
 			return 1
 		}
-		svc, err := rest.New(conf)
+		svc, err := rest.New(conf) // only REST is supported for now...
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not create mock service: %v\n", err)
 			return 1
 		}
-		err = svc.StartService()
+		err = svc.Start()
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not start mock service: %v\n", err)
 			return 1
@@ -149,14 +167,17 @@ func app() int {
 		}
 		defer func(s service.Service, c service.Config) {
 			c.Resource.Close()
-			s.StopService()
+			s.Stop()
 		}(svc, conf)
 		fmt.Printf("----> Service %v (%v)\n", conf.Addr, conf.Path)
 		services++
 	}
 
+	var done <-chan struct{}
 	if *fExec != "" {
-		proc, err := execCommandAsync(exec.NewCommand(*fExec, *fExec), *fExecLog)
+		var proc *exec.Process
+		var err error
+		proc, done, err = execCommandAsync(exec.NewCommand(*fExec, *fExec), *fExecLog)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * %v\n", err)
 			return 1
@@ -172,6 +193,7 @@ func app() int {
 	var proc *exec.Process
 	success := true
 	start := time.Now()
+
 suites:
 	for _, e := range cmdline.Args() {
 		if proc != nil {
@@ -239,7 +261,7 @@ suites:
 		if suite.Exec != nil {
 			cmd := suite.Exec
 			cmd.Environment = exec.Environ(cmd.Environment)
-			proc, err = execCommandAsync(*cmd, *fExecLog)
+			proc, _, err = execCommandAsync(*cmd, *fExecLog) // ignore done on per-suite tests
 			if err != nil {
 				color.New(colorErr...).Printf("* * * %v\n", err)
 				continue suites
@@ -330,8 +352,13 @@ suites:
 	}
 
 	if tests < 1 && errors < 1 && services > 0 {
-		color.New(colorSuite...).Println("====> No tests; running services until we're interrupted...")
-		<-make(chan struct{})
+		if done != nil {
+			color.New(colorSuite...).Println("====> No tests; running services until process exits...")
+			<-done
+		} else {
+			color.New(colorSuite...).Println("====> No tests; running services until we're interrupted...")
+			<-make(chan struct{})
+		}
 	}
 
 	if proc != nil {
@@ -374,7 +401,7 @@ suites:
 
 // Execute a set of commands in sequence, allowing each to terminate before
 // the next is executed.
-func execCommands(cmds []exec.Command) error {
+func execCommands(cmds []*exec.Command) error {
 	for i, e := range cmds {
 		if i > 0 && debug.VERBOSE {
 			fmt.Println()
@@ -391,7 +418,7 @@ func execCommands(cmds []exec.Command) error {
 			fmt.Printf("----> $ %v ", e.Command)
 		}
 		if debug.VERBOSE {
-			dumpEnv(os.Stdout, e.Environment)
+			dumpEnv(syncStdout, e.Environment)
 		}
 
 		out, err := e.Exec()
@@ -413,42 +440,46 @@ func execCommands(cmds []exec.Command) error {
 }
 
 // Execute a single command and do not wait for it to terminate
-func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, error) {
+func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, <-chan struct{}, error) {
 	if cmd.Command == "" {
-		return nil, fmt.Errorf("Empty command (did you set 'run'?)")
+		return nil, nil, fmt.Errorf("Empty command (did you set 'run'?)")
 	}
 
-	var out io.WriteCloser
+	var wout, werr io.WriteCloser
 	if logs != "" {
 		var err error
-		out, err = os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		out, err := os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err != nil {
-			return nil, fmt.Errorf("Could not open exec log: %v", err)
+			return nil, nil, fmt.Errorf("Could not open exec log: %v", err)
 		}
+		wout, werr = out, out
 	} else {
-		out = exec.NewPrefixWriter(os.Stdout, "      ◇ ")
+		wout = exec.NewPrefixWriter(syncStdout, "      ◇ ")
+		werr = exec.NewPrefixWriter(syncStdout, color.New(color.FgRed).Sprint("      ◆ "))
 	}
 
-	proc, err := cmd.Start(out)
+	proc, err := cmd.Start(wout, werr)
 	if err != nil {
-		return nil, fmt.Errorf("Could not exec process: %v", err)
+		return nil, nil, fmt.Errorf("Could not exec process: %v", err)
 	}
 
 	color.New(colorSuite...).Printf("----> $ %v\n", proc)
 	if debug.VERBOSE {
-		dumpEnv(os.Stdout, cmd.Environment)
+		dumpEnv(syncStdout, cmd.Environment)
 	}
 
+	done := make(chan struct{})
 	go func() {
 		state := proc.Monitor()
 		color.New(colorSuite...).Printf("----> * %v (pid %d; %s)\n", proc, state.Pid(), state)
+		close(done)
 	}()
 
 	if cmd.Wait > 0 {
 		color.New(colorSuite...).Printf("----> Waiting %v for process to settle...\n", cmd.Wait)
 		<-time.After(cmd.Wait)
 	}
-	return proc, nil
+	return proc, done, nil
 }
 
 // Flag string list

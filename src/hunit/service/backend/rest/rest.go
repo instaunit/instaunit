@@ -1,8 +1,10 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"hunit/service"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -10,10 +12,23 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"hunit/net/await"
+
+	"github.com/bww/go-util/debug"
+	humanize "github.com/dustin/go-humanize"
 )
 
 // Don't wait forever
 const ioTimeout = time.Second * 10
+
+// Status
+const (
+	statusMethod = "GET"
+	statusPath   = "/_instaunit/status"
+)
+
+const prefix = "[rest]"
 
 // REST service
 type restService struct {
@@ -35,9 +50,17 @@ func New(conf service.Config) (service.Service, error) {
 }
 
 // Start the service
-func (s *restService) StartService() error {
+func (s *restService) Start() error {
 	if s.server != nil {
 		return fmt.Errorf("Service is running")
+	}
+
+	host, port, err := net.SplitHostPort(s.conf.Addr)
+	if err != nil {
+		return fmt.Errorf("Invalid address: %v", err)
+	}
+	if host == "" {
+		host = "localhost"
 	}
 
 	s.server = &http.Server{
@@ -55,11 +78,20 @@ func (s *restService) StartService() error {
 		}
 	}()
 
+	// wait for our service to start up
+	status := fmt.Sprintf("http://%s:%s%s", host, port, statusPath)
+	err = await.Await(context.Background(), []string{status}, ioTimeout)
+	if err == await.ErrTimeout {
+		return fmt.Errorf("Timed out waiting for service: %s", status)
+	} else if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Stop the service
-func (s *restService) StopService() error {
+func (s *restService) Stop() error {
 	if s.server == nil {
 		return fmt.Errorf("Service is not running")
 	}
@@ -70,11 +102,30 @@ func (s *restService) StopService() error {
 
 // Handle requests
 func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
+	if debug.VERBOSE {
+		var dlen string
+		if req.ContentLength < 0 {
+			dlen = "unknown length"
+		} else {
+			dlen = humanize.Bytes(uint64(req.ContentLength))
+		}
+		fmt.Printf("%s -> %s %s (%s)\n", prefix, req.Method, req.URL.Path, dlen)
+	}
+
+	// match our internal status endpoint; we don't allow this to be shadowed
+	// by defined endpoints so that we can monitor the service.
+	if req.Method == statusMethod && req.URL.Path == statusPath {
+		rsp.Header().Set("Server", "HUnit/1")
+		rsp.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		rsp.WriteHeader(http.StatusOK)
+		return
+	}
 
 	// match endpoints
 	for _, e := range s.suite.Endpoints {
 		if r := e.Request; r != nil {
 
+			r.Lock()
 			if r.methods == nil {
 				r.methods = make(map[string]struct{})
 				for _, x := range r.Methods {
@@ -93,10 +144,13 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			if _, ok := r.methods[strings.ToLower(req.Method)]; ok {
+			_, ok := r.methods[strings.ToLower(req.Method)]
+			r.Unlock()
+
+			if ok {
 				match, err := path.Match(r.path, req.URL.Path)
 				if err != nil {
-					fmt.Printf("* * * Invalid path pattern: %v: %v\n", req.URL, err)
+					fmt.Printf("%s * * * Invalid path pattern: %v: %v\n", prefix, req.URL, err)
 				} else if match && paramsMatch(r.params, req.URL.Query()) {
 					s.handleRequest(rsp, req, e)
 					return
@@ -116,6 +170,10 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 
 // Handle requests
 func (s *restService) handleRequest(rsp http.ResponseWriter, req *http.Request, endpoint Endpoint) {
+	if debug.VERBOSE {
+		start := time.Now()
+		defer fmt.Printf("%s <- (%v) %s %s\n", prefix, time.Since(start), req.Method, req.URL.Path)
+	}
 	if r := endpoint.Response; r != nil {
 		for k, v := range r.Headers {
 			rsp.Header().Add(k, v)

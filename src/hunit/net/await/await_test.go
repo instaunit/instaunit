@@ -99,7 +99,7 @@ func TestAwaitHTTP(t *testing.T) {
 		err := Await(cxt, []string{"http://localhost:9999/"}, time.Minute)
 		assert.Nil(t, err, fmt.Sprint(err))
 		waited := time.Now().Sub(start)
-		assert.Equal(t, true, waited < (wait/2)+defaultRetry)
+		assert.Equal(t, true, waited < (wait/2)+defaultRetry, fmt.Sprintf("Waited %v >= %v", waited, (wait/2)+defaultRetry))
 	})
 
 }

@@ -39,6 +39,7 @@ Instaunit supports a lot of other request properties – from headers to author
 * **Wait for dependency services** to become available before a test suite starts running,
 * Declare **mock services** so your tests avoid external dependencies without making code-level changes,
 * Evaluate **expressions and built-in functions** to generate input and randomize your tests.
+* **Manage the process you're testing** by starting it before tests are run and stopping it after tests have completed.
 
 ## Running Tests
 

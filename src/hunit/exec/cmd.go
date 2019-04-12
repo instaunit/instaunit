@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 const newline = '\n'
@@ -16,64 +18,62 @@ const newline = '\n'
 // A writer that indents lines with a prefix string
 type prefixWriter struct {
 	writer io.Writer
+	buffer *bytes.Buffer
 	prefix string
-	nl     bool
 }
 
 func (s prefixWriter) Write(p []byte) (int, error) {
-	var i, x, n int
-	var r rune
-
-	if s.nl {
-		z, err := s.writer.Write([]byte(s.prefix))
-		if err != nil {
-			return z, err
-		}
-		s.nl = false
-	}
-
-	c := string(p)
-	for i, r = range c {
-		if s.nl {
-			z, err := s.writer.Write([]byte(s.prefix))
-			if err != nil {
-				return z, err
+	n, t := 0, len(p)
+	for {
+		r, w := utf8.DecodeRune(p)
+		if r == utf8.RuneError {
+			if w == 0 {
+				break
+			} else {
+				return n, fmt.Errorf("Invalid UTF-8")
 			}
-			s.nl = false
-			// don't account for the prefix, this presumably would confuse callers if: n > len(p)
 		}
+
+		n += w
+		p = p[w:]
+
+		s.buffer.WriteRune(r)
 		if r == newline {
-			z, err := s.writer.Write([]byte(c[x : i+1]))
+			_, err := s.flush()
 			if err != nil {
-				return z, err
+				return n, err
 			}
-			x = i + 1
-			n += z
-			s.nl = true
 		}
 	}
+	return t, nil
+}
 
-	if x < i {
-		z, err := s.writer.Write([]byte(c[x:]))
-		if err != nil {
-			return z, err
-		}
-		n += z
-		if c[len(c)-1] == newline {
-			s.nl = true
-		}
+func (s prefixWriter) flush() (int, error) {
+	l := s.buffer.Len()
+	v := make([]byte, len(s.prefix)+l)
+	copy(v, []byte(s.prefix))
+	copy(v[len(s.prefix):], s.buffer.Bytes())
+	_, err := s.writer.Write(v)
+	if err != nil {
+		return 0, err
 	}
-
-	return n, nil
+	s.buffer.Reset()
+	return l, nil
 }
 
 func (s prefixWriter) Close() error {
+	if s.buffer.Len() > 0 {
+		_, err := s.flush()
+		if err != nil {
+			return err
+		}
+	}
 	return nil // do nothing; this is intended to be used with os.Stdout
 }
 
 // Create a prefix writer
 func NewPrefixWriter(w io.Writer, p string) prefixWriter {
-	return prefixWriter{w, p, true}
+	return prefixWriter{w, &bytes.Buffer{}, p}
 }
 
 // Copy the environment in this process as a map and merge it with the
@@ -99,20 +99,21 @@ type Process struct {
 	cmd     *exec.Cmd
 	context context.Context
 	cancel  context.CancelFunc
-	redir   io.WriteCloser
+	wout    io.WriteCloser
+	werr    io.WriteCloser
 	linger  time.Duration
 	exited  bool
 	status  *os.ProcessState
 	monitor chan struct{}
 }
 
-func (p *Process) Start(out io.WriteCloser) error {
+func (p *Process) Start(wout, werr io.WriteCloser) error {
 	p.Lock()
 	defer p.Unlock()
 	if p.cmd == nil {
 		return fmt.Errorf("No process")
 	}
-	if p.redir != nil {
+	if p.wout != nil {
 		return fmt.Errorf("Process already started")
 	}
 
@@ -126,19 +127,20 @@ func (p *Process) Start(out io.WriteCloser) error {
 	}
 
 	go func() {
-		_, err := io.Copy(out, stdout)
+		_, err := io.Copy(wout, stdout)
 		if err != nil && err != io.EOF {
 			fmt.Printf("io: %s\n", err)
 		}
 	}()
 	go func() {
-		_, err := io.Copy(out, stderr)
+		_, err := io.Copy(werr, stderr)
 		if err != nil && err != io.EOF {
 			fmt.Printf("io: %s\n", err)
 		}
 	}()
 
-	p.redir = out
+	p.wout = wout
+	p.werr = werr
 
 	err = p.cmd.Start()
 	if err != nil {
@@ -207,11 +209,15 @@ func (p *Process) Kill() error {
 			return fmt.Errorf("Process is not cancelable")
 		}
 	}
-	if p.redir != nil {
-		p.redir.Close()
+	if p.wout != nil {
+		p.wout.Close()
+		p.wout = nil
+	}
+	if p.werr != nil {
+		p.werr.Close()
+		p.werr = nil
 	}
 	p.cmd = nil // mark the process as cancelled
-	p.redir = nil
 	p.exited = true
 	return nil
 }
@@ -278,19 +284,17 @@ func (c Command) Exec() (string, error) {
 }
 
 // Start a command
-func (c Command) Start(out io.WriteCloser) (*Process, error) {
+func (c Command) Start(wout, werr io.WriteCloser) (*Process, error) {
 	cxt, cancel := context.WithCancel(context.Background())
 	cmd, err := c.cmd(cxt)
 	if err != nil {
 		return nil, err
 	}
 
-	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, cancel, nil, c.Linger, false, nil, make(chan struct{}, 1)}
-
-	err = proc.Start(out)
+	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, cancel, nil, nil, c.Linger, false, nil, make(chan struct{}, 1)}
+	err = proc.Start(wout, werr)
 	if err != nil {
 		return nil, err
 	}
-
 	return proc, nil
 }

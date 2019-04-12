@@ -205,7 +205,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
 			if err == nil {
 				reqdata = string(f)
 			} else if err != nil && err != text.ErrUnsupportedContentType {
-				fmt.Println("* * * Invalid request entity could not be formatted: %v", t)
+				fmt.Printf("* * * Invalid request entity could not be formatted: %v\n", t)
 			}
 		}
 		err = text.WriteRequest(b, req, reqdata)
@@ -237,7 +237,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
 			if err == nil {
 				rspdata = f
 			} else if err != nil && err != text.ErrUnsupportedContentType {
-				fmt.Println("* * * Invalid entity could not be formatted: %v", t)
+				fmt.Printf("* * * Invalid entity could not be formatted: %v\n", t)
 			}
 		}
 		err = text.WriteResponse(b, rsp, rspdata)

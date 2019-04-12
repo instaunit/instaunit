@@ -1,5 +1,0 @@
-This is just some output
-which breaks lines.
-    To test process stdout handling.
-  Ok, then.
-Bye.

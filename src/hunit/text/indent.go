@@ -23,11 +23,13 @@ func IndentWithOptions(s, p string, opt IndentOptions) string {
 	if (opt & IndentOptionIndentFirstLine) == IndentOptionIndentFirstLine {
 		o.WriteString(p)
 	}
-	for i := 0; i < len(s); i++ {
-		o.WriteString(string(s[i]))
-		if s[i] == '\n' {
+	x := rune(0)
+	for _, r := range s {
+		if x == '\n' {
 			o.WriteString(p)
 		}
+		o.WriteRune(r)
+		x = r
 	}
 	return o.String()
 }
