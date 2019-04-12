@@ -56,9 +56,6 @@ $ instaunit test.yml
                actual: (int) 500
 
         #2 Entities do not match:
-             --- Expected
-             +++ Actual
-             @@ -1,2 +1,2 @@
              -{"status": "Ok"}
              +{"status": "Not great"}
 ```
