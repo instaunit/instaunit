@@ -3,13 +3,14 @@ package markdown
 import (
 	"bytes"
 	"fmt"
-	"hunit/test"
-	"hunit/text"
-	"hunit/text/slug"
 	"io"
 	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/text"
+	"github.com/instaunit/instaunit/hunit/text/slug"
 )
 
 /**

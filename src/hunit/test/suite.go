@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"hunit/exec"
+	"github.com/instaunit/instaunit/hunit/exec"
 
 	yaml "gopkg.in/yaml.v2"
 )

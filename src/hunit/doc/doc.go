@@ -2,11 +2,12 @@ package doc
 
 import (
 	"fmt"
-	"hunit/doc/emit"
-	"hunit/doc/emit/markdown"
-	"hunit/test"
 	"io"
 	"net/http"
+
+	"github.com/instaunit/instaunit/hunit/doc/emit"
+	"github.com/instaunit/instaunit/hunit/doc/emit/markdown"
+	"github.com/instaunit/instaunit/hunit/test"
 )
 
 // Implemented by documentation generators

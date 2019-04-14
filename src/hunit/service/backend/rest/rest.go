@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"fmt"
-	"hunit/service"
 	"net"
 	"net/http"
 	"net/url"
@@ -13,7 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"hunit/net/await"
+	"github.com/instaunit/instaunit/hunit/net/await"
+	"github.com/instaunit/instaunit/hunit/service"
 
 	"github.com/bww/go-util/debug"
 	humanize "github.com/dustin/go-humanize"

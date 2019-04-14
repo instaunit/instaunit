@@ -1,9 +1,0 @@
-build/
-
-# Run-time data directories
-**/dist/
-**/target/
-
-*.swp
-
-.DS_Store

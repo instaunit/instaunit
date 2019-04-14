@@ -3,9 +3,10 @@ package hunit
 import (
 	"encoding/json"
 	"fmt"
-	"hunit/test"
 	"strings"
 	"unicode"
+
+	"github.com/instaunit/instaunit/hunit/test"
 )
 
 // Compare entities for equality

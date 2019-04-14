@@ -1,8 +1,8 @@
 package hunit
 
 import (
-	"hunit/expr"
-	"hunit/test"
+	"github.com/instaunit/instaunit/hunit/expr"
+	"github.com/instaunit/instaunit/hunit/test"
 )
 
 // Interpolate if required

@@ -12,12 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"hunit/doc"
-	"hunit/test"
-	"hunit/text"
-)
+	"github.com/instaunit/instaunit/hunit/doc"
+	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/text"
 
-import (
 	gtext "github.com/bww/go-util/text"
 	"github.com/gorilla/websocket"
 )

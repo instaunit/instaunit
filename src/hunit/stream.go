@@ -6,10 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"hunit/test"
-)
+	"github.com/instaunit/instaunit/hunit/test"
 
-import (
 	"github.com/bww/go-util/debug"
 	"github.com/bww/go-util/text"
 	"github.com/gorilla/websocket"
