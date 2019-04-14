@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/websocket v1.4.0
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
+	github.com/stretchr/testify v1.3.0
 	golang.org/x/text v0.3.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
