@@ -12,11 +12,11 @@ GOARCH ?= $(shell go env GOARCH)
 GITHASH   := $(shell git log --pretty=format:'%h' -n 1)
 VERSION   ?= $(GITHASH)
 
-BUILD_DIR := $(PWD)/target
-PRODUCT   ?= $(NAME)-local
-TARGET    := $(BUILD_DIR)/$(PRODUCT)
-ARCHIVE   := $(PRODUCT).tgz
-PACKAGE   := $(BUILD_DIR)/$(ARCHIVE)
+BUILD_DIR  := $(PWD)/target
+PRODUCT    ?= $(NAME)-local
+TARGET_DIR := $(BUILD_DIR)/$(PRODUCT)
+ARCHIVE    := $(PRODUCT).tgz
+PACKAGE    := $(BUILD_DIR)/$(ARCHIVE)
 
 # build and install
 PREFIX ?= /usr/local
@@ -30,12 +30,12 @@ TEST_PKGS = $(MODULE)/hunit/...
 
 all: build
 
-$(TARGET)/bin/$(NAME): $(SRC)
+$(TARGET_DIR)/bin/$(NAME): $(SRC)
 	(cd src && go build -ldflags="-X main.version=$(VERSION) -X main.githash=$(GITHASH)" -o $@ $(MAIN))
 
-build: $(TARGET)/bin/$(NAME) ## Build the product
+build: $(TARGET_DIR)/bin/$(NAME) ## Build the product
 
-$(PACKAGE): $(TARGET)/bin/$(NAME)
+$(PACKAGE): $(TARGET_DIR)/bin/$(NAME)
 	(cd $(BUILD_DIR) && tar -zcf $(ARCHIVE) $(PRODUCT))
 
 package: $(PACKAGE)
@@ -49,7 +49,7 @@ release: test ## Build for all supported architectures
 	make formula PRODUCT=$(NAME)-$(VERSION)-darwin-amd64 GOOS=darwin GOARCH=amd64
 
 install: build ## Build and install
-	install -m 0755 $(TARGET)/bin/$(NAME) $(PREFIX)/bin/
+	install -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/
 
 test: ## Run tests
 	(cd src && go test $(TEST_PKGS))
