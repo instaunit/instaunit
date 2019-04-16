@@ -2,6 +2,7 @@ package junit
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
 	"time"
 
@@ -16,21 +17,21 @@ type testfail struct {
 }
 
 type testcase struct {
-	Id       string     `xml:"id,attr"`
+	Id       string     `xml:"id,attr,omitempty"`
 	Name     string     `xml:"name,attr,omitempty"`
 	Duration float64    `xml:"time,attr"`
 	Failures []testfail `xml:"failure,omitempty"`
 }
 
 type testsuite struct {
-	Id       string     `xml:"id,attr"`
+	Id       string     `xml:"id,attr,omitempty"`
 	Name     string     `xml:"name,attr,omitempty"`
 	Duration float64    `xml:"time,attr"`
 	Cases    []testcase `xml:"testcase"`
 }
 
 type testsuites struct {
-	Id       string      `xml:"id,attr"`
+	Id       string      `xml:"id,attr,omitempty"`
 	Name     string      `xml:"name,attr,omitempty"`
 	Tests    int         `xml:"tests,attr"`
 	Failures int         `xml:"failures,attr"`
@@ -41,14 +42,15 @@ type testsuites struct {
 // A junit report generator
 type Generator struct {
 	w               io.WriteCloser
+	id              string
 	tests, failures int
 	duration        time.Duration
 	suites          []testsuite
 }
 
 // Produce a new emitter
-func New(w io.WriteCloser) *Generator {
-	return &Generator{w: w}
+func New(w io.WriteCloser, id string) *Generator {
+	return &Generator{w: w, id: id}
 }
 
 // Initialize the report
@@ -60,7 +62,7 @@ func (g *Generator) Init() error {
 // Finalize the report
 func (g *Generator) Finalize() error {
 	ts := testsuites{
-		Id:       "ABC",
+		Id:       g.id,
 		Name:     "Name",
 		Tests:    g.tests,
 		Failures: g.failures,
@@ -89,6 +91,7 @@ func (g *Generator) Suite(conf test.Config, suite *test.Suite, results *emit.Res
 		}
 	}
 
+	sid := len(g.suites) + 1
 	tc := make([]testcase, len(results.Results))
 	for i, e := range results.Results {
 		var tf []testfail
@@ -106,7 +109,7 @@ func (g *Generator) Suite(conf test.Config, suite *test.Suite, results *emit.Res
 			})
 		}
 		tc[i] = testcase{
-			Id:       "XYZ",
+			Id:       fmt.Sprintf("%s_%d_%d", g.id, sid, i+1),
 			Name:     e.Name,
 			Duration: float64(e.Runtime) / float64(time.Second),
 			Failures: tf,
@@ -114,7 +117,7 @@ func (g *Generator) Suite(conf test.Config, suite *test.Suite, results *emit.Res
 	}
 
 	ts := testsuite{
-		Id:       "ZZZ",
+		Id:       fmt.Sprintf("%s_%d", g.id, sid),
 		Name:     suite.Title,
 		Duration: float64(results.Runtime) / float64(time.Second),
 		Cases:    tc,

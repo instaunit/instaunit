@@ -17,10 +17,10 @@ type Generator interface {
 }
 
 // Create a report emitter
-func New(t emit.Doctype, o io.WriteCloser) (Generator, error) {
+func New(t emit.Doctype, o io.WriteCloser, id string) (Generator, error) {
 	switch t {
 	case emit.DoctypeJUnitXML:
-		return junit.New(o), nil
+		return junit.New(o, id), nil
 	default:
 		return nil, fmt.Errorf("Unsupported report type: %v", t)
 	}

@@ -170,7 +170,7 @@ func app() int {
 			return 1
 		}
 
-		gen, err := report.New(rtype, out)
+		gen, err := report.New(rtype, out, fmt.Sprint(time.Now().Unix()))
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could create report generator: %v\n", err)
 			return 1
