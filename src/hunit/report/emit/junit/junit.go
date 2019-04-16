@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/report/emit"
@@ -68,7 +69,6 @@ func (g *Generator) Init() error {
 func (g *Generator) Finalize() error {
 	ts := testsuites{
 		Id:       g.id,
-		Name:     "Name",
 		Tests:    g.tests,
 		Failures: g.failures,
 		Duration: float64(g.duration) / float64(time.Second),
@@ -115,7 +115,7 @@ func (g *Generator) Suite(conf test.Config, suite *test.Suite, results *emit.Res
 		}
 		tc[i] = testcase{
 			Id:       fmt.Sprintf("%s_%d_%d", g.id, sid, i+1),
-			Name:     e.Name,
+			Name:     strings.TrimSpace(e.Name),
 			Duration: float64(e.Runtime) / float64(time.Second),
 			Failures: tf,
 		}
@@ -123,7 +123,7 @@ func (g *Generator) Suite(conf test.Config, suite *test.Suite, results *emit.Res
 
 	ts := testsuite{
 		Id:       fmt.Sprintf("%s_%d", g.id, sid),
-		Name:     suite.Title,
+		Name:     strings.TrimSpace(suite.Title),
 		Duration: float64(results.Runtime) / float64(time.Second),
 		Cases:    tc,
 	}
