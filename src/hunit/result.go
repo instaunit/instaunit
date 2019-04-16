@@ -1,11 +1,16 @@
 package hunit
 
+import (
+	"time"
+)
+
 // A test result
 type Result struct {
 	Name             string
 	Success          bool
 	Errors           []error
 	Reqdata, Rspdata []byte
+	Runtime          time.Duration
 }
 
 // Assert equality. If the values are not equal an error is added to the result.

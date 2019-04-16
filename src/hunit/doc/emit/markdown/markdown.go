@@ -15,14 +15,14 @@ import (
 
 // A markdown documentation generator
 type Generator struct {
-	w        io.Writer
+	w        io.WriteCloser
 	b        *bytes.Buffer
 	sections map[string]string
 	slugs    map[string]int
 }
 
 // Produce a new emitter
-func New(w io.Writer) *Generator {
+func New(w io.WriteCloser) *Generator {
 	return &Generator{w, nil, make(map[string]string), nil}
 }
 
@@ -52,6 +52,11 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 	}
 
 	return nil
+}
+
+// Close the wroter
+func (g *Generator) Close() error {
+	return g.w.Close()
 }
 
 // Generate documentation

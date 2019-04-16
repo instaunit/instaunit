@@ -2,7 +2,16 @@ package emit
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/instaunit/instaunit/hunit"
 )
+
+// Suite results
+type Results struct {
+	Results []*hunit.Result
+	Runtime time.Duration
+}
 
 // Report format type
 type Doctype uint32

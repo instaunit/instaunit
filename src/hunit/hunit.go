@@ -107,6 +107,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 
 // Run a test case
 func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
+	start := time.Now()
 
 	// wait if we need to
 	if c.Wait > 0 {
@@ -115,6 +116,9 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 
 	// start with an unevaluated result
 	result := &Result{Name: fmt.Sprintf("%v %v\n", c.Request.Method, c.Request.URL), Success: true}
+	defer func() {
+		result.Runtime = time.Since(start)
+	}()
 
 	// process variables first, they can be referenced by this case, itself
 	var vars map[string]interface{}

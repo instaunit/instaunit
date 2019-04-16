@@ -137,7 +137,7 @@ func app() int {
 	var docname map[string]int
 	if *fGendoc {
 		var err error
-		doctype, err = emit.ParseDoctype(*fDoctype)
+		doctype, err = doc_emit.ParseDoctype(*fDoctype)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Invalid documentation type: %v\n", err)
 			return 1
@@ -150,21 +150,39 @@ func app() int {
 		docname = make(map[string]int)
 	}
 
-	var reportType report_emit.Doctype
-	var reportName map[string]int
+	var reports []report.Generator
 	if *fReport {
-		var err error
-		reportType, err = emit.ParseDoctype(*fReportType)
+		err := os.MkdirAll(*fReportPath, 0755)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
+			return 1
+		}
+
+		rtype, err := report_emit.ParseDoctype(*fReportType)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Invalid report type: %v\n", err)
 			return 1
 		}
-		err = os.MkdirAll(*fReportPath, 0755)
+
+		out, err := os.OpenFile(path.Join(*fReportPath, rtype.String()+rtype.Ext()), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not create report base: %v\n", err)
+			color.New(colorErr...).Printf("* * * Could not open report output: %v\n", err)
 			return 1
 		}
-		reportName = make(map[string]int)
+
+		gen, err := report.New(rtype, out)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Could create report generator: %v\n", err)
+			return 1
+		}
+
+		err = gen.Init()
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Could initialize report generator: %v\n", err)
+			return 1
+		}
+
+		reports = []report.Generator{gen} // just one for now
 	}
 
 	services := 0
@@ -246,13 +264,10 @@ suites:
 			fmt.Println()
 		}
 
-		var out io.WriteCloser
 		var gendoc []doc.Generator
 		if *fGendoc {
-			var err error
 			base := disambigFile(base, doctype.Ext(), docname)
-
-			out, err = os.OpenFile(path.Join(*fDocpath, base), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+			out, err := os.OpenFile(path.Join(*fDocpath, base), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 			if err != nil {
 				color.New(colorErr...).Printf("* * * Could not open documentation output: %v\n", err)
 				return 1
@@ -261,26 +276,6 @@ suites:
 			gen, err := doc.New(doctype, out)
 			if err != nil {
 				color.New(colorErr...).Printf("* * * Could create documentation generator: %v\n", err)
-				return 1
-			}
-
-			gendoc = []doc.Generator{gen} // just one for now
-		}
-
-		var reports []report.Generator
-		if *fReport {
-			var err error
-			base := disambigFile(base, reportType.Ext(), reportName)
-
-			out, err = os.OpenFile(path.Join(*fReportPath, base), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-			if err != nil {
-				color.New(colorErr...).Printf("* * * Could not open report output: %v\n", err)
-				return 1
-			}
-
-			gen, err := doc.New(reportType, out)
-			if err != nil {
-				color.New(colorErr...).Printf("* * * Could create report generator: %v\n", err)
 				return 1
 			}
 
@@ -325,11 +320,13 @@ suites:
 			}
 		}
 
+		startSuite := time.Now()
 		results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: debug.DEBUG, Gendoc: gendoc, Config: cdup})
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not run test suite: %v\n", err)
 			errors++
 		}
+		suiteDuration := time.Since(startSuite)
 
 		if (options & (test.OptionDisplayRequests | test.OptionDisplayResponses)) != 0 {
 			if len(results) > 0 {
@@ -337,10 +334,17 @@ suites:
 			}
 		}
 
-		if out != nil {
-			err := out.Close()
+		for _, e := range reports {
+			err := e.Suite(cdup, suite, &report_emit.Results{results, suiteDuration})
 			if err != nil {
-				color.New(colorErr...).Printf("* * * Could not close documentation writer: %v\n", err)
+				color.New(colorErr...).Printf("* * * Could not emit report: %v\n", err)
+			}
+		}
+
+		for _, e := range gendoc {
+			err := e.Close()
+			if err != nil {
+				color.New(colorErr...).Printf("* * * Could not finalize documentation writer: %v\n", err)
 			}
 		}
 
@@ -383,6 +387,13 @@ suites:
 			if execCommands(suite.Teardown) != nil {
 				continue suites
 			}
+		}
+	}
+
+	for _, e := range reports {
+		err := e.Finalize()
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Could not finalize report writer: %v\n", err)
 		}
 	}
 
@@ -598,8 +609,7 @@ func dumpEnv(w io.Writer, env map[string]string) {
 
 // Disambiguate a filename
 func disambigFile(base, ext string, counts map[string]int) string {
-	ext := path.Ext(base)
-	stem := base[:len(base)-len(ext)]
+	stem := base[:len(base)-len(path.Ext(base))]
 	n, ok := counts[stem]
 	if ok && n > 0 {
 		stem = fmt.Sprintf("%v-%d", stem, n)

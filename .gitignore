@@ -3,5 +3,8 @@
 **/target/
 **/bin/
 
+# Generated
+**/reports/
+
 # Apple garbage
 .DS_Store

@@ -15,10 +15,11 @@ type Generator interface {
 	Init(*test.Suite) error
 	Case(test.Config, test.Case, *http.Request, string, *http.Response, []byte) error
 	Finalize(*test.Suite) error
+	Close() error
 }
 
 // Create a documentation emitter
-func New(t emit.Doctype, o io.Writer) (Generator, error) {
+func New(t emit.Doctype, o io.WriteCloser) (Generator, error) {
 	switch t {
 	case emit.DoctypeMarkdown:
 		return Generator(markdown.New(o)), nil
