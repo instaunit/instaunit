@@ -10,6 +10,11 @@ import (
 	"github.com/instaunit/instaunit/hunit/test"
 )
 
+const (
+	severityError   = "ERROR"
+	severityWarning = "WARNING"
+)
+
 type testfail struct {
 	Message string `xml:"message,attr,omitempty"`
 	Type    string `xml:"type,attr"`
@@ -98,13 +103,13 @@ func (g *Generator) Suite(conf test.Config, suite *test.Suite, results *emit.Res
 		if len(e.Errors) > 0 {
 			for _, err := range e.Errors {
 				tf = append(tf, testfail{
-					Type:   "ERROR",
+					Type:   severityError,
 					Detail: err.Error(),
 				})
 			}
 		} else if !e.Success {
 			tf = append(tf, testfail{
-				Type:    "ERROR",
+				Type:    severityError,
 				Message: "The test failed. That's all we know.",
 			})
 		}
