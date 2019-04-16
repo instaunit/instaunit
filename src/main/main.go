@@ -12,9 +12,11 @@ import (
 
 	"github.com/instaunit/instaunit/hunit"
 	"github.com/instaunit/instaunit/hunit/doc"
-	"github.com/instaunit/instaunit/hunit/doc/emit"
+	doc_emit "github.com/instaunit/instaunit/hunit/doc/emit"
 	"github.com/instaunit/instaunit/hunit/exec"
 	"github.com/instaunit/instaunit/hunit/net/await"
+	"github.com/instaunit/instaunit/hunit/report"
+	report_emit "github.com/instaunit/instaunit/hunit/report/emit"
 	"github.com/instaunit/instaunit/hunit/service"
 	"github.com/instaunit/instaunit/hunit/service/backend/rest"
 	"github.com/instaunit/instaunit/hunit/syncio"
@@ -59,6 +61,9 @@ func app() int {
 		fDoctype         = cmdline.String("doc:type", coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"), "The format to generate documentation in. Overrides: $HUNIT_DOC_TYPE.")
 		fDocInclHTTP     = cmdline.Bool("doc:include-http", strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")), "Include HTTP in request and response examples (as opposed to just routes and entities). Overrides: $HUNIT_DOC_INCLUDE_HTTP.")
 		fDocFormatEntity = cmdline.Bool("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")), "Pretty-print supported request and response entities in documentation output. Overrides: $HUNIT_DOC_FORMAT_ENTITIES.")
+		fReport          = cmdline.Bool("report", strToBool(os.Getenv("HUNIT_REPORT")), "Generate a report. Overrides: $HUNIT_REPORT.")
+		fReportPath      = cmdline.String("report:output", coalesce(os.Getenv("HUNIT_REPORT_OUTPUT"), "./reports"), "The directory in which generated reports should be written. Overrides: $HUNIT_REPORT_OUTPUT.")
+		fReportType      = cmdline.String("report:type", coalesce(os.Getenv("HUNIT_REPORT_TYPE"), "junit"), "The format to generate reports in. Overrides: $HUNIT_REPORT_TYPE.")
 		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections. Overrides: $HUNIT_NET_IO_GRACE_PERIOD.")
 		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests, usually the program that is being tested. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
 		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output. Overrides: $HUNIT_EXEC_LOG.")
@@ -128,7 +133,7 @@ func app() int {
 		}
 	}
 
-	var doctype emit.Doctype
+	var doctype doc_emit.Doctype
 	var docname map[string]int
 	if *fGendoc {
 		var err error
@@ -143,6 +148,23 @@ func app() int {
 			return 1
 		}
 		docname = make(map[string]int)
+	}
+
+	var reportType report_emit.Doctype
+	var reportName map[string]int
+	if *fReport {
+		var err error
+		reportType, err = emit.ParseDoctype(*fReportType)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Invalid report type: %v\n", err)
+			return 1
+		}
+		err = os.MkdirAll(*fReportPath, 0755)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Could not create report base: %v\n", err)
+			return 1
+		}
+		reportName = make(map[string]int)
 	}
 
 	services := 0
@@ -228,16 +250,9 @@ suites:
 		var gendoc []doc.Generator
 		if *fGendoc {
 			var err error
-			ext := path.Ext(base)
-			stem := base[:len(base)-len(ext)]
+			base := disambigFile(base, doctype.Ext(), docname)
 
-			n, ok := docname[stem]
-			if ok && n > 0 {
-				stem = fmt.Sprintf("%v-%d", stem, n)
-			}
-			docname[stem] = n + 1
-
-			out, err = os.OpenFile(path.Join(*fDocpath, stem+doctype.Ext()), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+			out, err = os.OpenFile(path.Join(*fDocpath, base), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 			if err != nil {
 				color.New(colorErr...).Printf("* * * Could not open documentation output: %v\n", err)
 				return 1
@@ -246,6 +261,26 @@ suites:
 			gen, err := doc.New(doctype, out)
 			if err != nil {
 				color.New(colorErr...).Printf("* * * Could create documentation generator: %v\n", err)
+				return 1
+			}
+
+			gendoc = []doc.Generator{gen} // just one for now
+		}
+
+		var reports []report.Generator
+		if *fReport {
+			var err error
+			base := disambigFile(base, reportType.Ext(), reportName)
+
+			out, err = os.OpenFile(path.Join(*fReportPath, base), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+			if err != nil {
+				color.New(colorErr...).Printf("* * * Could not open report output: %v\n", err)
+				return 1
+			}
+
+			gen, err := doc.New(reportType, out)
+			if err != nil {
+				color.New(colorErr...).Printf("* * * Could create report generator: %v\n", err)
 				return 1
 			}
 
@@ -559,6 +594,18 @@ func dumpEnv(w io.Writer, env map[string]string) {
 	for k, v := range env {
 		fmt.Fprintf(w, f, k, v)
 	}
+}
+
+// Disambiguate a filename
+func disambigFile(base, ext string, counts map[string]int) string {
+	ext := path.Ext(base)
+	stem := base[:len(base)-len(ext)]
+	n, ok := counts[stem]
+	if ok && n > 0 {
+		stem = fmt.Sprintf("%v-%d", stem, n)
+	}
+	counts[stem] = n + 1
+	return stem + ext
 }
 
 type colorWriter struct {
