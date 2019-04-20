@@ -10,6 +10,7 @@ GOARCH ?= $(shell go env GOARCH)
 
 # build and packaging
 GITHASH   := $(shell git log --pretty=format:'%h' -n 1)
+BRANCH    := $(shell git rev-parse --abbrev-ref HEAD)
 VERSION   ?= $(GITHASH)
 LATEST    ?= latest
 
