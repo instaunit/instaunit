@@ -11,12 +11,14 @@ GOARCH ?= $(shell go env GOARCH)
 # build and packaging
 GITHASH   := $(shell git log --pretty=format:'%h' -n 1)
 VERSION   ?= $(GITHASH)
+LATEST    ?= latest
 
 BUILD_DIR  := $(PWD)/target
 PRODUCT    ?= $(NAME)-local
 TARGET_DIR := $(BUILD_DIR)/$(PRODUCT)
 ARCHIVE    := $(PRODUCT).tgz
 PACKAGE    := $(BUILD_DIR)/$(ARCHIVE)
+ARTIFACTS  := s3://instaunit/releases
 
 # build and install
 PREFIX ?= /usr/local
@@ -40,13 +42,20 @@ $(PACKAGE): $(TARGET_DIR)/bin/$(NAME)
 
 package: $(PACKAGE)
 
-formula: package
-	$(PWD)/build/update-formula -v $(VERSION) -o $(PWD)/formula/instaunit.rb $(PACKAGE)
+publish: package
+	aws s3 cp --acl public-read $(PACKAGE) $(ARTIFACTS)/$(VERSION)/$(ARCHIVE)
+
+formula: publish
+	$(PWD)/build/update-formula -v $(VERSION) -o $(TARGET_DIR)/$(NAME).rb $(PACKAGE)
+	aws s3 cp --acl public-read $(TARGET_DIR)/$(NAME).rb $(ARTIFACTS)/$(LATEST)/$(NAME).rb
+	aws s3 cp --acl public-read $(TARGET_DIR)/$(NAME).rb $(ARTIFACTS)/$(VERSION)/$(NAME).rb
+	@echo "----> https://instaunit.s3.amazonaws.com/releases/$(LATEST)/$(NAME).rb"
 
 release: test ## Build for all supported architectures
-	make package PRODUCT=$(NAME)-$(VERSION)-linux-amd64 GOOS=linux GOARCH=amd64
-	make package PRODUCT=$(NAME)-$(VERSION)-freebsd-amd64 GOOS=freebsd GOARCH=amd64
+	make publish PRODUCT=$(NAME)-$(VERSION)-linux-amd64 GOOS=linux GOARCH=amd64
+	make publish PRODUCT=$(NAME)-$(VERSION)-freebsd-amd64 GOOS=freebsd GOARCH=amd64
 	make formula PRODUCT=$(NAME)-$(VERSION)-darwin-amd64 GOOS=darwin GOARCH=amd64
+	@echo && echo "Tag this release:\n\t$ git commit -a -m \"Version $(VERSION)\" && git tag $(VERSION)" && echo
 
 install: build ## Build and install
 	install -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/

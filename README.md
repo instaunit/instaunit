@@ -1,12 +1,12 @@
 # Instaunit tests your Web APIs
 
-Instaunit is a tool that lets you write integration tests for REST and Websocket services declaratively. You can use Instaunit locally for development and on your CI infrastructure to run automated tests against your Web services.
+Instaunit is a tool that lets you write integration tests for REST and Websocket services declaratively and run them automatically. You can use Instaunit locally for development and on your CI infrastructure as part of your integration tests.
 
-**Using Instaunit to manage the repetitive details of executing requests and evaluating responses allows you to write tests faster and focus on the business logic of your services.**
+**Instaunit manages the repetitive details** of setting up and tearing down, executing requests and evaluating responses – which allows you to get more value out of your tests faster.
 
 Since tests and documentation are naturally maintained in parallel, Instaunit can combine these two highly-related tasks into one: add optional usage descriptions to your tests and Instaunit can generate documentation for your endpoints, complete with examples.
 
-## Getting Started
+# Getting Started
 
 Get up and running quickly with our [**Getting Started Tutorial**](https://github.com/instaunit/instaunit/wiki/Getting-Started).
 
@@ -17,7 +17,7 @@ You can install Instaunit by:
 * [Downloading a binary release](https://github.com/instaunit/instaunit/releases) (Homebrew on MacOS is also supported; see release notes).
 * Cloning this repo and building from source via: `make install`.
 
-## Describing Tests
+# Writing Tests
 
 Tests are described by a YAML-based document format. Just describe your request, the response you expect, and that's basically it. Here's a very simple test suite containing a single test case:
 
@@ -41,7 +41,7 @@ Instaunit supports a lot of other request properties – from headers to author
 * Evaluate **expressions and built-in functions** to generate input and randomize your tests.
 * **Manage the process you're testing** by starting it before tests are run and stopping it after tests have completed.
 
-## Running Tests
+# Running Tests
 
 Tests can be run by pointing `instaunit` to a test suite document (or many of them). 
 
@@ -60,7 +60,15 @@ $ instaunit test.yml
              +{"status": "Not great"}
 ```
 
-## Documenting Tests
+## Producing Reports
+
+Reports describing the results of your tests can be produced in addition to the information logged to standard output. Currently the [JUnit](https://junit.org/junit5/) report format is supported.
+
+Try running `instaunit -report <test_suite>` to generate a report.
+
+You can optionally specify the report output directory with the `-report:output` flag or the generated report format with `-report:type`. The JUnit report format is the default (and currently, only) output format.
+
+# Documenting Tests
 
 Tests and documentation are naturally maintained together: when an endpoint is added or changed you must update your tests as well as the documentation that describes it. To generate documentation, simply add a description to a representative test case for your endpoint. You can pick and choose which tests generate documentation.
 
