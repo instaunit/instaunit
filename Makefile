@@ -32,6 +32,10 @@ TEST_PKGS = $(MODULE)/hunit/...
 
 all: build
 
+gate:
+	@echo && echo "AWS Profile: $(AWS_PROFILE)" && echo "    Version: $(VERSION)" && echo "     Branch: $(BRANCH)"
+	@echo && read -p "Release version $(VERSION)? [y/N] " -r continue && echo && [ "$${continue:-N}" = "y" ]
+
 $(TARGET_DIR)/bin/$(NAME): $(SRC)
 	(cd src && go build -ldflags="-X main.version=$(VERSION) -X main.githash=$(GITHASH)" -o $@ $(MAIN))
 
@@ -51,7 +55,7 @@ formula: publish
 	aws s3 cp --acl public-read $(TARGET_DIR)/$(NAME).rb $(ARTIFACTS)/$(VERSION)/$(NAME).rb
 	@echo "----> https://instaunit.s3.amazonaws.com/releases/$(LATEST)/$(NAME).rb"
 
-release: test ## Build for all supported architectures
+release: gate test ## Build for all supported architectures
 	make publish PRODUCT=$(NAME)-$(VERSION)-linux-amd64 GOOS=linux GOARCH=amd64
 	make publish PRODUCT=$(NAME)-$(VERSION)-freebsd-amd64 GOOS=freebsd GOARCH=amd64
 	make formula PRODUCT=$(NAME)-$(VERSION)-darwin-amd64 GOOS=darwin GOARCH=amd64
