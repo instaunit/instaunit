@@ -38,7 +38,7 @@ cat <<FORMULA> "$formula_path"
 
 class Instaunit < Formula
   homepage "https://github.com/instaunit/instaunit"
-  url "https://github.com/instaunit/instaunit/releases/download/${release_version}/instaunit-${release_version}-${GOOS}-${GOARCH}.tgz"
+  url "https://instaunit.s3.amazonaws.com/releases/${release_version}/instaunit-${release_version}-${GOOS}-${GOARCH}.tgz"
   sha256 "${sha256}"
   version "${release_version}"
   
