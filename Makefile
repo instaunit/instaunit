@@ -54,7 +54,7 @@ formula: publish
 	$(PWD)/build/update-formula -v $(VERSION) -o $(TARGET_DIR)/$(NAME).rb $(PACKAGE)
 	aws s3 cp --acl public-read $(TARGET_DIR)/$(NAME).rb $(ARTIFACTS)/$(LATEST)/$(NAME).rb
 	aws s3 cp --acl public-read $(TARGET_DIR)/$(NAME).rb $(ARTIFACTS)/$(VERSION)/$(NAME).rb
-	@echo "----> https://instaunit.s3.amazonaws.com/releases/$(LATEST)/$(NAME).rb"
+	@echo "\nHomebrew formula for version $(VERSION):\n\thttps://instaunit.s3.amazonaws.com/releases/$(LATEST)/$(NAME).rb"
 
 release: gate test ## Build for all supported architectures
 	make publish PRODUCT=$(NAME)-$(VERSION)-linux-amd64 GOOS=linux GOARCH=amd64
