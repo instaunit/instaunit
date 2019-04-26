@@ -37,7 +37,7 @@ Instaunit supports a lot of other request properties – from headers to author
 * **Compare entities semantically** to ignore insignificant differences like whitespace and map key order,
 * Reference the output of previously-run tests to **chain related tests together**,
 * **Wait for dependency services** to become available before a test suite starts running,
-* Declare **mock services** so your tests avoid external dependencies without making code-level changes,
+* Declare [**mock services**](https://github.com/instaunit/instaunit/wiki/Mock-Services) so your tests avoid external dependencies without making code-level changes,
 * Evaluate **expressions and built-in functions** to generate input and randomize your tests.
 * **Manage the process you're testing** by starting it before tests are run and stopping it after tests have completed.
 
