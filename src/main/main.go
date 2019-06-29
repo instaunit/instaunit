@@ -464,9 +464,6 @@ func execCommands(cmds []*exec.Command) error {
 		} else {
 			fmt.Printf("----> $ %v ", e.Command)
 		}
-		if debug.VERBOSE {
-			dumpEnv(syncStdout, e.Environment)
-		}
 
 		out, err := e.Exec()
 		if err != nil {
