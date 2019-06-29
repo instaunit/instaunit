@@ -508,9 +508,6 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, <-chan stru
 	}
 
 	color.New(colorSuite...).Printf("----> $ %v\n", proc)
-	if debug.VERBOSE {
-		dumpEnv(syncStdout, cmd.Environment)
-	}
 
 	done := make(chan struct{})
 	go func() {
