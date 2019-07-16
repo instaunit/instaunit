@@ -130,6 +130,17 @@ func unmarshalCSVEntity(context Context, entity []byte) (interface{}, error) {
 func semanticEqual(expected, actual interface{}) bool {
 	switch a := actual.(type) {
 
+	case map[string]string:
+		e, ok := expected.(map[string]string)
+		if !ok {
+			return false
+		}
+		for k, v := range e {
+			if !semanticEqual(v, a[k]) {
+				return false
+			}
+		}
+
 	case map[string]interface{}:
 		e, ok := expected.(map[string]interface{})
 		if !ok {
