@@ -1,8 +1,11 @@
 package hunit
 
 import (
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"unicode"
 
@@ -69,6 +72,8 @@ func unmarshalEntity(context Context, contentType string, entity []byte) (interf
 	switch contentType {
 	case "application/json":
 		return unmarshalJSONEntity(context, entity)
+	case "text/csv":
+		return unmarshalCSVEntity(context, entity)
 	default:
 		return nil, fmt.Errorf("Unsupported content type for semantic comparison: %v", contentType)
 	}
@@ -83,8 +88,41 @@ func unmarshalJSONEntity(context Context, entity []byte) (interface{}, error) {
 	var value interface{}
 	err := json.Unmarshal(entity, &value)
 	if err != nil {
-		return nil, fmt.Errorf("Could not parse JSON entity: %v", err)
+		return nil, fmt.Errorf("Invalid JSON entity: %v", err)
 	}
+	return value, nil
+}
+
+// Unmarshal a CSV entity
+func unmarshalCSVEntity(context Context, entity []byte) (interface{}, error) {
+	if entity == nil || len(entity) < 1 {
+		return nil, nil
+	}
+
+	value := make([]interface{}, 0)
+	var h []string
+
+	r := csv.NewReader(bytes.NewBuffer(entity))
+	for {
+		row, err := r.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, fmt.Errorf("Invalid CSV entity: %v (%s)", err, strings.Join(row, ", "))
+		}
+
+		if h == nil {
+			h = row
+			continue
+		}
+
+		m := make(map[string]string)
+		for i, e := range row {
+			m[h[i]] = e
+		}
+		value = append(value, m)
+	}
+
 	return value, nil
 }
 
