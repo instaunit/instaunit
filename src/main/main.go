@@ -464,9 +464,6 @@ func execCommands(cmds []*exec.Command) error {
 		} else {
 			fmt.Printf("----> $ %v ", e.Command)
 		}
-		if debug.VERBOSE {
-			dumpEnv(syncStdout, e.Environment)
-		}
 
 		out, err := e.Exec()
 		if err != nil {
@@ -511,9 +508,6 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, <-chan stru
 	}
 
 	color.New(colorSuite...).Printf("----> $ %v\n", proc)
-	if debug.VERBOSE {
-		dumpEnv(syncStdout, cmd.Environment)
-	}
 
 	done := make(chan struct{})
 	go func() {
