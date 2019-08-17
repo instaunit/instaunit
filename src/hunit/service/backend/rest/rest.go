@@ -3,18 +3,19 @@ package rest
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
-	"path"
-	"reflect"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/instaunit/instaunit/hunit/expr"
+	"github.com/instaunit/instaunit/hunit/expr/runtime"
 	"github.com/instaunit/instaunit/hunit/net/await"
 	"github.com/instaunit/instaunit/hunit/service"
 
+	"github.com/bww/go-router"
 	"github.com/bww/go-util/debug"
 	humanize "github.com/dustin/go-humanize"
 )
@@ -35,6 +36,8 @@ type restService struct {
 	conf   service.Config
 	suite  *Suite
 	server *http.Server
+	router router.Router
+	vars   expr.Variables
 }
 
 // Create a new service
@@ -43,9 +46,29 @@ func New(conf service.Config) (service.Service, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	vars := expr.Variables{
+		"std": runtime.Stdlib,
+	}
+
+	handler := func(e Endpoint) router.Handler {
+		return func(req *router.Request, cxt router.Context) (*router.Response, error) {
+			return handleRequest((*http.Request)(req), e, vars)
+		}
+	}
+
+	r := router.New()
+	for _, e := range suite.Endpoints {
+		if e.Request != nil {
+			r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
+		}
+	}
+
 	return &restService{
-		conf:  conf,
-		suite: suite,
+		conf:   conf,
+		suite:  suite,
+		router: r,
+		vars:   vars,
 	}, nil
 }
 
@@ -121,89 +144,75 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// match endpoints
-	for _, e := range s.suite.Endpoints {
-		if r := e.Request; r != nil {
-
-			r.Lock()
-			if r.methods == nil {
-				r.methods = make(map[string]struct{})
-				for _, x := range r.Methods {
-					r.methods[strings.ToLower(x)] = struct{}{}
-				}
-			}
-
-			if r.params == nil {
-				r.params = make(url.Values)
-				u, err := url.Parse(r.Path)
-				if err == nil {
-					r.params = u.Query()
-					r.path = u.Path
-				} else {
-					r.path = r.Path // just use the full path for matching if the path doesn't parse
-				}
-			}
-
-			_, ok := r.methods[strings.ToLower(req.Method)]
-			r.Unlock()
-
-			if ok {
-				match, err := path.Match(r.path, req.URL.Path)
-				if err != nil {
-					fmt.Printf("%s * * * Invalid path pattern: %v: %v\n", prefix, req.URL, err)
-				} else if match && paramsMatch(r.params, req.URL.Query()) {
-					s.handleRequest(rsp, req, e)
-					return
-				}
-			}
-
-		}
+	// handle our route
+	res, err := s.router.Handle((*router.Request)(req))
+	if err != nil {
+		fmt.Printf("%s * * * Could not handle request: %v: %v\n", prefix, req.URL, err)
+		return
 	}
 
-	// nothing matched
-	rsp.Header().Set("Server", "HUnit/1")
-	rsp.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	rsp.WriteHeader(http.StatusNotFound)
-	fmt.Fprintln(rsp, "Not found.")
-
+	// write it
+	handleResponse(rsp, req, res)
 }
 
 // Handle requests
-func (s *restService) handleRequest(rsp http.ResponseWriter, req *http.Request, endpoint Endpoint) {
+func handleRequest(req *http.Request, endpoint Endpoint, vars expr.Variables) (*router.Response, error) {
 	if debug.VERBOSE {
 		start := time.Now()
 		defer fmt.Printf("%s <- (%v) %s %s\n", prefix, time.Since(start), req.Method, req.URL.Path)
 	}
-	if r := endpoint.Response; r != nil {
-		for k, v := range r.Headers {
-			rsp.Header().Add(k, v)
-		}
-		elen := len(r.Entity)
-		rsp.Header().Set("Content-Length", strconv.FormatInt(int64(elen), 10))
-		if r.Status != 0 {
-			rsp.WriteHeader(r.Status)
-		} else {
-			rsp.WriteHeader(http.StatusOK)
-		}
-		if elen > 0 {
-			_, err := rsp.Write([]byte(r.Entity))
-			if err != nil {
-				fmt.Printf("* * * Could not write response: %v: %v\n", req.URL, err)
-			}
+
+	r := endpoint.Response
+	if r == nil {
+		return router.NewResponse(http.StatusOK), nil
+	}
+
+	e, err := expr.Interpolate(r.Entity, vars)
+	if err != nil {
+		return nil, err
+	}
+
+	x := router.NewResponse(r.Status)
+	for k, v := range r.Headers {
+		x.SetHeader(k, v)
+	}
+	if l := len(e); l > 0 {
+		x.SetHeader("Content-Length", strconv.FormatInt(int64(l), 10))
+		x.SetStringEntity("text/plain", e)
+	}
+
+	return x, nil
+}
+
+// Handle responses
+func handleResponse(rsp http.ResponseWriter, req *http.Request, res *router.Response) {
+	for k, v := range res.Header {
+		rsp.Header().Set(k, v[0])
+	}
+
+	if res.Status != 0 {
+		rsp.WriteHeader(res.Status)
+	} else {
+		rsp.WriteHeader(http.StatusOK)
+	}
+
+	if e := res.Entity; e != nil {
+		defer e.Close()
+		_, err := io.Copy(rsp, e)
+		if err != nil {
+			fmt.Printf("* * * Could not write response: %v: %v\n", req.URL, err)
 		}
 	}
 }
 
-// All the parameters in a must be present in b; b may have extra params
-func paramsMatch(a, b url.Values) bool {
-	for k, v := range a {
-		c, ok := b[k]
-		if !ok {
-			return false
-		}
-		if !reflect.DeepEqual(v, c) {
-			return false
+// Create a
+func convertParams(p map[string]string) url.Values {
+	var r url.Values
+	if len(p) > 0 {
+		r = make(url.Values)
+		for k, v := range p {
+			r.Set(k, v)
 		}
 	}
-	return true
+	return r
 }

@@ -1,20 +1,36 @@
 package runtime
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
-)
 
-import (
 	"github.com/bww/epl"
 	"github.com/bww/go-util/rand"
 	"github.com/bww/go-util/uuid"
 )
 
+// base64 libs
+type stdBase64 struct{}
+
+func (s stdBase64) Encode(v string) string {
+	return base64.StdEncoding.EncodeToString([]byte(v))
+}
+
+func (s stdBase64) Decode(v string) (string, error) {
+	d, err := base64.StdEncoding.DecodeString(v)
+	if err != nil {
+		return "", err
+	}
+	return string(d), nil
+}
+
 // The standard library
-type stdlib struct{}
+type stdlib struct {
+	Base64 stdBase64
+}
 
 // Builtins
 var Stdlib stdlib
