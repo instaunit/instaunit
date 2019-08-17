@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/expr"
@@ -143,7 +144,7 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 				return
 			}
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(data))
-			fmt.Println(text.Indent(string(data), "      > "))
+			fmt.Println(text.Indent(string(data), strings.Repeat(" ", len(prefix))+" > "))
 		}
 	}
 
@@ -186,7 +187,7 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 			}
 			fmt.Printf("%s <- %d/%s (%v) %s %s%s (%s)\n", prefix, r.Status, http.StatusText(r.Status), time.Since(start), req.Method, req.URL.Path, query, humanize.Bytes(uint64(len(e))))
 			if len(e) > 0 {
-				fmt.Println(text.Indent(e, "      > "))
+				fmt.Println(text.Indent(e, strings.Repeat(" ", len(prefix))+" < "))
 			}
 		}()
 	}
