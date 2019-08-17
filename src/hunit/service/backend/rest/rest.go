@@ -1,9 +1,11 @@
 package rest
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +19,7 @@ import (
 
 	"github.com/bww/go-router"
 	"github.com/bww/go-util/debug"
+	"github.com/bww/go-util/text"
 	humanize "github.com/dustin/go-humanize"
 )
 
@@ -53,7 +56,7 @@ func New(conf service.Config) (service.Service, error) {
 
 	handler := func(e Endpoint) router.Handler {
 		return func(req *router.Request, cxt router.Context) (*router.Response, error) {
-			return handleRequest((*http.Request)(req), e, vars)
+			return handleRequest((*http.Request)(req), cxt, e, vars)
 		}
 	}
 
@@ -133,6 +136,15 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 			dlen = humanize.Bytes(uint64(req.ContentLength))
 		}
 		fmt.Printf("%s -> %s %s (%s)\n", prefix, req.Method, req.URL.Path, dlen)
+		if req.ContentLength > 0 {
+			data, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				fmt.Printf("%s * * * Could not handle request: %v: %v\n", prefix, req.URL, err)
+				return
+			}
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+			fmt.Println(text.Indent(string(data), "      > "))
+		}
 	}
 
 	// match our internal status endpoint; we don't allow this to be shadowed
@@ -156,29 +168,69 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 }
 
 // Handle requests
-func handleRequest(req *http.Request, endpoint Endpoint, vars expr.Variables) (*router.Response, error) {
-	if debug.VERBOSE {
-		start := time.Now()
-		defer fmt.Printf("%s <- (%v) %s %s\n", prefix, time.Since(start), req.Method, req.URL.Path)
-	}
+func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, vars expr.Variables) (*router.Response, error) {
+	var err error
 
 	r := endpoint.Response
 	if r == nil {
 		return router.NewResponse(http.StatusOK), nil
 	}
 
-	e, err := expr.Interpolate(r.Entity, vars)
+	var e string
+	if debug.VERBOSE {
+		start := time.Now()
+		defer func() {
+			var query string
+			if len(req.URL.RawQuery) > 0 {
+				query = "?" + req.URL.RawQuery
+			}
+			fmt.Printf("%s <- %d/%s (%v) %s %s%s (%s)\n", prefix, r.Status, http.StatusText(r.Status), time.Since(start), req.Method, req.URL.Path, query, humanize.Bytes(uint64(len(e))))
+			if len(e) > 0 {
+				fmt.Println(text.Indent(e, "      > "))
+			}
+		}()
+	}
+
+	cvars := make(map[string]interface{})
+	for k, v := range cxt.Vars {
+		cvars[k] = v
+	}
+
+	cparams := make(map[string]interface{})
+	for k, v := range req.URL.Query() {
+		if len(v) > 0 {
+			cparams[k] = v[0]
+		}
+	}
+
+	err = req.ParseForm()
+	if err != nil {
+		return nil, err
+	}
+	cform := make(map[string]interface{})
+	for k, v := range req.Form {
+		if len(v) > 0 {
+			cform[k] = v[0]
+		}
+	}
+
+	vars["request"] = map[string]interface{}{
+		"vars":   cvars,
+		"params": cparams,
+		"form":   cform,
+	}
+	e, err = expr.Interpolate(r.Entity, vars)
 	if err != nil {
 		return nil, err
 	}
 
 	x := router.NewResponse(r.Status)
+	if l := len(e); l > 0 {
+		x.SetStringEntity("binary/octet-stream", e)
+		x.SetHeader("Content-Length", strconv.FormatInt(int64(l), 10))
+	}
 	for k, v := range r.Headers {
 		x.SetHeader(k, v)
-	}
-	if l := len(e); l > 0 {
-		x.SetHeader("Content-Length", strconv.FormatInt(int64(l), 10))
-		x.SetStringEntity("text/plain", e)
 	}
 
 	return x, nil
