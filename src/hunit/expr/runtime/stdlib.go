@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net/url"
 	"reflect"

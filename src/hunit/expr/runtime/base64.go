@@ -1,11 +1,8 @@
-package stdlib
+package runtime
 
 import (
 	"encoding/base64"
 	"fmt"
-	"net/url"
-	"reflect"
-	"strings"
 )
 
 // base64 libs
@@ -16,13 +13,13 @@ func (s stdBase64) Encode(v interface{}) (string, error) {
 	case []byte:
 		return base64.StdEncoding.EncodeToString(c), nil
 	case string:
-		return base64.StdEncoding.EncodeToString(string(c)), nil
+		return base64.StdEncoding.EncodeToString([]byte(c)), nil
 	default:
 		return "", fmt.Errorf("Unsupported type: %T", v)
 	}
 }
 
-func (s stdBase64) Decode(v string) (string, error) {
+func (s stdBase64) Decode(v interface{}) (string, error) {
 	var d []byte
 	var err error
 	switch c := v.(type) {
