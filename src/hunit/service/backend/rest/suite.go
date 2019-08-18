@@ -3,7 +3,6 @@ package rest
 import (
 	"io"
 	"io/ioutil"
-	"net/url"
 	"sync"
 	"time"
 
@@ -13,11 +12,9 @@ import (
 // A request
 type Request struct {
 	sync.Mutex
-	Methods []string `yaml:"methods"`
-	methods map[string]struct{}
-	Path    string `yaml:"path"`
-	path    string
-	params  url.Values
+	Methods []string          `yaml:"methods"`
+	Path    string            `yaml:"path"`
+	Params  map[string]string `yaml:"params"`
 	Headers map[string]string `yaml:"headers"`
 	Entity  string            `yaml:"entity"`
 }

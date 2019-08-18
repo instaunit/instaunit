@@ -5,16 +5,20 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
-)
 
-import (
 	"github.com/bww/epl"
 	"github.com/bww/go-util/rand"
 	"github.com/bww/go-util/uuid"
 )
 
+func deprecated(a, b string) {
+	fmt.Println("hunit: %q is deprecated and will be removed in a future release; use %q instead.", a, b)
+}
+
 // The standard library
-type stdlib struct{}
+type stdlib struct {
+	Base64 stdBase64
+}
 
 // Builtins
 var Stdlib stdlib
