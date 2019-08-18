@@ -7,6 +7,8 @@ github.com/bww/go-router v0.0.0-20190817194626-c2b784d6f758 h1:FIjxnpMsBqPz4nNaw
 github.com/bww/go-router v0.0.0-20190817194626-c2b784d6f758/go.mod h1:w8Co2+tWdGgzwsV9UfVtImjsDmm9pRQsKVWbdP5ug7o=
 github.com/bww/go-router v0.0.0-20190817213659-abcf53bf1123 h1:T4D+7lokmcVvcVCJovnpcG0nCgmM2qOtN39HFE8q30w=
 github.com/bww/go-router v0.0.0-20190817213659-abcf53bf1123/go.mod h1:w8Co2+tWdGgzwsV9UfVtImjsDmm9pRQsKVWbdP5ug7o=
+github.com/bww/go-router v0.0.0-20190818190848-535bb17b039c h1:7aHKEaKFp6VC7jPIaJUoxNJKiVs5xNFt/n/SfxE6JnA=
+github.com/bww/go-router v0.0.0-20190818190848-535bb17b039c/go.mod h1:w8Co2+tWdGgzwsV9UfVtImjsDmm9pRQsKVWbdP5ug7o=
 github.com/bww/go-util v0.0.0-20190123023739-e1f71f0d9eac h1:Z+I7BvPfpnB+Rzo+zXW0WDaRs6mAhU9keRStcdWvF0w=
 github.com/bww/go-util v0.0.0-20190123023739-e1f71f0d9eac/go.mod h1:QAMM23Ng6n6jqUIVKKNRxkAcvFsVPVcwZlWcuHokJp8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
