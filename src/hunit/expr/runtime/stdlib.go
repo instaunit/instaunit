@@ -12,19 +12,8 @@ import (
 	"github.com/bww/go-util/uuid"
 )
 
-// base64 libs
-type stdBase64 struct{}
-
-func (s stdBase64) Encode(v string) string {
-	return base64.StdEncoding.EncodeToString([]byte(v))
-}
-
-func (s stdBase64) Decode(v string) (string, error) {
-	d, err := base64.StdEncoding.DecodeString(v)
-	if err != nil {
-		return "", err
-	}
-	return string(d), nil
+func deprecated(a, b string) {
+	fmt.Println("hunit: %q is deprecated and will be removed in a future release; use %q instead.", a, b)
 }
 
 // The standard library
