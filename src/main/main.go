@@ -53,6 +53,7 @@ func app() int {
 	cmdline := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	var (
 		fBaseURL         = cmdline.String("base-url", coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"), "The base URL for requests. Overrides: $HUNIT_BASE_URL.")
+		fWait            = cmdline.Duration("wait", strToDuration(os.Getenv("HUNIT_WAIT_ON_START")), "Wait an interval before test suites are run to allow services to settle. Overrides: $HUNIT_WAIT_ON_START.")
 		fExpandVars      = cmdline.Bool("expand", strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true), "Expand variables in test cases. Overrides: $HUNIT_EXPAND_VARS.")
 		fTrimEntity      = cmdline.Bool("entity:trim", strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true), "Trim trailing whitespace from entities. Overrides: $HUNIT_TRIM_ENTITY.")
 		fDumpRequest     = cmdline.Bool("dump:request", strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")), "Dump requests to standard output as they are processed. Overrides: $HUNIT_DUMP_REQUESTS.")
@@ -229,6 +230,9 @@ func app() int {
 	// give services and processes a second to settle
 	if services > 0 {
 		<-time.After(time.Second / 4)
+	}
+	if *fWait > 0 {
+		<-time.After(*fWait)
 	}
 
 	var proc *exec.Process
