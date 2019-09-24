@@ -232,6 +232,7 @@ func app() int {
 		<-time.After(time.Second / 4)
 	}
 	if *fWait > 0 {
+		fmt.Println("----> Waiting", *fWait)
 		<-time.After(*fWait)
 	}
 
