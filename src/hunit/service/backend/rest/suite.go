@@ -16,6 +16,7 @@ type Request struct {
 	Path    string            `yaml:"path"`
 	Params  map[string]string `yaml:"params"`
 	Headers map[string]string `yaml:"headers"`
+	Cookies map[string]string `yaml:"cookies"`
 	Entity  string            `yaml:"entity"`
 }
 
@@ -23,6 +24,7 @@ type Request struct {
 type Response struct {
 	Status  int               `yaml:"status"`
 	Headers map[string]string `yaml:"headers"`
+	Cookies map[string]string `yaml:"cookies"`
 	Entity  string            `yaml:"entity"`
 }
 
