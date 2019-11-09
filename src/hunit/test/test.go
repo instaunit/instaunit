@@ -31,6 +31,7 @@ type Request struct {
 	Method    string            `yaml:"method"`
 	URL       string            `yaml:"url"`
 	Headers   map[string]string `yaml:"headers"`
+	Cookies   map[string]string `yaml:"cookies"`
 	Params    map[string]string `yaml:"params"`
 	Entity    string            `yaml:"entity"`
 	Format    string            `yaml:"format"`
@@ -43,6 +44,7 @@ type Request struct {
 type Response struct {
 	Status     int               `yaml:"status"`
 	Headers    map[string]string `yaml:"headers"`
+	Cookies    map[string]string `yaml:"cookies"`
 	Entity     string            `yaml:"entity"`
 	Comparison Comparison        `yaml:"compare"`
 	Format     string            `yaml:"format"`
