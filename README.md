@@ -14,7 +14,7 @@ Get up and running quickly with our [**Getting Started Tutorial**](https://githu
 
 ### Installing via Homebrew on macOS
 
-MacOS users can install the latest version of Instaunit via Homebrew by running the following command. Upgrading and uninstalling work similarly.
+MacOS users can install the latest version of Instaunit via Homebrew by running the following command.
 
 ```
 brew install 'https://instaunit.s3.amazonaws.com/releases/latest/instaunit.rb'
