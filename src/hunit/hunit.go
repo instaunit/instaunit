@@ -287,7 +287,22 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	req.Header = header
+
+	if c.Request.Cookies != nil {
+		for k, v := range c.Request.Cookies {
+			k, err = interpolateIfRequired(context, k)
+			if err != nil {
+				return result.Error(err), nil, nil
+			}
+			v, err = interpolateIfRequired(context, v)
+			if err != nil {
+				return result.Error(err), nil, nil
+			}
+			req.AddCookie(&http.Cookie{Name: k, Value: v})
+		}
+	}
 
 	reqbuf := &bytes.Buffer{}
 	err = text.WriteRequest(reqbuf, req, reqdata)

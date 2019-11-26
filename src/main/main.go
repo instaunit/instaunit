@@ -28,6 +28,8 @@ import (
 	"github.com/fatih/color"
 )
 
+const stdinPath = "-"
+
 var ( // set at compile time via the linker
 	version = "v0.0.0"
 	githash = "000000"
@@ -252,11 +254,20 @@ suites:
 			proc = nil
 		}
 
-		base := path.Base(e)
-		color.New(colorSuite...).Printf("====> %v", base)
-
+		var suite *test.Suite
+		var base string
+		var err error
 		cdup := config // copy global configs and update them
-		suite, err := test.LoadSuiteFromFile(&cdup, e)
+
+		if e == stdinPath {
+			base = "(stdin)"
+			color.New(colorSuite...).Printf("====> %s", base)
+			suite, err = test.LoadSuiteFromReader(&cdup, os.Stdin)
+		} else {
+			base = path.Base(e)
+			color.New(colorSuite...).Printf("====> %s", base)
+			suite, err = test.LoadSuiteFromFile(&cdup, e)
+		}
 		if err != nil {
 			fmt.Println()
 			color.New(colorErr...).Printf("* * * Could not load test suite: %v\n", err)

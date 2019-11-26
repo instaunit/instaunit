@@ -1,6 +1,7 @@
 package test
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"time"
@@ -44,22 +45,25 @@ type Suite struct {
 
 // Load a test suite
 func LoadSuiteFromFile(c *Config, p string) (*Suite, error) {
-
 	file, err := os.Open(p)
 	if err != nil {
 		return nil, err
 	}
-
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	return LoadSuite(c, data)
+	defer file.Close()
+	return LoadSuiteFromReader(c, file)
 }
 
 // Load a test suite
-func LoadSuite(conf *Config, data []byte) (*Suite, error) {
+func LoadSuiteFromReader(c *Config, r io.Reader) (*Suite, error) {
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	return LoadSuiteFromData(c, data)
+}
+
+// Load a test suite
+func LoadSuiteFromData(conf *Config, data []byte) (*Suite, error) {
 	var ferr error
 
 	suite := &Suite{Config: *conf}
