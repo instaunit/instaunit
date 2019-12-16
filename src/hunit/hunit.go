@@ -96,20 +96,20 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 				}()
 
 				r, f, err := RunTest(e, c)
-				if err != nil {
-					lock.Lock()
-					errs = append(errs, err)
-					lock.Unlock()
-					return
-				}
 
 				lock.Lock()
-				if r != nil {
-					results = append(results, r)
+
+				if err != nil {
+					errs = append(errs, err)
+				} else {
+					if r != nil {
+						results = append(results, r)
+					}
+					if f != nil {
+						futures = append(futures, f)
+					}
 				}
-				if f != nil {
-					futures = append(futures, f)
-				}
+
 				lock.Unlock()
 			}()
 		}
