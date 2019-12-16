@@ -94,11 +94,8 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 					<-sem
 					wg.Done()
 				}()
-
 				r, f, err := RunTest(e, c)
-
 				lock.Lock()
-
 				if err != nil {
 					errs = append(errs, err)
 				} else {
@@ -109,7 +106,6 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 						futures = append(futures, f)
 					}
 				}
-
 				lock.Unlock()
 			}()
 		}
