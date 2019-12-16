@@ -80,6 +80,13 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 		var errs []error
 
 		for i := 0; i < n; i++ {
+			lock.Lock()
+			nerr := len(errs)
+			lock.Unlock()
+			if nerr > 0 {
+				break
+			}
+
 			wg.Add(1)
 			sem <- struct{}{}
 			go func() {
@@ -108,6 +115,10 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 		}
 
 		wg.Wait()
+
+		if len(errs) > 0 {
+			return nil, errs[0]
+		}
 	}
 
 	for _, e := range context.Gendoc {
