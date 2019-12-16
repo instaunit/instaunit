@@ -67,17 +67,18 @@ type MessageExchange struct {
 
 // A test case
 type Case struct {
-	Id       string            `yaml:"id"`
-	Wait     time.Duration     `yaml:"wait"`
-	Repeat   int               `yaml:"repeat"`
-	Gendoc   bool              `yaml:"gendoc"`
-	Title    string            `yaml:"title"`
-	Comments string            `yaml:"doc"`
-	Params   map[string]string `yaml:"params"`
-	Request  Request           `yaml:"request"`
-	Response Response          `yaml:"response"`
-	Stream   *Stream           `yaml:"websocket"`
-	Vars     yaml.MapSlice     `yaml:"vars"`
+	Id         string            `yaml:"id"`
+	Wait       time.Duration     `yaml:"wait"`
+	Repeat     int               `yaml:"repeat"`
+	Concurrent int               `yaml:"concurrent"`
+	Gendoc     bool              `yaml:"gendoc"`
+	Title      string            `yaml:"title"`
+	Comments   string            `yaml:"doc"`
+	Params     map[string]string `yaml:"params"`
+	Request    Request           `yaml:"request"`
+	Response   Response          `yaml:"response"`
+	Stream     *Stream           `yaml:"websocket"`
+	Vars       yaml.MapSlice     `yaml:"vars"`
 }
 
 // Determine if this case is documented or not

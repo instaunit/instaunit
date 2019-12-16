@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/doc"
@@ -67,17 +68,52 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 		if n < 1 {
 			n = 1
 		}
+
+		p := e.Concurrent
+		if p < 1 {
+			p = 1
+		}
+
+		sem := make(chan struct{}, p)
+		var wg sync.WaitGroup
+		var lock sync.Mutex
+		var errs []error
+
 		for i := 0; i < n; i++ {
-			r, f, err := RunTest(e, c)
-			if err != nil {
-				return nil, err
+			lock.Lock()
+			nerr := len(errs)
+			lock.Unlock()
+			if nerr > 0 {
+				break
 			}
-			if r != nil {
-				results = append(results, r)
-			}
-			if f != nil {
-				futures = append(futures, f)
-			}
+
+			wg.Add(1)
+			sem <- struct{}{}
+			go func() {
+				defer func() {
+					<-sem
+					wg.Done()
+				}()
+				r, f, err := RunTest(e, c)
+				lock.Lock()
+				if err != nil {
+					errs = append(errs, err)
+				} else {
+					if r != nil {
+						results = append(results, r)
+					}
+					if f != nil {
+						futures = append(futures, f)
+					}
+				}
+				lock.Unlock()
+			}()
+		}
+
+		wg.Wait()
+
+		if len(errs) > 0 {
+			return nil, errs[0]
 		}
 	}
 
