@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/doc"
@@ -67,18 +68,46 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 		if n < 1 {
 			n = 1
 		}
-		for i := 0; i < n; i++ {
-			r, f, err := RunTest(e, c)
-			if err != nil {
-				return nil, err
-			}
-			if r != nil {
-				results = append(results, r)
-			}
-			if f != nil {
-				futures = append(futures, f)
-			}
+
+		p := e.Concurrent
+		if p < 1 {
+			p = 1
 		}
+
+		sem := make(chan struct{}, p)
+		var wg sync.WaitGroup
+		var lock sync.Mutex
+		var errs []error
+
+		for i := 0; i < n; i++ {
+			wg.Add(1)
+			sem <- struct{}{}
+			go func() {
+				defer func() {
+					<-sem
+					wg.Done()
+				}()
+
+				r, f, err := RunTest(e, c)
+				if err != nil {
+					lock.Lock()
+					errs = append(errs, err)
+					lock.Unlock()
+					return
+				}
+
+				lock.Lock()
+				if r != nil {
+					results = append(results, r)
+				}
+				if f != nil {
+					futures = append(futures, f)
+				}
+				lock.Unlock()
+			}()
+		}
+
+		wg.Wait()
 	}
 
 	for _, e := range context.Gendoc {
