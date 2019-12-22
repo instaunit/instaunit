@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit"
+	"github.com/instaunit/instaunit/hunit/cache"
 	"github.com/instaunit/instaunit/hunit/doc"
 	"github.com/instaunit/instaunit/hunit/exec"
 	"github.com/instaunit/instaunit/hunit/net/await"
@@ -385,7 +386,7 @@ suites:
 			if r.Errors != nil {
 				for _, e := range r.Errors {
 					count++
-					fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %v", count, e), "             ", 0))
+					fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %s", count, e), "             ", 0))
 					fmt.Println()
 				}
 			}

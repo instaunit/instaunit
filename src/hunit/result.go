@@ -6,12 +6,13 @@ import (
 
 // A test result
 type Result struct {
-	Name             string
-	Success          bool
-	Skipped          bool
-	Errors           []error
-	Reqdata, Rspdata []byte
-	Runtime          time.Duration
+	Name    string        `json:"name"`
+	Success bool          `json:"success"`
+	Skipped bool          `json:"skipped"`
+	Errors  []string      `json:"errors,omitempty"`
+	Reqdata []byte        `json:"request_data,omitempty"`
+	Rspdata []byte        `json:"response_data,omitempty"`
+	Runtime time.Duration `json:"duration"`
 }
 
 // Assert equality. If the values are not equal an error is added to the result.
@@ -28,6 +29,6 @@ func (r *Result) AssertEqual(e, a interface{}, m string, x ...interface{}) bool 
 // the result is returned so calls can be chained.
 func (r *Result) Error(e error) *Result {
 	r.Success = false
-	r.Errors = append(r.Errors, e)
+	r.Errors = append(r.Errors, e.Error())
 	return r
 }
