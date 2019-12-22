@@ -1,5 +1,16 @@
 
 -
+  # This test can fail because it is not required
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
+  
+  response:
+    status: 200
+
+
+-
+  # This test must not fail or subsequent tests will be skipped
   require: true
    
   request:
@@ -11,7 +22,6 @@
 
 -
   # This test will fail implicitly due to dependency failure
-  
   request:
     method: GET
     url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/entity.json
