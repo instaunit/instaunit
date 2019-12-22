@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	pathutil "path"
+
 	"github.com/instaunit/instaunit/hunit"
 )
 
@@ -38,12 +40,34 @@ type Cache struct {
 	Version string                     `json:"version"`
 	Binary  *Resource                  `json:"binary,omitempty"`
 	Suites  []*Resource                `json:"suites,omitempty"`
-	Results map[string][]*hunit.Result `json:"results,omitempty"`
-	suites  map[string]*Resource
+	Results map[string][]*hunit.Result `json:"results,omitempty"` // checksum -> []results
+	suites  map[string]*Resource       `json:"-"`                 // checksum -> Resource
 }
 
-func (c *Cache) Suite(path string) *Resource {
-	return c.suites[path]
+func (c *Cache) Suite(checksum string) *Resource {
+	return c.suites[checksum]
+}
+
+func (c *Cache) AddSuite(suite *Resource, results []*hunit.Result) {
+	c.Suites = append(c.Suites, suite)
+	if c.suites == nil {
+		c.suites = map[string]*Resource{suite.Checksum: suite}
+	} else {
+		c.suites[suite.Checksum] = suite
+	}
+	if c.Results == nil {
+		c.Results = map[string][]*hunit.Result{suite.Checksum: results}
+	} else {
+		c.Results[suite.Checksum] = results
+	}
+}
+
+func (c *Cache) ResultsForSuite(suite *Resource) []*hunit.Result {
+	if c.Results != nil {
+		return c.Results[suite.Checksum]
+	} else {
+		return nil
+	}
 }
 
 func Read(path string) (*Cache, error) {
@@ -61,13 +85,17 @@ func Read(path string) (*Cache, error) {
 
 	c.suites = make(map[string]*Resource)
 	for _, e := range c.Suites {
-		c.suites[e.Path] = e
+		c.suites[e.Checksum] = e
 	}
 
 	return c, nil
 }
 
 func Write(path string, cache *Cache) error {
+	err := os.MkdirAll(pathutil.Dir(path), 0755)
+	if err != nil {
+		return err
+	}
 	f, err := os.Create(path)
 	if err != nil {
 		return err

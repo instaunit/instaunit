@@ -32,7 +32,7 @@ import (
 
 const (
 	stdinPath = "-"
-	cacheBase = "./.hunit_cache"
+	cacheBase = "./.hunit/cache"
 )
 
 var ( // set at compile time via the linker
@@ -87,11 +87,7 @@ func app() int {
 	cmdline.Parse(os.Args[1:])
 
 	if *fVersion {
-		if version == githash {
-			fmt.Println(version)
-		} else {
-			fmt.Printf("%s (%s)\n", version, githash)
-		}
+		fmt.Println(formatVersion())
 		return 0
 	}
 
@@ -244,28 +240,35 @@ func app() int {
 		<-time.After(*fWait)
 	}
 
+	// setup caching
+	var rcache, wcache *cache.Cache
+	var cachePath string
+	if *fCache && *fExec != "" {
+		var err error
+		sum, err := cache.Checksum(*fExec)
+		if err != nil {
+			color.New(colorErr...).Println("* * *", err)
+			return 1
+		}
+
+		wcache = &cache.Cache{Version: formatVersion(), Binary: sum}
+		cachePath = path.Join(cacheBase, *fExec+".cache")
+
+		c, err := cache.Read(cachePath)
+		if errors.Is(err, os.ErrNotExist) {
+			fmt.Println("----> No cache available:", cachePath)
+		} else if err != nil {
+			color.New(colorErr...).Println("* * *", err)
+			return 1
+		} else if b := c.Binary; b != nil && b.Path == *fExec && b.Checksum == sum.Checksum {
+			fmt.Println("----> Using cache:", cachePath)
+			rcache = c
+		}
+	}
+
 	var proc *exec.Process
 	success := true
 	start := time.Now()
-
-	var cached *cache.Cache
-	var exesum string
-	if *fCache && *fExec != "" {
-		var err error
-		exesum, err = cache.Checksum(*fExec)
-		if err != nil {
-			color.New(colorErr...).Printf("* * * %v\n", err)
-		}
-		dir, base := path.Dir(*fExec), path.Base(*fExec)
-		p := fmt.Sprintf(".hunit_cache:%s", base)
-		c, err := cache.Read(path.Join(dir, p))
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			color.New(colorErr...).Printf("* * * %v\n", err)
-		} else if b := c.Binary; b != nil && b.Path == *fExec && b.Checksum == v.Checksum {
-			fmt.Println("----> Using cache:", p)
-			cached = c
-		}
-	}
 
 suites:
 	for _, e := range cmdline.Args() {
@@ -284,18 +287,27 @@ suites:
 		var err error
 		cdup := config // copy global configs and update them
 
+		var reader io.Reader
 		if e == stdinPath {
 			base = "(stdin)"
 			color.New(colorSuite...).Printf("====> %s", base)
-			suite, err = test.LoadSuiteFromReader(&cdup, os.Stdin)
+			reader = os.Stdin
 		} else {
 			base = path.Base(e)
 			color.New(colorSuite...).Printf("====> %s", base)
-			suite, err = test.LoadSuiteFromFile(&cdup, e)
+			f, err := os.Open(e)
+			if err != nil {
+				color.New(colorErr...).Println("\n* * * Could not load test suite:", err)
+				errno++
+				break
+			}
+			defer f.Close()
+			reader = f
 		}
+
+		suite, err = test.LoadSuiteFromReader(&cdup, reader)
 		if err != nil {
-			fmt.Println()
-			color.New(colorErr...).Printf("* * * Could not load test suite: %v\n", err)
+			color.New(colorErr...).Println("\n* * * Could not load test suite:", err)
 			errno++
 			break
 		}
@@ -306,18 +318,36 @@ suites:
 			fmt.Println()
 		}
 
+		var sum *cache.Resource
+		if (rcache != nil || wcache != nil) && e != stdinPath {
+			sum, err = cache.Checksum(e)
+			if err != nil {
+				color.New(colorErr...).Println("* * * Could not load suite checksum:", err)
+				errno++
+				break
+			}
+		}
+
+		if rcache != nil && e != stdinPath {
+			cached := rcache.Suite(sum.Checksum)
+			if cached != nil {
+				success = success && reportResults(options, rcache.ResultsForSuite(sum), &tests, &failures, &skipped)
+				continue
+			}
+		}
+
 		var gendoc []doc.Generator
 		if *fGendoc {
 			base := disambigFile(base, doctype.Ext(), docname)
 			out, err := os.OpenFile(path.Join(*fDocpath, base), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 			if err != nil {
-				color.New(colorErr...).Printf("* * * Could not open documentation output: %v\n", err)
+				color.New(colorErr...).Println("* * * Could not open documentation output:", err)
 				return 1
 			}
 
 			gen, err := doc.New(doctype, out)
 			if err != nil {
-				color.New(colorErr...).Printf("* * * Could create documentation generator: %v\n", err)
+				color.New(colorErr...).Println("* * * Could create documentation generator:", err)
 				return 1
 			}
 
@@ -390,44 +420,9 @@ suites:
 			}
 		}
 
-		var count int
-		for _, r := range results {
-			tests++
-			if !r.Success {
-				success = false
-				failures++
-			}
-			if r.Skipped {
-				color.New(color.FgYellow).Printf("----> %v", r.Name)
-				skipped++
-				continue
-			}
-			if r.Success {
-				color.New(color.FgCyan).Printf("----> %v", r.Name)
-			} else {
-				color.New(color.FgRed).Printf("----> %v", r.Name)
-			}
-			if r.Errors != nil {
-				for _, e := range r.Errors {
-					count++
-					fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %s", count, e), "             ", 0))
-					fmt.Println()
-				}
-			}
-			preq := len(r.Reqdata) > 0 && ((options&test.OptionDisplayRequests) == test.OptionDisplayRequests || (!r.Success && (options&test.OptionDisplayRequestsOnFailure) == test.OptionDisplayRequestsOnFailure))
-			prsp := len(r.Rspdata) > 0 && ((options&test.OptionDisplayResponses) == test.OptionDisplayResponses || (!r.Success && (options&test.OptionDisplayResponsesOnFailure) == test.OptionDisplayResponsesOnFailure))
-			if preq {
-				fmt.Println(text.Indent(string(r.Reqdata), "      > "))
-			}
-			if preq && prsp {
-				fmt.Println("      * ")
-			}
-			if prsp {
-				fmt.Println(text.Indent(string(r.Rspdata), "      < "))
-			}
-			if preq || prsp {
-				fmt.Println()
-			}
+		success = success && reportResults(options, results, &tests, &failures, &skipped)
+		if wcache != nil && sum != nil {
+			wcache.AddSuite(sum, results)
 		}
 
 		if len(suite.Teardown) > 0 {
@@ -467,9 +462,16 @@ suites:
 	duration := time.Since(start)
 	fmt.Println()
 
+	if wcache != nil {
+		err := cache.Write(cachePath, wcache)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Could not write cache: %v\n\n", err)
+		}
+	}
+
 	if errno > 0 {
 		color.New(color.BgHiRed, color.Bold, color.FgBlack).Printf(" ERRORS! ")
-		fmt.Printf(" %d %s could not be run due to errors.\n", errno, plural(errno, "test", "tests"))
+		fmt.Printf(" %d %s could not be run due to errors.\n\n", errno, plural(errno, "test", "tests"))
 		return 1
 	}
 
@@ -490,6 +492,50 @@ suites:
 		fmt.Printf(" All %d tests passed.\n", tests)
 	}
 	return 0
+}
+
+func reportResults(options test.Options, results []*hunit.Result, tests, failures, skipped *int) bool {
+	var count int
+	var success bool
+	for _, r := range results {
+		*tests++
+		if !r.Success {
+			success = false
+			*failures++
+		}
+		if r.Skipped {
+			color.New(color.FgYellow).Printf("----> %v", r.Name)
+			*skipped++
+			continue
+		}
+		if r.Success {
+			color.New(color.FgCyan).Printf("----> %v", r.Name)
+		} else {
+			color.New(color.FgRed).Printf("----> %v", r.Name)
+		}
+		if r.Errors != nil {
+			for _, e := range r.Errors {
+				count++
+				fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %s", count, e), "             ", 0))
+				fmt.Println()
+			}
+		}
+		preq := len(r.Reqdata) > 0 && ((options&test.OptionDisplayRequests) == test.OptionDisplayRequests || (!r.Success && (options&test.OptionDisplayRequestsOnFailure) == test.OptionDisplayRequestsOnFailure))
+		prsp := len(r.Rspdata) > 0 && ((options&test.OptionDisplayResponses) == test.OptionDisplayResponses || (!r.Success && (options&test.OptionDisplayResponsesOnFailure) == test.OptionDisplayResponsesOnFailure))
+		if preq {
+			fmt.Println(text.Indent(string(r.Reqdata), "      > "))
+		}
+		if preq && prsp {
+			fmt.Println("      * ")
+		}
+		if prsp {
+			fmt.Println(text.Indent(string(r.Rspdata), "      < "))
+		}
+		if preq || prsp {
+			fmt.Println()
+		}
+	}
+	return success
 }
 
 // Execute a set of commands in sequence, allowing each to terminate before
@@ -567,4 +613,12 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, <-chan stru
 		<-time.After(cmd.Wait)
 	}
 	return proc, done, nil
+}
+
+func formatVersion() string {
+	if version == githash {
+		return version
+	} else {
+		return fmt.Sprintf("%s (%s)", version, githash)
+	}
 }
