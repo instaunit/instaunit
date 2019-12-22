@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -29,7 +30,10 @@ import (
 	"github.com/fatih/color"
 )
 
-const stdinPath = "-"
+const (
+	stdinPath = "-"
+	cacheBase = "./.hunit_cache"
+)
 
 var ( // set at compile time via the linker
 	version = "v0.0.0"
@@ -50,7 +54,7 @@ func main() {
 
 // You know what it does
 func app() int {
-	var tests, skipped, failures, errors int
+	var tests, skipped, failures, errno int
 	var headerSpecs, serviceSpecs flagList
 
 	cmdline := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
@@ -69,6 +73,7 @@ func app() int {
 		fReport          = cmdline.Bool("report", strToBool(os.Getenv("HUNIT_REPORT")), "Generate a report. Overrides: $HUNIT_REPORT.")
 		fReportPath      = cmdline.String("report:output", coalesce(os.Getenv("HUNIT_REPORT_OUTPUT"), "./reports"), "The directory in which generated reports should be written. Overrides: $HUNIT_REPORT_OUTPUT.")
 		fReportType      = cmdline.String("report:type", coalesce(os.Getenv("HUNIT_REPORT_TYPE"), "junit"), "The format to generate reports in. Overrides: $HUNIT_REPORT_TYPE.")
+		fCache           = cmdline.Bool("cache", strToBool(os.Getenv("HUNIT_CACHE_RESULTS")), "Cache results. When enabled, test suites run against a managed service will cache results if neither the service binary nor the test suite has changed. Overrides: $HUNIT_CACHE_RESULTS.")
 		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections. Overrides: $HUNIT_NET_IO_GRACE_PERIOD.")
 		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests, usually the program that is being tested. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
 		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output. Overrides: $HUNIT_EXEC_LOG.")
@@ -243,6 +248,25 @@ func app() int {
 	success := true
 	start := time.Now()
 
+	var cached *cache.Cache
+	var exesum string
+	if *fCache && *fExec != "" {
+		var err error
+		exesum, err = cache.Checksum(*fExec)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * %v\n", err)
+		}
+		dir, base := path.Dir(*fExec), path.Base(*fExec)
+		p := fmt.Sprintf(".hunit_cache:%s", base)
+		c, err := cache.Read(path.Join(dir, p))
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			color.New(colorErr...).Printf("* * * %v\n", err)
+		} else if b := c.Binary; b != nil && b.Path == *fExec && b.Checksum == v.Checksum {
+			fmt.Println("----> Using cache:", p)
+			cached = c
+		}
+	}
+
 suites:
 	for _, e := range cmdline.Args() {
 		if proc != nil {
@@ -272,7 +296,7 @@ suites:
 		if err != nil {
 			fmt.Println()
 			color.New(colorErr...).Printf("* * * Could not load test suite: %v\n", err)
-			errors++
+			errno++
 			break
 		}
 
@@ -332,7 +356,7 @@ suites:
 				err := await.Await(context.Background(), deps.Resources, deps.Timeout)
 				if err != nil {
 					color.New(colorErr...).Printf("* * * Error waiting for dependencies: %v\n", err)
-					errors++
+					errno++
 					continue
 				}
 			}
@@ -342,7 +366,7 @@ suites:
 		results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: debug.DEBUG, Gendoc: gendoc, Config: cdup})
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not run test suite: %v\n", err)
-			errors++
+			errno++
 		}
 		suiteDuration := time.Since(startSuite)
 
@@ -420,7 +444,7 @@ suites:
 		}
 	}
 
-	if tests < 1 && errors < 1 && services > 0 {
+	if tests < 1 && errno < 1 && services > 0 {
 		if done != nil {
 			color.New(colorSuite...).Println("====> No tests; running services until process exits...")
 			<-done
@@ -443,9 +467,9 @@ suites:
 	duration := time.Since(start)
 	fmt.Println()
 
-	if errors > 0 {
+	if errno > 0 {
 		color.New(color.BgHiRed, color.Bold, color.FgBlack).Printf(" ERRORS! ")
-		fmt.Printf(" %d %s could not be run due to errors.\n", errors, plural(errors, "test", "tests"))
+		fmt.Printf(" %d %s could not be run due to errors.\n", errno, plural(errno, "test", "tests"))
 		return 1
 	}
 
