@@ -8,6 +8,7 @@ import (
 type Result struct {
 	Name             string
 	Success          bool
+	Skipped          bool
 	Errors           []error
 	Reqdata, Rspdata []byte
 	Runtime          time.Duration

@@ -49,7 +49,7 @@ func main() {
 
 // You know what it does
 func app() int {
-	var tests, failures, errors int
+	var tests, skipped, failures, errors int
 	var headerSpecs, serviceSpecs flagList
 
 	cmdline := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
@@ -367,15 +367,20 @@ suites:
 
 		var count int
 		for _, r := range results {
-			if r.Success {
-				color.New(color.FgCyan).Printf("----> %v", r.Name)
-			} else {
-				color.New(color.FgRed).Printf("----> %v", r.Name)
-			}
 			tests++
 			if !r.Success {
 				success = false
 				failures++
+			}
+			if r.Skipped {
+				color.New(color.FgYellow).Printf("----> %v", r.Name)
+				skipped++
+				continue
+			}
+			if r.Success {
+				color.New(color.FgCyan).Printf("----> %v", r.Name)
+			} else {
+				color.New(color.FgRed).Printf("----> %v", r.Name)
 			}
 			if r.Errors != nil {
 				for _, e := range r.Errors {
@@ -447,7 +452,7 @@ suites:
 
 	if !success {
 		color.New(color.BgHiRed, color.Bold, color.FgBlack).Printf(" FAIL! ")
-		fmt.Printf(" %d of %d tests failed.\n", failures, tests)
+		fmt.Printf(" %d of %d tests failed (%d implicit).\n", failures, tests, skipped)
 		return 1
 	}
 
