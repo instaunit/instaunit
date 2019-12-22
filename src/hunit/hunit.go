@@ -63,7 +63,13 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 		}
 	}
 
+	precond := true
 	for _, e := range s.Cases {
+		if !precond {
+			results = append(results, &Result{Name: fmt.Sprintf("%v %v (dependency failed)\n", e.Request.Method, e.Request.URL), Skipped: true})
+			continue
+		}
+
 		n := e.Repeat
 		if n < 1 {
 			n = 1
@@ -97,8 +103,14 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 				r, f, err := RunTest(e, c)
 				lock.Lock()
 				if err != nil {
+					if e.Require {
+						precond = false
+					}
 					errs = append(errs, err)
 				} else {
+					if e.Require {
+						precond = precond && r.Success
+					}
 					if r != nil {
 						results = append(results, r)
 					}
