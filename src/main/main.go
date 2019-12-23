@@ -251,17 +251,21 @@ func app() int {
 			return 1
 		}
 
-		wcache = &cache.Cache{Version: formatVersion(), Binary: sum}
 		cachePath = path.Join(cacheBase, *fExec+".cache")
+		wcache = &cache.Cache{
+			Version: formatVersion(),
+			Created: time.Now(),
+			Binary:  sum,
+		}
 
 		c, err := cache.Read(cachePath)
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Println("----> No cache available:", cachePath)
+			fmt.Println("----> No results cache available:", cachePath)
 		} else if err != nil {
 			color.New(colorErr...).Println("* * *", err)
 			return 1
 		} else if b := c.Binary; b != nil && b.Path == *fExec && b.Checksum == sum.Checksum {
-			fmt.Println("----> Using cache:", cachePath)
+			fmt.Println("----> Using results cache:", cachePath)
 			rcache = c
 		}
 	}
@@ -331,7 +335,10 @@ suites:
 		if rcache != nil && e != stdinPath {
 			cached := rcache.Suite(sum.Checksum)
 			if cached != nil {
-				success = success && reportResults(options, rcache.ResultsForSuite(sum), &tests, &failures, &skipped)
+				fmt.Println("----> Reporting cached results from:", rcache.Created)
+				results := rcache.ResultsForSuite(sum)
+				success = success && reportResults(options, true, results, &tests, &failures, &skipped)
+				wcache.AddSuite(cached, results)
 				continue
 			}
 		}
@@ -420,7 +427,7 @@ suites:
 			}
 		}
 
-		success = success && reportResults(options, results, &tests, &failures, &skipped)
+		success = success && reportResults(options, false, results, &tests, &failures, &skipped)
 		if wcache != nil && sum != nil {
 			wcache.AddSuite(sum, results)
 		}
@@ -494,9 +501,13 @@ suites:
 	return 0
 }
 
-func reportResults(options test.Options, results []*hunit.Result, tests, failures, skipped *int) bool {
+func reportResults(options test.Options, cached bool, results []*hunit.Result, tests, failures, skipped *int) bool {
 	var count int
 	var success bool
+	var prefix string
+	if cached {
+		prefix = "(cached) "
+	}
 	for _, r := range results {
 		*tests++
 		if !r.Success {
@@ -504,14 +515,14 @@ func reportResults(options test.Options, results []*hunit.Result, tests, failure
 			*failures++
 		}
 		if r.Skipped {
-			color.New(color.FgYellow).Printf("----> %v", r.Name)
+			color.New(color.FgYellow).Printf("----> %s%v", prefix, r.Name)
 			*skipped++
 			continue
 		}
 		if r.Success {
-			color.New(color.FgCyan).Printf("----> %v", r.Name)
+			color.New(color.FgCyan).Printf("----> %s%v", prefix, r.Name)
 		} else {
-			color.New(color.FgRed).Printf("----> %v", r.Name)
+			color.New(color.FgRed).Printf("----> %s%v", prefix, r.Name)
 		}
 		if r.Errors != nil {
 			for _, e := range r.Errors {

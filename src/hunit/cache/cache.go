@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	pathutil "path"
 
@@ -38,6 +39,7 @@ func Checksum(path string) (*Resource, error) {
 
 type Cache struct {
 	Version string                     `json:"version"`
+	Created time.Time                  `json:"created"`
 	Binary  *Resource                  `json:"binary,omitempty"`
 	Suites  []*Resource                `json:"suites,omitempty"`
 	Results map[string][]*hunit.Result `json:"results,omitempty"` // checksum -> []results
