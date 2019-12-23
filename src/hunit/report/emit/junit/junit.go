@@ -104,7 +104,7 @@ func (g *Generator) Suite(conf test.Config, suite *test.Suite, results *emit.Res
 			for _, err := range e.Errors {
 				tf = append(tf, testfail{
 					Type:   severityError,
-					Detail: err.Error(),
+					Detail: err,
 				})
 			}
 		} else if !e.Success {
