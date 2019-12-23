@@ -317,9 +317,7 @@ suites:
 		}
 
 		if suite.Title != "" {
-			color.New(colorSuite...).Printf(" (%v)\n", suite.Title)
-		} else {
-			fmt.Println()
+			color.New(colorSuite...).Printf(" (%v)", suite.Title)
 		}
 
 		var sum *cache.Resource
@@ -330,6 +328,9 @@ suites:
 				errno++
 				break
 			}
+			color.New(colorSuite...).Printf(" (cache: %s)\n", sum.Checksum)
+		} else {
+			fmt.Println()
 		}
 
 		if rcache != nil && e != stdinPath {
@@ -337,7 +338,7 @@ suites:
 			if cached != nil {
 				fmt.Println("----> Reporting cached results from:", rcache.Created)
 				results := rcache.ResultsForSuite(sum)
-				success = success && reportResults(options, true, results, &tests, &failures, &skipped)
+				success = reportResults(options, true, results, &tests, &failures, &skipped) && success
 				wcache.AddSuite(cached, results)
 				continue
 			}
@@ -427,7 +428,7 @@ suites:
 			}
 		}
 
-		success = success && reportResults(options, false, results, &tests, &failures, &skipped)
+		success = reportResults(options, false, results, &tests, &failures, &skipped) && success
 		if wcache != nil && sum != nil {
 			wcache.AddSuite(sum, results)
 		}
