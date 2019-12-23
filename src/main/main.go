@@ -230,13 +230,6 @@ func app() int {
 			return 1
 		}
 		defer proc.Kill()
-		if *fAwait != "" {
-			err := await.Await(context.Background(), []string{*fAwait}, 0)
-			if err != nil {
-				color.New(colorErr...).Printf("* * * Error waiting for managed process: %v\n", err)
-				return 1
-			}
-		}
 	}
 
 	// give services and processes a second to settle
@@ -277,6 +270,14 @@ func app() int {
 			rcache = c
 		} else {
 			fmt.Println("----> Results cache is outdated:", cachePath)
+		}
+	}
+
+	if *fAwait != "" {
+		err := await.Await(context.Background(), []string{*fAwait}, 0)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Error waiting for resource: %v\n", err)
+			return 1
 		}
 	}
 
