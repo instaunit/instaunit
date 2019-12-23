@@ -506,8 +506,8 @@ suites:
 
 func reportResults(options test.Options, cached bool, results []*hunit.Result, tests, failures, skipped *int) bool {
 	var count int
-	var success bool
 	var prefix string
+	success := true
 	if cached {
 		prefix = "(cached) "
 	}
