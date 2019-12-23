@@ -47,7 +47,11 @@ type Cache struct {
 }
 
 func (c *Cache) Suite(checksum string) *Resource {
-	return c.suites[checksum]
+	if c.suites != nil {
+		return c.suites[checksum]
+	} else {
+		return nil
+	}
 }
 
 func (c *Cache) AddSuite(suite *Resource, results []*hunit.Result) {
