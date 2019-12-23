@@ -32,7 +32,7 @@ import (
 
 const (
 	stdinPath = "-"
-	cacheBase = "./.hunit/cache"
+	cacheBase = "./.instaunit/cache"
 )
 
 var ( // set at compile time via the linker
