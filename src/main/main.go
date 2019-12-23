@@ -326,7 +326,7 @@ suites:
 		if (rcache != nil || wcache != nil) && e != stdinPath {
 			sum, err = cache.Checksum(e)
 			if err != nil {
-				color.New(colorErr...).Println("* * * Could not load suite checksum:", err)
+				color.New(colorErr...).Println("\n* * * Could not load suite checksum:", err)
 				errno++
 				break
 			}
