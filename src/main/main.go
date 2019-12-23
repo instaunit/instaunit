@@ -267,6 +267,8 @@ func app() int {
 		} else if b := c.Binary; b != nil && b.Path == *fExec && b.Checksum == sum.Checksum {
 			fmt.Println("----> Using results cache:", cachePath)
 			rcache = c
+		} else {
+			fmt.Println("----> Results cache is outdated:", cachePath)
 		}
 	}
 
