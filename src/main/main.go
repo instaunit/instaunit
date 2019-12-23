@@ -84,7 +84,7 @@ func app() int {
 	)
 	cmdline.Var(&headerSpecs, "header", "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
 	cmdline.Var(&serviceSpecs, "service", "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
-	cmdline.Var(&awaitURLs, "await", "Wait for a resource describe by a URL to become available before running tests. The URL will be polled until it becomes available. Provide -await repeatedly to wait for multiple resources.")
+	cmdline.Var(&awaitURLs, "await", "Wait for the resource described by a URL to become available before running tests. The URL will be polled until it becomes available. Provide -await repeatedly to wait for multiple resources.")
 	cmdline.Parse(os.Args[1:])
 
 	if *fVersion {
