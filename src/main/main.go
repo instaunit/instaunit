@@ -55,7 +55,7 @@ func main() {
 // You know what it does
 func app() int {
 	var tests, skipped, failures, errno int
-	var headerSpecs, serviceSpecs flagList
+	var headerSpecs, serviceSpecs, awaitURLs flagList
 
 	cmdline := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	var (
@@ -84,6 +84,7 @@ func app() int {
 	)
 	cmdline.Var(&headerSpecs, "header", "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
 	cmdline.Var(&serviceSpecs, "service", "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
+	cmdline.Var(&awaitURLs, "await", "Wait for the resource described by a URL to become available before running tests. The URL will be polled until it becomes available. Provide -await repeatedly to wait for multiple resources.")
 	cmdline.Parse(os.Args[1:])
 
 	if *fVersion {
@@ -269,6 +270,15 @@ func app() int {
 			rcache = c
 		} else {
 			fmt.Println("----> Results cache is outdated:", cachePath)
+		}
+	}
+
+	if len(awaitURLs) > 0 {
+		fmt.Println("----> Waiting for resources:", strings.Join(awaitURLs, ", "))
+		err := await.Await(context.Background(), awaitURLs, 0)
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Error waiting for resources: %v\n", err)
+			return 1
 		}
 	}
 

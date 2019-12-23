@@ -5,4 +5,4 @@
     url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
   
   response:
-    status: 404
+    status: 400
