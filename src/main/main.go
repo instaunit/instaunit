@@ -77,6 +77,7 @@ func app() int {
 		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections. Overrides: $HUNIT_NET_IO_GRACE_PERIOD.")
 		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests, usually the program that is being tested. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
 		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output. Overrides: $HUNIT_EXEC_LOG.")
+		fAwait           = cmdline.String("await", os.Getenv("HUNIT_AWAIT_URL"), "Wait for a service to become available before running tests. The provided URL will be polled until it returns a 200 status code. Overrides: $HUNIT_AWAIT_URL.")
 		fDebug           = cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode. Overrides: $HUNIT_DEBUG.")
 		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal. Overrides: $HUNIT_COLOR_OUTPUT.")
 		fVerbose         = cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_VERBOSE and $VERBOSE.")
@@ -229,6 +230,13 @@ func app() int {
 			return 1
 		}
 		defer proc.Kill()
+		if *fAwait != "" {
+			err := await.Await(context.Background(), []string{*fAwait}, 0)
+			if err != nil {
+				color.New(colorErr...).Printf("* * * Error waiting for managed process: %v\n", err)
+				return 1
+			}
+		}
 	}
 
 	// give services and processes a second to settle
