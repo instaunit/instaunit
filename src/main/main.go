@@ -55,7 +55,7 @@ func main() {
 // You know what it does
 func app() int {
 	var tests, skipped, failures, errno int
-	var headerSpecs, serviceSpecs flagList
+	var headerSpecs, serviceSpecs, awaitURLs flagList
 
 	cmdline := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	var (
@@ -77,7 +77,6 @@ func app() int {
 		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections. Overrides: $HUNIT_NET_IO_GRACE_PERIOD.")
 		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests, usually the program that is being tested. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
 		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output. Overrides: $HUNIT_EXEC_LOG.")
-		fAwait           = cmdline.String("await", os.Getenv("HUNIT_AWAIT_URL"), "Wait for a service to become available before running tests. The provided URL will be polled until it returns a 200 status code. Overrides: $HUNIT_AWAIT_URL.")
 		fDebug           = cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode. Overrides: $HUNIT_DEBUG.")
 		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal. Overrides: $HUNIT_COLOR_OUTPUT.")
 		fVerbose         = cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_VERBOSE and $VERBOSE.")
@@ -85,6 +84,7 @@ func app() int {
 	)
 	cmdline.Var(&headerSpecs, "header", "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
 	cmdline.Var(&serviceSpecs, "service", "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
+	cmdline.Var(&awaitURLs, "await", "Wait for a resource describe by a URL to become available before running tests. The URL will be polled until it becomes available. Provide -await repeatedly to wait for multiple resources.")
 	cmdline.Parse(os.Args[1:])
 
 	if *fVersion {
@@ -273,10 +273,11 @@ func app() int {
 		}
 	}
 
-	if *fAwait != "" {
-		err := await.Await(context.Background(), []string{*fAwait}, 0)
+	if len(awaitURLs) > 0 {
+		fmt.Println("----> Waiting for resources:", strings.Join(awaitURLs, ", "))
+		err := await.Await(context.Background(), awaitURLs, 0)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Error waiting for resource: %v\n", err)
+			color.New(colorErr...).Printf("* * * Error waiting for resources: %v\n", err)
 			return 1
 		}
 	}
