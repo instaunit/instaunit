@@ -46,6 +46,7 @@ type Response struct {
 	Entity     string            `yaml:"entity"`
 	Comparison Comparison        `yaml:"compare"`
 	Format     string            `yaml:"format"`
+	Assert     *Script           `yaml:"assert"`
 	Title      string            `yaml:"title"`
 	Comments   string            `yaml:"doc"`
 }

@@ -27,7 +27,7 @@ func mapenv(v []string) map[string]string {
 }
 
 // Produce a context with the standard library included
-func runtimeContext(v Variables, e []string) interface{} {
+func RuntimeContext(v Variables, e []string) interface{} {
 	c := make(Variables)
 	for k, v := range v {
 		c[k] = v
@@ -39,7 +39,7 @@ func runtimeContext(v Variables, e []string) interface{} {
 
 // Interpolate expressions in a string
 func Interpolate(s string, v Variables) (string, error) {
-	return interpolate(s, "${", "}", runtimeContext(v, os.Environ()))
+	return interpolate(s, "${", "}", RuntimeContext(v, os.Environ()))
 }
 
 // Interpolate
