@@ -27,7 +27,7 @@ func mapenv(v []string) map[string]string {
 }
 
 // Produce a context with the standard library included
-func RuntimeContext(v Variables, e []string) interface{} {
+func RuntimeContext(v Variables, e []string) Variables {
 	c := make(Variables)
 	for k, v := range v {
 		c[k] = v
