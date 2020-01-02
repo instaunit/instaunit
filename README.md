@@ -12,9 +12,19 @@ Get up and running quickly with our [**Getting Started Tutorial**](https://githu
 
 ## Installing Instaunit
 
+### Installing via Homebrew on macOS
+
+MacOS users can install the latest version of Instaunit via Homebrew by running the following command.
+
+```
+brew install 'https://instaunit.s3.amazonaws.com/releases/latest/instaunit.rb'
+```
+
+### Other Installation Options
+
 You can install Instaunit by:
 
-* [Downloading a binary release](https://github.com/instaunit/instaunit/releases) (Homebrew on MacOS is also supported; see release notes).
+* [Downloading a binary release](https://github.com/instaunit/instaunit/releases),
 * Cloning this repo and building from source via: `make install`.
 
 # Writing Tests

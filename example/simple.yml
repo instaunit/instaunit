@@ -1,0 +1,8 @@
+
+-
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
+  
+  response:
+    status: 400

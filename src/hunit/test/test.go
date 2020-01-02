@@ -31,6 +31,7 @@ type Request struct {
 	Method    string            `yaml:"method"`
 	URL       string            `yaml:"url"`
 	Headers   map[string]string `yaml:"headers"`
+	Cookies   map[string]string `yaml:"cookies"`
 	Params    map[string]string `yaml:"params"`
 	Entity    string            `yaml:"entity"`
 	Format    string            `yaml:"format"`
@@ -43,6 +44,7 @@ type Request struct {
 type Response struct {
 	Status     int               `yaml:"status"`
 	Headers    map[string]string `yaml:"headers"`
+	Cookies    map[string]string `yaml:"cookies"`
 	Entity     string            `yaml:"entity"`
 	Comparison Comparison        `yaml:"compare"`
 	Format     string            `yaml:"format"`
@@ -66,17 +68,19 @@ type MessageExchange struct {
 
 // A test case
 type Case struct {
-	Id       string            `yaml:"id"`
-	Wait     time.Duration     `yaml:"wait"`
-	Repeat   int               `yaml:"repeat"`
-	Gendoc   bool              `yaml:"gendoc"`
-	Title    string            `yaml:"title"`
-	Comments string            `yaml:"doc"`
-	Params   map[string]string `yaml:"params"`
-	Request  Request           `yaml:"request"`
-	Response Response          `yaml:"response"`
-	Stream   *Stream           `yaml:"websocket"`
-	Vars     yaml.MapSlice     `yaml:"vars"`
+	Id         string            `yaml:"id"`
+	Wait       time.Duration     `yaml:"wait"`
+	Repeat     int               `yaml:"repeat"`
+	Concurrent int               `yaml:"concurrent"`
+	Gendoc     bool              `yaml:"gendoc"`
+	Title      string            `yaml:"title"`
+	Comments   string            `yaml:"doc"`
+	Require    bool              `yaml:"require"`
+	Params     map[string]string `yaml:"params"`
+	Request    Request           `yaml:"request"`
+	Response   Response          `yaml:"response"`
+	Stream     *Stream           `yaml:"websocket"`
+	Vars       yaml.MapSlice     `yaml:"vars"`
 }
 
 // Determine if this case is documented or not

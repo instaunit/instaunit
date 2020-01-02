@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/doc"
@@ -62,22 +63,69 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 		}
 	}
 
+	precond := true
 	for _, e := range s.Cases {
+		if !precond {
+			results = append(results, &Result{Name: fmt.Sprintf("%v %v (dependency failed)\n", e.Request.Method, e.Request.URL), Skipped: true})
+			continue
+		}
+
 		n := e.Repeat
 		if n < 1 {
 			n = 1
 		}
+
+		p := e.Concurrent
+		if p < 1 {
+			p = 1
+		}
+
+		sem := make(chan struct{}, p)
+		var wg sync.WaitGroup
+		var lock sync.Mutex
+		var errs []error
+
 		for i := 0; i < n; i++ {
-			r, f, err := RunTest(e, c)
-			if err != nil {
-				return nil, err
+			lock.Lock()
+			nerr := len(errs)
+			lock.Unlock()
+			if nerr > 0 {
+				break
 			}
-			if r != nil {
-				results = append(results, r)
-			}
-			if f != nil {
-				futures = append(futures, f)
-			}
+
+			wg.Add(1)
+			sem <- struct{}{}
+			go func() {
+				defer func() {
+					<-sem
+					wg.Done()
+				}()
+				r, f, err := RunTest(e, c)
+				lock.Lock()
+				if err != nil {
+					if e.Require {
+						precond = false
+					}
+					errs = append(errs, err)
+				} else {
+					if e.Require {
+						precond = precond && r.Success
+					}
+					if r != nil {
+						results = append(results, r)
+					}
+					if f != nil {
+						futures = append(futures, f)
+					}
+				}
+				lock.Unlock()
+			}()
+		}
+
+		wg.Wait()
+
+		if len(errs) > 0 {
+			return nil, errs[0]
 		}
 	}
 
@@ -287,7 +335,22 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	req.Header = header
+
+	if c.Request.Cookies != nil {
+		for k, v := range c.Request.Cookies {
+			k, err = interpolateIfRequired(context, k)
+			if err != nil {
+				return result.Error(err), nil, nil
+			}
+			v, err = interpolateIfRequired(context, v)
+			if err != nil {
+				return result.Error(err), nil, nil
+			}
+			req.AddCookie(&http.Cookie{Name: k, Value: v})
+		}
+	}
 
 	reqbuf := &bytes.Buffer{}
 	err = text.WriteRequest(reqbuf, req, reqdata)

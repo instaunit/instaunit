@@ -3,6 +3,7 @@ package runtime
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func deprecated(a, b string) {
-	fmt.Println("hunit: %q is deprecated and will be removed in a future release; use %q instead.", a, b)
+	fmt.Fprintf(os.Stderr, "hunit: %q is deprecated and will be removed in a future release; use %q instead.\n", a, b)
 }
 
 // The standard library
