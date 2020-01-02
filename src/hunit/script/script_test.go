@@ -113,10 +113,8 @@ func TestScripts(t *testing.T) {
 		fmt.Println(">>>", e.Script)
 		r, err := e.Script.Bool(context)
 		if e.Error != nil {
-			fmt.Println("ERRTIME", err)
 			assert.Equal(t, e.Error, err)
 		} else if assert.Nil(t, err, fmt.Sprint(err)) {
-			fmt.Println("GOTCHA", r)
 			assert.Equal(t, e.Expect, r)
 		}
 	}
