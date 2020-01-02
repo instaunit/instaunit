@@ -52,6 +52,21 @@ func TestScripts(t *testing.T) {
 			false,
 			nil,
 		},
+		{
+			Script{"js", `a == b`},
+			false,
+			nil,
+		},
+		{
+			Script{"js", `a == a`},
+			true,
+			nil,
+		},
+		{
+			Script{"js", `c.a[0] == "Zero"`},
+			true,
+			nil,
+		},
 		//
 		{
 			Script{"epl", `1 == 2`},
@@ -76,6 +91,21 @@ func TestScripts(t *testing.T) {
 		{
 			Script{"epl", `c.b`},
 			false,
+			nil,
+		},
+		{
+			Script{"epl", `a == b`},
+			false,
+			nil,
+		},
+		{
+			Script{"epl", `a == a`},
+			true,
+			nil,
+		},
+		{
+			Script{"epl", `c.a[0] == "Zero"`},
+			true,
 			nil,
 		},
 	}
