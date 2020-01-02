@@ -28,6 +28,7 @@ var client = http.Client{Timeout: time.Second * 30}
 
 // A test context
 type Context struct {
+	sync.Mutex
 	BaseURL   string
 	Options   test.Options
 	Config    test.Config
@@ -443,19 +444,32 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		result.Rspdata = rspbuf.Bytes()
 	}
 
+	// test case variables
+	casevars := map[string]interface{}{
+		"test": c,
+		"vars": dupmap(vars),
+		"response": map[string]interface{}{
+			"headers": flattenHeader(rsp.Header),
+			"entity":  rspdata,
+			"value":   rspvalue,
+			"status":  rsp.StatusCode,
+		},
+	}
+
+	// assertions
+	if assert := c.Response.Assert; assert != nil {
+		ok, err := assert.Bool(casevars)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Could not evaluate assertion: %v", err)
+		}
+		if !ok {
+			result.Error(&ScriptError{"Script assertion failed", true, ok, assert})
+		}
+	}
+
 	// add to our context if we have an identifier
 	if c.Id != "" {
-		headers := flattenHeader(rsp.Header)
-		context.Variables[c.Id] = map[string]interface{}{
-			"case": c,
-			"vars": dupmap(vars),
-			"response": map[string]interface{}{
-				"headers": headers,
-				"entity":  rspdata,
-				"value":   rspvalue,
-				"status":  rsp.StatusCode,
-			},
-		}
+		context.Variables[c.Id] = casevars
 	}
 
 	// generate documentation if necessary

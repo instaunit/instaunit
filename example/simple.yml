@@ -6,3 +6,19 @@
   
   response:
     status: 400
+
+-
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
+  
+  response:
+    assert:
+      type: javascript
+      source: |
+        if(test.Request.Method != "POST"){
+          console.log("Ok, I'm the script! This is wrong.")
+          false
+        }else{
+          true
+        }
