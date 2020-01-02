@@ -20,5 +20,6 @@
           console.log("Ok, I'm the script! This is wrong.")
           false
         }else{
+          console.log("Ok, I'm the script! Lookin' good!")
           true
         }
