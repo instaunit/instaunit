@@ -3,6 +3,7 @@ package script
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/instaunit/instaunit/hunit/expr"
 
@@ -43,7 +44,7 @@ func (s Script) Bool(v expr.Variables) (bool, error) {
 
 func (s Script) Eval(v expr.Variables) (interface{}, error) {
 	cxt := expr.RuntimeContext(v, os.Environ())
-	switch s.Type {
+	switch strings.ToLower(s.Type) {
 	case "epl", "":
 		return s.evalEPL(cxt)
 	case "js", "javascript":
