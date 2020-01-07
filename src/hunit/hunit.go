@@ -17,8 +17,11 @@ import (
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
 
-	gtext "github.com/bww/go-util/text"
+	"github.com/bww/go-util/debug"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/websocket"
+
+	textutil "github.com/bww/go-util/text"
 )
 
 const localVarsId = "vars"
@@ -28,7 +31,6 @@ var client = http.Client{Timeout: time.Second * 30}
 
 // A test context
 type Context struct {
-	sync.Mutex
 	BaseURL   string
 	Options   test.Options
 	Config    test.Config
@@ -39,7 +41,13 @@ type Context struct {
 }
 
 // Derive a subcontext
-func (c Context) Subcontext(vars map[string]interface{}) Context {
+func (c Context) WithVars(vars ...map[string]interface{}) Context {
+	var v map[string]interface{}
+	if len(vars) == 1 {
+		v = vars[0]
+	} else {
+		v = mergemap(vars...)
+	}
 	return Context{
 		BaseURL:   c.BaseURL,
 		Options:   c.Options,
@@ -47,7 +55,7 @@ func (c Context) Subcontext(vars map[string]interface{}) Context {
 		Headers:   c.Headers,
 		Debug:     c.Debug,
 		Gendoc:    c.Gendoc,
-		Variables: vars,
+		Variables: v,
 	}
 }
 
@@ -55,7 +63,7 @@ func (c Context) Subcontext(vars map[string]interface{}) Context {
 func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 	var futures []FutureResult
 	results := make([]*Result, 0)
-	c := context.Subcontext(make(map[string]interface{}))
+	globals := make(map[string]interface{})
 
 	for _, e := range context.Gendoc {
 		err := e.Init(s)
@@ -101,8 +109,14 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 					<-sem
 					wg.Done()
 				}()
-				r, f, err := RunTest(e, c)
 				lock.Lock()
+				d := dupmap(globals)
+				lock.Unlock()
+				r, f, v, err := RunTest(e, context.WithVars(d))
+				lock.Lock()
+				if v != nil && e.Id != "" {
+					globals[e.Id] = v
+				}
 				if err != nil {
 					if e.Require {
 						precond = false
@@ -155,7 +169,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 }
 
 // Run a test case
-func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
+func RunTest(c test.Case, context Context) (*Result, FutureResult, map[string]interface{}, error) {
 	start := time.Now()
 
 	// wait if we need to
@@ -169,29 +183,32 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		result.Runtime = time.Since(start)
 	}()
 
-	// process variables first, they can be referenced by this case, itself
-	var vars map[string]interface{}
+	// process locals first, they can be referenced by this case, itself
+	locals := make(map[string]interface{})
 	for _, e := range c.Vars {
-		k, v := e.Key.(string), gtext.Stringer(e.Value)
+		k, v := e.Key.(string), textutil.Stringer(e.Value)
 		e, err := interpolateIfRequired(context, v)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, nil, nil
 		}
-		if x, ok := context.Variables[localVarsId]; ok {
-			vars = x.(map[string]interface{})
-		} else {
-			vars = make(map[string]interface{})
-			context.Variables[localVarsId] = vars
-		}
-		vars[k] = e
+		locals[k] = e
 	}
+
+	// test case variables
+	vars := map[string]interface{}{
+		"test": c,
+		"vars": locals,
+	}
+
+	// derive our working context
+	context = context.WithVars(context.Variables, vars)
 
 	// update the method
 	method, err := interpolateIfRequired(context, c.Request.Method)
 	if err != nil {
-		return result.Error(err), nil, nil
+		return result.Error(err), nil, vars, nil
 	} else if method == "" {
-		return nil, nil, fmt.Errorf("Request requires a method (set 'method')")
+		return nil, nil, nil, fmt.Errorf("Request requires a method (set 'method')")
 	}
 
 	// incrementally update the name as we evaluate it
@@ -207,7 +224,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	if len(c.Request.Params) > 0 {
 		url, err = mergeQueryParams(url, c.Request.Params, context)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, vars, nil
 		}
 	}
 
@@ -216,9 +233,9 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 
 	url, err = interpolateIfRequired(context, url)
 	if err != nil {
-		return result.Error(err), nil, nil
+		return result.Error(err), nil, vars, nil
 	} else if url == "" {
-		return nil, nil, fmt.Errorf("Request requires a URL (set 'url')")
+		return nil, nil, nil, fmt.Errorf("Request requires a URL (set 'url')")
 	}
 
 	// incrementally update the name as we evaluate it
@@ -229,11 +246,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		for k, v := range context.Headers {
 			k, err = interpolateIfRequired(context, k)
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
 			v, err = interpolateIfRequired(context, v)
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
 			header.Add(k, v)
 		}
@@ -243,11 +260,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		for k, v := range c.Request.Headers {
 			k, err = interpolateIfRequired(context, k)
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
 			v, err = interpolateIfRequired(context, v)
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
 			header.Add(k, v)
 		}
@@ -256,11 +273,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	if c.Request.BasicAuth != nil {
 		u, err := interpolateIfRequired(context, c.Request.BasicAuth.Username)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, vars, nil
 		}
 		p, err := interpolateIfRequired(context, c.Request.BasicAuth.Password)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, vars, nil
 		}
 		header.Set("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(u+":"+p))))
 	}
@@ -269,7 +286,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	if c.Stream != nil {
 		messages := c.Stream.Messages
 		if len(messages) < 1 {
-			return result.Error(fmt.Errorf("No messages are exchanged over websocket.")), nil, nil
+			return result.Error(fmt.Errorf("No messages are exchanged over websocket.")), nil, vars, nil
 		}
 
 		dialer := websocket.Dialer{
@@ -279,28 +296,22 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		}
 		url, err := urlWithScheme("ws", url)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, vars, nil
 		}
 		conn, _, err := dialer.Dial(url, header)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, vars, nil
 		}
 
 		monitor := NewStreamMonitor(url, context, conn, messages)
 		err = monitor.Run(result)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
-		// add to our context if we have an identifier
-		if c.Id != "" {
-			context.Variables[c.Id] = map[string]interface{}{
-				"case": c,
-				"vars": dupmap(vars),
-				"websocket": map[string]interface{}{
-					"url": url,
-				},
-			}
+		// add to our context
+		vars["websocket"] = map[string]interface{}{
+			"url": url,
 		}
 
 		// depending on the I/O mode, resolve or return a future
@@ -308,13 +319,13 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		case test.IOModeSync:
 			r, err := monitor.Finish(time.Time{})
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
-			return r, nil, nil
+			return r, nil, vars, nil
 		case test.IOModeAsync:
-			return nil, monitor, nil
+			return nil, monitor, vars, nil
 		default:
-			return nil, nil, fmt.Errorf("No such I/O mode: %v", m)
+			return nil, nil, nil, fmt.Errorf("No such I/O mode: %v", m)
 		}
 	}
 
@@ -323,7 +334,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	if c.Request.Entity != "" {
 		reqdata, err = interpolateIfRequired(context, c.Request.Entity)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, vars, nil
 		} else {
 			entity = bytes.NewBuffer([]byte(reqdata))
 		}
@@ -334,7 +345,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 
 	req, err := http.NewRequest(method, url, entity)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	req.Header = header
@@ -343,11 +354,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		for k, v := range c.Request.Cookies {
 			k, err = interpolateIfRequired(context, k)
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
 			v, err = interpolateIfRequired(context, v)
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
 			req.AddCookie(&http.Cookie{Name: k, Value: v})
 		}
@@ -356,7 +367,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	reqbuf := &bytes.Buffer{}
 	err = text.WriteRequest(reqbuf, req, reqdata)
 	if err != nil {
-		return result.Error(err), nil, nil
+		return result.Error(err), nil, vars, nil
 	} else {
 		result.Reqdata = reqbuf.Bytes()
 	}
@@ -366,7 +377,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		defer rsp.Body.Close()
 	}
 	if err != nil {
-		return result.Error(err), nil, nil
+		return result.Error(err), nil, vars, nil
 	}
 
 	// check the response status
@@ -382,7 +393,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 
 	contentType, err = interpolateIfRequired(context, contentType)
 	if err != nil {
-		return result.Error(err), nil, nil
+		return result.Error(err), nil, vars, nil
 	}
 
 	// check response headers, if necessary
@@ -390,11 +401,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		for k, v := range headers {
 			k, err = interpolateIfRequired(context, k)
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
 			v, err = interpolateIfRequired(context, v)
 			if err != nil {
-				return result.Error(err), nil, nil
+				return result.Error(err), nil, vars, nil
 			}
 			result.AssertEqual(v, rsp.Header.Get(k), "Headers do not match: %v", k)
 		}
@@ -414,7 +425,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	if c.Response.Comparison == test.CompareSemantic {
 		rspvalue, err = unmarshalEntity(context, contentType, rspdata)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, vars, nil
 		}
 	} else if c.Id != "" { // attempt it but don't produce an error if we fail
 		val, err := unmarshalEntity(context, contentType, rspdata)
@@ -427,7 +438,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	if entity := c.Response.Entity; entity != "" {
 		entity, err = interpolateIfRequired(context, entity)
 		if err != nil {
-			return result.Error(err), nil, nil
+			return result.Error(err), nil, vars, nil
 		}
 		if len(rspdata) == 0 {
 			result.AssertEqual(entity, "", "Entities do not match")
@@ -439,37 +450,34 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	rspbuf := &bytes.Buffer{}
 	err = text.WriteResponse(rspbuf, rsp, rspdata)
 	if err != nil {
-		return result.Error(err), nil, nil
+		return result.Error(err), nil, vars, nil
 	} else {
 		result.Rspdata = rspbuf.Bytes()
 	}
 
 	// test case variables
-	casevars := map[string]interface{}{
-		"test": c,
-		"vars": dupmap(vars),
-		"response": map[string]interface{}{
-			"headers": flattenHeader(rsp.Header),
-			"entity":  rspdata,
-			"value":   rspvalue,
-			"status":  rsp.StatusCode,
-		},
+	vars["response"] = map[string]interface{}{
+		"headers": flatten(rsp.Header),
+		"entity":  rspdata,
+		"value":   rspvalue,
+		"status":  rsp.StatusCode,
 	}
 
 	// assertions
 	if assert := c.Response.Assert; assert != nil {
-		ok, err := assert.Bool(casevars)
+		if debug.DEBUG {
+			for k, v := range context.Variables {
+				fmt.Printf("%s: ", k)
+				spew.Dump(v)
+			}
+		}
+		ok, err := assert.Bool(context.Variables)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Could not evaluate assertion: %v", err)
+			return nil, nil, nil, fmt.Errorf("Could not evaluate assertion: %v", err)
 		}
 		if !ok {
 			result.Error(&ScriptError{"Script assertion failed", true, ok, assert})
 		}
-	}
-
-	// add to our context if we have an identifier
-	if c.Id != "" {
-		context.Variables[c.Id] = casevars
 	}
 
 	// generate documentation if necessary
@@ -477,18 +485,18 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 		for _, e := range context.Gendoc {
 			err := e.Case(context.Config, c, req, reqdata, rsp, rspdata)
 			if err != nil {
-				return nil, nil, fmt.Errorf("Could not generate documentation: %v", err)
+				return nil, nil, nil, fmt.Errorf("Could not generate documentation: %v", err)
 			}
 		}
 	}
 
-	return result, nil, nil
+	return result, nil, vars, nil
 }
 
-// Flatten a header to a one-to-one key-to-value map
-func flattenHeader(header http.Header) map[string]string {
+// Flatten a header/values to a one-to-one key-to-value map
+func flatten(values map[string][]string) map[string]string {
 	f := make(map[string]string)
-	for k, v := range header {
+	for k, v := range values {
 		if len(v) > 0 {
 			f[k] = v[0]
 		} else {
@@ -503,6 +511,17 @@ func dupmap(m map[string]interface{}) map[string]interface{} {
 	d := make(map[string]interface{})
 	for k, v := range m {
 		d[k] = v
+	}
+	return d
+}
+
+// Merge maps
+func mergemap(m ...map[string]interface{}) map[string]interface{} {
+	d := make(map[string]interface{})
+	for _, e := range m {
+		for k, v := range e {
+			d[k] = v
+		}
 	}
 	return d
 }

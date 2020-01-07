@@ -11,13 +11,13 @@ import (
 	"github.com/robertkrimen/otto"
 )
 
-type ErrInvalidTypeError struct {
+type InvalidTypeError struct {
 	source string
 	expect string
 	result interface{}
 }
 
-func (e ErrInvalidTypeError) Error() string {
+func (e InvalidTypeError) Error() string {
 	return fmt.Sprintf("Invalid type; expected %s in {%s}, got (%T) %v", e.expect, e.source, e.result, e.result)
 }
 
@@ -38,7 +38,7 @@ func (s Script) Bool(v expr.Variables) (bool, error) {
 	case otto.Value:
 		return v.ToBoolean()
 	default:
-		return false, ErrInvalidTypeError{s.Source, "bool", res}
+		return false, InvalidTypeError{s.Source, "bool", res}
 	}
 }
 

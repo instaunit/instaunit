@@ -1,5 +1,7 @@
 
 -
+  id: first
+  
   request:
     method: GET
     url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
@@ -8,14 +10,19 @@
     status: 400
 
 -
+  vars:
+    a: Hello
+    b: World
+  
   request:
     method: GET
-    url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
+    url: https://raw.githubusercontent.com/instaunit/instaunit/${vars.a}_${vars.b}
   
   response:
     assert:
       type: javascript
       source: |
+        console.log("FIRST:", first.response.status);
         if(test.Request.Method != "POST"){
           console.log("Ok, I'm the script! This is wrong.")
           false
