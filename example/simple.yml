@@ -10,6 +10,8 @@
     status: 400
 
 -
+  id: second
+  
   vars:
     a: Hello
     b: World
@@ -30,3 +32,18 @@
           console.log("Ok, I'm the script! Lookin' good!")
           true
         }
+
+-
+  id: third
+  
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/instaunit/instaunit/${second.test.Request.Method}_${second.response.status}
+  
+  response:
+    status: 400
+    assert:
+      type: javascript
+      source: |
+        console.log("SECOND:", second.response.status);
+        true

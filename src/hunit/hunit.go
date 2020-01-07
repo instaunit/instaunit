@@ -14,17 +14,14 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/doc"
+	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
 
-	"github.com/bww/go-util/debug"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/websocket"
 
 	textutil "github.com/bww/go-util/text"
 )
-
-const localVarsId = "vars"
 
 // HTTP client
 var client = http.Client{Timeout: time.Second * 30}
@@ -37,16 +34,16 @@ type Context struct {
 	Headers   map[string]string
 	Debug     bool
 	Gendoc    []doc.Generator
-	Variables map[string]interface{}
+	Variables expr.Variables
 }
 
-// Derive a subcontext
-func (c Context) WithVars(vars ...map[string]interface{}) Context {
+// Derive a context from the receiver with the provided variables
+func (c Context) WithVars(vars ...expr.Variables) Context {
 	var v map[string]interface{}
 	if len(vars) == 1 {
 		v = vars[0]
 	} else {
-		v = mergemap(vars...)
+		v = mergeVars(vars...)
 	}
 	return Context{
 		BaseURL:   c.BaseURL,
@@ -59,11 +56,16 @@ func (c Context) WithVars(vars ...map[string]interface{}) Context {
 	}
 }
 
+// Merge vars into this context's variables, preferring the parameters
+func (c *Context) AddVars(vars ...expr.Variables) {
+	c.Variables = mergeVars(append([]expr.Variables{c.Variables}, vars...)...)
+}
+
 // Run a test suite
 func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 	var futures []FutureResult
 	results := make([]*Result, 0)
-	globals := make(map[string]interface{})
+	globals := make(expr.Variables)
 
 	for _, e := range context.Gendoc {
 		err := e.Init(s)
@@ -110,9 +112,9 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 					wg.Done()
 				}()
 				lock.Lock()
-				d := dupmap(globals)
+				g := dupVars(globals)
 				lock.Unlock()
-				r, f, v, err := RunTest(e, context.WithVars(d))
+				r, f, v, err := RunTest(e, context.WithVars(g))
 				lock.Lock()
 				if v != nil && e.Id != "" {
 					globals[e.Id] = v
@@ -169,7 +171,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 }
 
 // Run a test case
-func RunTest(c test.Case, context Context) (*Result, FutureResult, map[string]interface{}, error) {
+func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variables, error) {
 	start := time.Now()
 
 	// wait if we need to
@@ -184,7 +186,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, map[string]in
 	}()
 
 	// process locals first, they can be referenced by this case, itself
-	locals := make(map[string]interface{})
+	locals := make(expr.Variables)
 	for _, e := range c.Vars {
 		k, v := e.Key.(string), textutil.Stringer(e.Value)
 		e, err := interpolateIfRequired(context, v)
@@ -195,13 +197,12 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, map[string]in
 	}
 
 	// test case variables
-	vars := map[string]interface{}{
+	vars := expr.Variables{
 		"test": c,
 		"vars": locals,
 	}
-
-	// derive our working context
-	context = context.WithVars(context.Variables, vars)
+	// merge into context
+	context.AddVars(vars)
 
 	// update the method
 	method, err := interpolateIfRequired(context, c.Request.Method)
@@ -310,9 +311,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, map[string]in
 		}
 
 		// add to our context
-		vars["websocket"] = map[string]interface{}{
+		vars["websocket"] = expr.Variables{
 			"url": url,
 		}
+		// merge into context
+		context.AddVars(vars)
 
 		// depending on the I/O mode, resolve or return a future
 		switch m := c.Stream.Mode; m {
@@ -456,21 +459,17 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, map[string]in
 	}
 
 	// test case variables
-	vars["response"] = map[string]interface{}{
+	vars["response"] = expr.Variables{
 		"headers": flatten(rsp.Header),
 		"entity":  rspdata,
 		"value":   rspvalue,
 		"status":  rsp.StatusCode,
 	}
+	// merge into context
+	context.AddVars(vars)
 
 	// assertions
 	if assert := c.Response.Assert; assert != nil {
-		if debug.DEBUG {
-			for k, v := range context.Variables {
-				fmt.Printf("%s: ", k)
-				spew.Dump(v)
-			}
-		}
 		ok, err := assert.Bool(context.Variables)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("Could not evaluate assertion: %v", err)
@@ -507,8 +506,8 @@ func flatten(values map[string][]string) map[string]string {
 }
 
 // Duplicate a variable map
-func dupmap(m map[string]interface{}) map[string]interface{} {
-	d := make(map[string]interface{})
+func dupVars(m expr.Variables) expr.Variables {
+	d := make(expr.Variables)
 	for k, v := range m {
 		d[k] = v
 	}
@@ -516,8 +515,8 @@ func dupmap(m map[string]interface{}) map[string]interface{} {
 }
 
 // Merge maps
-func mergemap(m ...map[string]interface{}) map[string]interface{} {
-	d := make(map[string]interface{})
+func mergeVars(m ...expr.Variables) expr.Variables {
+	d := make(expr.Variables)
 	for _, e := range m {
 		for k, v := range e {
 			d[k] = v
