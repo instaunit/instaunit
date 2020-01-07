@@ -38,23 +38,24 @@ func Indent(s, p string) string {
 
 // Indent a string by prefixing each line with the provided string
 func IndentWithOptions(s, p string, opt IndentOptions) string {
-	var err error
 	var t *indentTemplate
-	var x *indentContext
+	var c *indentContext
 	if (opt & IndentOptionIndentTemplate) == IndentOptionIndentTemplate {
 		v, err := template.New("prefix").Parse(p)
 		if err != nil {
 			panic(err)
 		}
 		t = &indentTemplate{v}
-		x = &indentContext{0}
+		c = &indentContext{0}
 	}
 	var o bytes.Buffer
 	if (opt & IndentOptionIndentFirstLine) == IndentOptionIndentFirstLine {
-		x.Line++
-		if t != nil {
+		if c != nil {
+			c.Line++
+		}
+		if t == nil {
 			o.WriteString(p)
-		} else if v, err := t.Exec(p, x); err != nil {
+		} else if v, err := t.Exec(p, c); err != nil {
 			panic(err)
 		} else {
 			o.WriteString(v)
@@ -63,10 +64,12 @@ func IndentWithOptions(s, p string, opt IndentOptions) string {
 	x := rune(0)
 	for _, r := range s {
 		if x == '\n' {
-			x.Line++
-			if t != nil {
+			if c != nil {
+				c.Line++
+			}
+			if t == nil {
 				o.WriteString(p)
-			} else if v, err := t.Exec(p, x); err != nil {
+			} else if v, err := t.Exec(p, c); err != nil {
 				panic(err)
 			} else {
 				o.WriteString(v)
