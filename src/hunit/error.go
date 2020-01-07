@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/instaunit/instaunit/hunit/script"
+	"github.com/instaunit/instaunit/hunit/text"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-cmp/cmp"
@@ -46,7 +47,7 @@ func (e ScriptError) Error() string {
 	}
 	m += "expected: " + spew.Sdump(e.Expected)
 	m += "  actual: " + spew.Sdump(e.Actual)
-	m += "--\n" + e.Script.Source
+	m += "--\n" + text.IndentWithOptions(e.Script.Source, `{{ printf "%03d: " .Line }}`, text.IndentOptionIndentFirstLine|text.IndentOptionIndentTemplate)
 	return m
 }
 
