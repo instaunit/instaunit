@@ -10,7 +10,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.7.0
-	github.com/google/go-cmp v0.2.0
+	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.0
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
