@@ -28,7 +28,13 @@ func TestInterpolateVariables(t *testing.T) {
 			`Before ${a}, after.`, `Before 123, after.`, nil,
 		},
 		{
+			`Before ${a}, ${b} after.`, `Before 123, String value after.`, nil,
+		},
+		{
 			`Before ${"\}"}, after.`, `Before }, after.`, nil,
+		},
+		{
+			`Before ${"\}"}, ${b} after.`, `Before }, String value after.`, nil,
 		},
 		{
 			`Before ${""}}, after.`, `Before }, after.`, nil,
@@ -40,10 +46,13 @@ func TestInterpolateVariables(t *testing.T) {
 			`Before \\${a}, after.`, `Before \123, after.`, nil,
 		},
 		{
-			`Before $${a}}, after.`, `Before $123}, after.`, nil,
+			`Before \\${a}${b}, after.`, `Before \123String value, after.`, nil,
 		},
 		{
 			`Before $${a}}, after.`, `Before $123}, after.`, nil,
+		},
+		{
+			`Before $${a}, ${b} after.`, `Before $123, String value after.`, nil,
 		},
 		{
 			`Before ${c.a[0]}, after.`, `Before Zero, after.`, nil,
