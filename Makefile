@@ -66,7 +66,7 @@ install: build ## Build and install
 	install -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/
 
 test: ## Run tests
-	(cd src && go test $(TEST_PKGS))
+	(cd src && go test $(FLAGS) $(TEST_PKGS))
 
 clean: ## Delete the built product and any generated files
 	rm -rf $(BUILD_DIR)
