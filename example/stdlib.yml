@@ -1,0 +1,42 @@
+
+- 
+  id: first
+  
+  request:
+    method: GET
+    url: https://www.google.com
+    params:
+      a: ${std.Base64.Encode("This is a string to encode.")}
+  
+  response:
+    status: 200
+
+- 
+  request:
+    method: POST
+    url: https://www.google.com
+    entity: |
+      ${std.JSON.Marshal(first.response.headers)}
+  
+  response:
+    status: 405
+
+- 
+  request:
+    method: POST
+    url: https://www.google.com
+    entity: |
+      ${std.JSON.Unmarshal(std.JSON.Marshal(first.response.headers))}
+  
+  response:
+    status: 405
+
+- 
+  request:
+    method: POST
+    url: https://www.google.com
+    entity: |
+      ${std.JSON.Unmarshal("{\\"a\\":\\"OKOKOK\\"\}")}
+  
+  response:
+    status: 200
