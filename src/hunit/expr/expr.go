@@ -71,7 +71,11 @@ func interpolate(s, pre, suf string, context interface{}) (string, error) {
 		if s[i] == '\\' {
 			esc++
 			if (esc % 2) == 0 {
-				out.WriteRune('\\')
+				if expr != nil {
+					expr.WriteRune('\\')
+				} else {
+					out.WriteRune('\\')
+				}
 			}
 			i++
 			continue
