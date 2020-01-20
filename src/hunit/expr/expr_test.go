@@ -1,13 +1,9 @@
 package expr
 
 import (
-	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
-)
 
-var (
-	invalidInputError = fmt.Errorf("Invalid input")
+	"github.com/stretchr/testify/assert"
 )
 
 var context = map[string]interface{}{
@@ -23,36 +19,65 @@ var context = map[string]interface{}{
  * Test interpolate
  */
 func TestInterpolateVariables(t *testing.T) {
-	testInterpolate(t, `Before ${a}, after.`, `Before 123, after.`, context)
-	testInterpolate(t, `Before \${a}, after.`, `Before ${a}, after.`, context)
-	testInterpolate(t, `Before \\${a}, after.`, `Before \123, after.`, context)
-	testInterpolate(t, `Before $${a}}, after.`, `Before $123}, after.`, context)
-	testInterpolate(t, `Before $${a}}, after.`, `Before $123}, after.`, context)
-	testInterpolate(t, `Before ${c.a[0]}, after.`, `Before Zero, after.`, context)
-	testInterpolate(t, `Before ${c["b"]}, after.`, `Before false, after.`, context)
-	testInterpolate(t, `Before ${a, after.`, invalidInputError, context)
-	testInterpolate(t, `Before ${a
-}, after.`, `Before 123, after.`, context) // whitespace is not significant in EPL
+	tests := []struct {
+		Text   string
+		Expect string
+		Error  error
+	}{
+		{
+			`Before ${a}, after.`, `Before 123, after.`, nil,
+		},
+		{
+			`Before ${a}, ${b} after.`, `Before 123, String value after.`, nil,
+		},
+		{
+			`Before ${"\}"}, after.`, `Before }, after.`, nil,
+		},
+		{
+			`Before ${"\}"}, ${b} after.`, `Before }, String value after.`, nil,
+		},
+		{
+			`Before ${""}}, after.`, `Before }, after.`, nil,
+		},
+		{
+			`Before \${a}, after.`, `Before ${a}, after.`, nil,
+		},
+		{
+			`Before \\${a}, after.`, `Before \123, after.`, nil,
+		},
+		{
+			`Before \\${a}${b}, after.`, `Before \123String value, after.`, nil,
+		},
+		{
+			`Before $${a}}, after.`, `Before $123}, after.`, nil,
+		},
+		{
+			`Before $${a}, ${b} after.`, `Before $123, String value after.`, nil,
+		},
+		{
+			`Before ${c.a[0]}, after.`, `Before Zero, after.`, nil,
+		},
+		{
+			`Before ${a, after.`, "", ErrEndOfInput,
+		},
+		{
+			`Before ${a
+}, after.`, `Before 123, after.`, nil,
+		},
+	}
+	for _, e := range tests {
+		testInterpolate(t, e.Text, e.Expect, e.Error, context)
+	}
 }
 
-func testInterpolate(t *testing.T, s string, e, c interface{}) {
+func testInterpolate(t *testing.T, s string, e string, r error, c interface{}) {
 	t.Logf("----> %v\n", s)
-
 	v, err := interpolate(s, "${", "}", c)
-	if e == invalidInputError {
-		if assert.NotNil(t, err, "Expect an error") {
-			t.Logf("(err) %v\n", err)
-		}
-		return
+	if r != nil {
+		t.Logf("<---- (ERR) %v\n", err)
+		assert.Equal(t, r, err, s)
 	} else {
-		if !assert.Nil(t, err, fmt.Sprintf("%v", err)) {
-			return
-		}
+		t.Logf("<---- %v\n", v)
+		assert.Equal(t, e, v)
 	}
-
-	t.Logf("<---- %v\n", v)
-	if !assert.Equal(t, e, v) {
-		return
-	}
-
 }
