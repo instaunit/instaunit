@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/bww/epl"
 	"github.com/bww/go-util/rand"
@@ -19,6 +20,7 @@ func deprecated(a, b string) {
 // The standard library
 type stdlib struct {
 	Base64 stdBase64
+	JSON   stdJSON
 }
 
 // Builtins
@@ -88,6 +90,11 @@ func (s stdlib) ToTitle(v string) string {
 // Trim space from both ends of a string
 func (s stdlib) TrimSpace(v string) string {
 	return strings.TrimSpace(v)
+}
+
+// Get the current timestamp as time.Time
+func (s stdlib) Now() time.Time {
+	return time.Now()
 }
 
 // Take any element from a collection
