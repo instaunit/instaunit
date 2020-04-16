@@ -98,7 +98,6 @@ type Process struct {
 	cmdline string
 	cmd     *exec.Cmd
 	context context.Context
-	cancel  context.CancelFunc
 	wout    io.WriteCloser
 	werr    io.WriteCloser
 	linger  time.Duration
@@ -203,10 +202,13 @@ func (p *Process) Kill() error {
 		<-time.After(p.linger)
 	}
 	if !p.exited {
-		if p.cancel != nil {
-			p.cancel()
+		if p.cmd.Process != nil {
+			err := p.cmd.Process.Kill()
+			if err != nil {
+				return fmt.Errorf("Could not kill process: %v", err)
+			}
 		} else {
-			return fmt.Errorf("Process is not cancelable")
+			return fmt.Errorf("No process")
 		}
 	}
 	if p.wout != nil {
@@ -285,13 +287,13 @@ func (c Command) Exec() (string, error) {
 
 // Start a command
 func (c Command) Start(wout, werr io.WriteCloser) (*Process, error) {
-	cxt, cancel := context.WithCancel(context.Background())
+	cxt := context.Background()
 	cmd, err := c.cmd(cxt)
 	if err != nil {
 		return nil, err
 	}
 
-	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, cancel, nil, nil, c.Linger, false, nil, make(chan struct{}, 1)}
+	proc := &Process{sync.Mutex{}, c.Command, cmd, cxt, nil, nil, c.Linger, false, nil, make(chan struct{}, 1)}
 	err = proc.Start(wout, werr)
 	if err != nil {
 		return nil, err
