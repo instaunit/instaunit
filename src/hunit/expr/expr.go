@@ -7,7 +7,7 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 
-	"github.com/bww/epl"
+	"github.com/bww/epl/v1"
 )
 
 var (

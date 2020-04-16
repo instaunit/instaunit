@@ -3,6 +3,8 @@ github.com/aws/aws-lambda-go v1.10.0/go.mod h1:zUsUQhAUjYzR8AuduJPCfhBuKWUaDbQiP
 github.com/aws/aws-lambda-go v1.12.1/go.mod h1:z4ywteZ5WwbIEzG0tXizIAUlUwkTNNknX4upd5Z5XJM=
 github.com/bww/epl v0.0.0-20181209001352-52a4304e2789 h1:ziQ0JNavETOH6uYMkYWJ1Im6sHhy3/Izy4k3Ir7dzIk=
 github.com/bww/epl v0.0.0-20181209001352-52a4304e2789/go.mod h1:fi6GubtJAsaIDEWn+D59RJ1aLRcdS81h4Rb18t3j3KA=
+github.com/bww/epl v1.1.0 h1:rssZihhwgot64FMX1y96W0KuYfyA0ZTw1Az9UAxtVi0=
+github.com/bww/epl v1.1.0/go.mod h1:8CahovY2O3KqBUPSfiQzaSaNd6Bkn+SJH7L98/76vaI=
 github.com/bww/go-router v0.0.0-20190817194626-c2b784d6f758 h1:FIjxnpMsBqPz4nNaw7kWhcx1VsDB4nOFfzwTctWuT1Y=
 github.com/bww/go-router v0.0.0-20190817194626-c2b784d6f758/go.mod h1:w8Co2+tWdGgzwsV9UfVtImjsDmm9pRQsKVWbdP5ug7o=
 github.com/bww/go-router v0.0.0-20190817213659-abcf53bf1123 h1:T4D+7lokmcVvcVCJovnpcG0nCgmM2qOtN39HFE8q30w=

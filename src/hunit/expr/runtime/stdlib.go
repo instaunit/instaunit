@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bww/epl"
+	"github.com/bww/epl/v1"
 	"github.com/bww/go-util/rand"
 	"github.com/bww/go-util/uuid"
 )

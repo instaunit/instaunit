@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/aws/aws-lambda-go v1.12.1 // indirect
-	github.com/bww/epl v0.0.0-20181209001352-52a4304e2789
+	github.com/bww/epl v1.1.0
 	github.com/bww/go-router v0.0.0-20190818190848-535bb17b039c
 	github.com/bww/go-util v0.0.0-20190123023739-e1f71f0d9eac
 	github.com/davecgh/go-spew v1.1.1
