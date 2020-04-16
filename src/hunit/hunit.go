@@ -56,19 +56,6 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 	results := make([]*Result, 0)
 	c := context.Subcontext(make(map[string]interface{}))
 
-	var globals map[string]interface{}
-	for _, e := range s.Vars {
-		k, v := e.Key.(string), gtext.Stringer(e.Value)
-		e, err := interpolateIfRequired(context, v)
-		if err != nil {
-			return nil, err
-		}
-		if globals == nil {
-			globals = make(map[string]interface{})
-		}
-		globals[k] = e
-	}
-
 	for _, e := range context.Gendoc {
 		err := e.Init(s)
 		if err != nil {
