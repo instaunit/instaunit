@@ -41,6 +41,7 @@ type Suite struct {
 	Teardown []*exec.Command `yaml:"teardown"`
 	Exec     *exec.Command   `yaml:"process"`
 	Deps     *Dependencies   `yaml:"depends"`
+	Vars     yaml.MapSlice   `yaml:"vars"`
 }
 
 // Load a test suite
