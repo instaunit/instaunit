@@ -1,6 +1,7 @@
 package test
 
 import (
+	"errors"
 	"io"
 	"io/ioutil"
 	"os"
@@ -8,8 +9,10 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/exec"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
+
+var errMalformedSuite = errors.New("Malformed suite")
 
 // Suite options
 type Config struct {
@@ -64,22 +67,24 @@ func LoadSuiteFromReader(c *Config, r io.Reader) (*Suite, error) {
 
 // Load a test suite
 func LoadSuiteFromData(conf *Config, data []byte) (*Suite, error) {
-	var ferr error
-
-	suite := &Suite{Config: *conf}
-	err := yaml.Unmarshal(data, suite)
+	node := &yaml.Node{}
+	err := yaml.Unmarshal(data, node)
 	if err != nil {
-		ferr = err
+		return nil, err
+	}
+	if node.Kind != yaml.DocumentNode || len(node.Content) < 1 {
+		err = errMalformedSuite
 	}
 
-	if len(suite.Cases) < 1 {
-		var cases []Case
-		err := yaml.Unmarshal(data, &cases)
-		if err != nil {
-			return nil, coalesce(ferr, err)
-		} else {
-			suite.Cases = cases
-		}
+	node = node.Content[0]
+	suite := &Suite{Config: *conf}
+	switch node.Kind {
+	case yaml.SequenceNode:
+		err = node.Decode(&suite.Cases)
+	case yaml.MappingNode:
+		err = node.Decode(suite)
+	default:
+		err = errMalformedSuite
 	}
 
 	*conf = suite.Config

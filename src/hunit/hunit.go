@@ -170,9 +170,9 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 
 	// process variables first, they can be referenced by this case, itself
 	var vars map[string]interface{}
-	for _, e := range c.Vars {
-		k, v := e.Key.(string), gtext.Stringer(e.Value)
-		e, err := interpolateIfRequired(context, v)
+	for k, e := range c.Vars {
+		v := gtext.Stringer(e)
+		r, err := interpolateIfRequired(context, v)
 		if err != nil {
 			return result.Error(err), nil, nil
 		}
@@ -182,7 +182,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 			vars = make(map[string]interface{})
 			context.Variables[localVarsId] = vars
 		}
-		vars[k] = e
+		vars[k] = r
 	}
 
 	// update the method

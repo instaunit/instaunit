@@ -2,8 +2,7 @@ package test
 
 import (
 	"time"
-
-	yaml "gopkg.in/yaml.v2"
+	// yaml "gopkg.in/yaml.v3"
 )
 
 // Options
@@ -67,19 +66,19 @@ type MessageExchange struct {
 
 // A test case
 type Case struct {
-	Id         string            `yaml:"id"`
-	Wait       time.Duration     `yaml:"wait"`
-	Repeat     int               `yaml:"repeat"`
-	Concurrent int               `yaml:"concurrent"`
-	Gendoc     bool              `yaml:"gendoc"`
-	Title      string            `yaml:"title"`
-	Comments   string            `yaml:"doc"`
-	Require    bool              `yaml:"require"`
-	Params     map[string]string `yaml:"params"`
-	Request    Request           `yaml:"request"`
-	Response   Response          `yaml:"response"`
-	Stream     *Stream           `yaml:"websocket"`
-	Vars       yaml.MapSlice     `yaml:"vars"`
+	Id         string                 `yaml:"id"`
+	Wait       time.Duration          `yaml:"wait"`
+	Repeat     int                    `yaml:"repeat"`
+	Concurrent int                    `yaml:"concurrent"`
+	Gendoc     bool                   `yaml:"gendoc"`
+	Title      string                 `yaml:"title"`
+	Comments   string                 `yaml:"doc"`
+	Require    bool                   `yaml:"require"`
+	Params     map[string]string      `yaml:"params"`
+	Request    Request                `yaml:"request"`
+	Response   Response               `yaml:"response"`
+	Stream     *Stream                `yaml:"websocket"`
+	Vars       map[string]interface{} `yaml:"vars"`
 }
 
 // Determine if this case is documented or not
