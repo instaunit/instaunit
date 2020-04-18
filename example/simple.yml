@@ -1,11 +1,10 @@
 
-tests:
-  -
-    request:
-      method: GET
-      url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
-      params:
-        first: ${"A"+"B"}
-    
-    response:
-      status: 400
+-
+  request:
+    method: GET
+    url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
+    params:
+      first: ${"A"+"B"}
+  
+  response:
+    status: 400
