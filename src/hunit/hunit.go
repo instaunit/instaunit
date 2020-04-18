@@ -163,7 +163,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	}
 
 	// start with an unevaluated result
-	result := &Result{Name: fmt.Sprintf("%v %v\n", c.Request.Method, c.Request.URL), Success: true}
+	result := &Result{Name: formatName(c, c.Request.Method, c.Request.URL), Success: true}
 	defer func() {
 		result.Runtime = time.Since(start)
 	}()
@@ -194,7 +194,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	}
 
 	// incrementally update the name as we evaluate it
-	result.Name = fmt.Sprintf("%v %v\n", method, c.Request.URL)
+	result.Name = formatName(c, method, c.Request.URL)
 
 	var url string
 	if isAbsoluteURL(c.Request.URL) {
@@ -211,7 +211,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	}
 
 	// incrementally update the name as we evaluate it
-	result.Name = fmt.Sprintf("%v %v\n", method, url)
+	result.Name = formatName(c, method, url)
 
 	url, err = interpolateIfRequired(context, url)
 	if err != nil {
@@ -221,7 +221,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	}
 
 	// incrementally update the name as we evaluate it
-	result.Name = fmt.Sprintf("%v %v\n", method, url)
+	result.Name = formatName(c, method, url)
 
 	header := make(http.Header)
 	if context.Headers != nil {
@@ -469,6 +469,10 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, error) {
 	}
 
 	return result, nil, nil
+}
+
+func formatName(c test.Case, method, url string) string {
+	return fmt.Sprintf("%v %v @ line %d\n", method, url, c.Source.Line)
 }
 
 // Flatten a header to a one-to-one key-to-value map

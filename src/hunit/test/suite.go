@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	// "github.com/davecgh/go-spew/spew"
 	"github.com/instaunit/instaunit/hunit/exec"
 
 	yaml "gopkg.in/yaml.v3"
@@ -80,15 +81,62 @@ func LoadSuiteFromData(conf *Config, data []byte) (*Suite, error) {
 	suite := &Suite{Config: *conf}
 	switch node.Kind {
 	case yaml.SequenceNode:
-		err = node.Decode(&suite.Cases)
+		err = decodeCases(suite, node)
 	case yaml.MappingNode:
-		err = node.Decode(suite)
+		err = decodeSuite(suite, node)
 	default:
 		err = errMalformedSuite
 	}
 
 	*conf = suite.Config
 	return suite, nil
+}
+
+// Decode the full suite document format
+func decodeSuite(suite *Suite, node *yaml.Node) error {
+	err := node.Decode(suite)
+	if err != nil {
+		return err
+	}
+	l := len(node.Content)
+	for i, e := range node.Content {
+		if e.Kind == yaml.ScalarNode && e.Value == "tests" {
+			if i+1 < l && node.Content[i+1].Kind == yaml.SequenceNode {
+				return annotate(suite, node.Content[i+1])
+			}
+		}
+	}
+	return nil
+}
+
+// Decode a sequence of cases; this is the simple suite document format
+func decodeCases(suite *Suite, node *yaml.Node) error {
+	err := node.Decode(&suite.Cases)
+	if err != nil {
+		return err
+	}
+	return annotate(suite, node)
+}
+
+// Annotate test cases using the provided sequence node
+func annotate(suite *Suite, node *yaml.Node) error {
+	if len(suite.Cases) != len(node.Content) {
+		return errMalformedSuite
+	}
+	for i, e := range suite.Cases {
+		n := node.Content[i]
+		e.Source = Source{
+			Line:   n.Line,
+			Column: n.Column,
+			Comments: Comments{
+				Head: n.HeadComment,
+				Line: n.LineComment,
+				Tail: n.FootComment,
+			},
+		}
+		suite.Cases[i] = e
+	}
+	return nil
 }
 
 // Return the first non-nil error or nil if there are none.

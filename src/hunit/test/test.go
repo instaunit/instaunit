@@ -64,6 +64,17 @@ type MessageExchange struct {
 	Input  *string       `yaml:"receive"`
 }
 
+// Source comments
+type Comments struct {
+	Head, Line, Tail string
+}
+
+// Source annotation
+type Source struct {
+	Line, Column int
+	Comments     Comments
+}
+
 // A test case
 type Case struct {
 	Id         string                 `yaml:"id"`
@@ -79,6 +90,7 @@ type Case struct {
 	Response   Response               `yaml:"response"`
 	Stream     *Stream                `yaml:"websocket"`
 	Vars       map[string]interface{} `yaml:"vars"`
+	Source     Source
 }
 
 // Determine if this case is documented or not
