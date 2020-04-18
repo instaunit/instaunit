@@ -1,10 +1,14 @@
 
 -
+  vars:
+    hello: Hello world
+  
   request:
     method: GET
     url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
     params:
       first: ${"A"+"B"}
+      second: ${vars.hello}
   
   response:
     status: 400
