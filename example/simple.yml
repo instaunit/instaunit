@@ -16,7 +16,6 @@ tests:
         first: ${"A"+"B"}
         second: ${vars.hello}
         third: ${vars.global_to_the_max}
-        fourth: ${vars.nonexistent}
     
     response:
       status: 400
