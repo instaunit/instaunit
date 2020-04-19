@@ -32,6 +32,7 @@ tests:
       url: https://raw.githubusercontent.com/instaunit/instaunit/${vars.a}_${vars.b}
     
     response:
+      status: 200
       assert:
         type: javascript
         source: |
