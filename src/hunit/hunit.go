@@ -65,7 +65,7 @@ func (c *Context) AddVars(vars ...expr.Variables) {
 func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 	var futures []FutureResult
 	results := make([]*Result, 0)
-	globals := make(expr.Variables)
+	globals := dupVars(s.Globals)
 
 	for _, e := range context.Gendoc {
 		err := e.Init(s)
@@ -225,7 +225,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	if len(c.Request.Params) > 0 {
 		url, err = mergeQueryParams(url, c.Request.Params, context)
 		if err != nil {
-			return result.Error(err), nil, vars, nil
+			return nil, nil, vars, fmt.Errorf("Test case declared on line %d: %v", c.Source.Line, err)
 		}
 	}
 

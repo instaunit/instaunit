@@ -36,14 +36,15 @@ type Dependencies struct {
 
 // A test suite
 type Suite struct {
-	Title    string          `yaml:"title"`
-	Comments string          `yaml:"doc"`
-	Cases    []Case          `yaml:"tests"`
-	Config   Config          `yaml:"options"`
-	Setup    []*exec.Command `yaml:"setup"`
-	Teardown []*exec.Command `yaml:"teardown"`
-	Exec     *exec.Command   `yaml:"process"`
-	Deps     *Dependencies   `yaml:"depends"`
+	Title    string                 `yaml:"title"`
+	Comments string                 `yaml:"doc"`
+	Cases    []Case                 `yaml:"tests"`
+	Config   Config                 `yaml:"options"`
+	Setup    []*exec.Command        `yaml:"setup"`
+	Teardown []*exec.Command        `yaml:"teardown"`
+	Exec     *exec.Command          `yaml:"process"`
+	Deps     *Dependencies          `yaml:"depends"`
+	Globals  map[string]interface{} `yaml:"vars"`
 }
 
 // Load a test suite

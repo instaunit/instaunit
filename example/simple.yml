@@ -1,53 +1,61 @@
 
--
-  vars:
-    hello: Hello world
-  
-  request:
-    method: GET
-    url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
-    params:
-      first: ${"A"+"B"}
-      second: ${vars.hello}
-  
-  response:
-    status: 400
+vars:
+  global_to_the_max: Hello, there. I'm a global.
 
--
-  id: second
-  
-  vars:
-    a: Hello
-    b: World
-  
-  request:
-    method: GET
-    url: https://raw.githubusercontent.com/instaunit/instaunit/${vars.a}_${vars.b}
-  
-  response:
-    assert:
-      type: javascript
-      source: |
-        console.log("FIRST:", first.response.status);
-        if(test.Request.Method != "POST"){
-          console.log("Ok, I'm the script! This is wrong.")
-          false
-        }else{
-          console.log("Ok, I'm the script! Lookin' good!")
+tests:
+  -
+    id: first
+    
+    vars:
+      hello: Hello world
+    
+    request:
+      method: GET
+      url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
+      params:
+        first: ${"A"+"B"}
+        second: ${vars.hello}
+        third: ${vars.global_to_the_max}
+        fourth: ${vars.nonexistent}
+    
+    response:
+      status: 400
+
+  -
+    id: second
+    
+    vars:
+      a: Hello
+      b: World
+    
+    request:
+      method: GET
+      url: https://raw.githubusercontent.com/instaunit/instaunit/${vars.a}_${vars.b}
+    
+    response:
+      assert:
+        type: javascript
+        source: |
+          console.log("FIRST:", first.response.status);
+          if(test.Request.Method != "POST"){
+            console.log("Ok, I'm the script! This is wrong.")
+            false
+          }else{
+            console.log("Ok, I'm the script! Lookin' good!")
+            true
+          }
+
+  -
+    id: third
+    
+    request:
+      method: GET
+      url: https://raw.githubusercontent.com/instaunit/instaunit/${second.test.Request.Method}_${second.response.status}
+    
+    response:
+      status: 400
+      assert:
+        type: javascript
+        source: |
+          console.log("SECOND:", second.response.status);
           true
-        }
-
--
-  id: third
-  
-  request:
-    method: GET
-    url: https://raw.githubusercontent.com/instaunit/instaunit/${second.test.Request.Method}_${second.response.status}
-  
-  response:
-    status: 400
-    assert:
-      type: javascript
-      source: |
-        console.log("SECOND:", second.response.status);
-        true

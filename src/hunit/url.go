@@ -1,6 +1,7 @@
 package hunit
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 )
@@ -29,7 +30,7 @@ func mergeQueryParams(u string, p map[string]string, c Context) (string, error) 
 	for k, v := range p {
 		v, err = interpolateIfRequired(c, v)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("Evaluating query parameter %q: %v", k, err)
 		}
 		q.Add(k, v)
 	}
