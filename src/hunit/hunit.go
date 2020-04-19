@@ -180,20 +180,20 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	}
 
 	// start with an unevaluated result
-	result := &Result{Name: fmt.Sprintf("%v %v\n", c.Request.Method, c.Request.URL), Success: true}
+	result := &Result{Name: formatName(c, c.Request.Method, c.Request.URL), Success: true}
 	defer func() {
 		result.Runtime = time.Since(start)
 	}()
 
-	// process locals first, they can be referenced by this case, itself
+	// process variables first, they can be referenced by this case, itself
 	locals := make(expr.Variables)
-	for _, e := range c.Vars {
-		k, v := e.Key.(string), textutil.Stringer(e.Value)
-		e, err := interpolateIfRequired(context, v)
+	for k, e := range c.Vars {
+		v := textutil.Stringer(e)
+		r, err := interpolateIfRequired(context, v)
 		if err != nil {
 			return result.Error(err), nil, nil, nil
 		}
-		locals[k] = e
+		locals[k] = r
 	}
 
 	// test case variables
@@ -213,7 +213,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	}
 
 	// incrementally update the name as we evaluate it
-	result.Name = fmt.Sprintf("%v %v\n", method, c.Request.URL)
+	result.Name = formatName(c, method, c.Request.URL)
 
 	var url string
 	if isAbsoluteURL(c.Request.URL) {
@@ -230,7 +230,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	}
 
 	// incrementally update the name as we evaluate it
-	result.Name = fmt.Sprintf("%v %v\n", method, url)
+	result.Name = formatName(c, method, url)
 
 	url, err = interpolateIfRequired(context, url)
 	if err != nil {
@@ -240,7 +240,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	}
 
 	// incrementally update the name as we evaluate it
-	result.Name = fmt.Sprintf("%v %v\n", method, url)
+	result.Name = formatName(c, method, url)
 
 	header := make(http.Header)
 	if context.Headers != nil {
@@ -460,7 +460,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 
 	// test case variables
 	vars["response"] = expr.Variables{
-		"headers": flatten(rsp.Header),
+		"headers": flattenHeader(rsp.Header),
 		"entity":  rspdata,
 		"value":   rspvalue,
 		"status":  rsp.StatusCode,
@@ -492,10 +492,14 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	return result, nil, vars, nil
 }
 
-// Flatten a header/values to a one-to-one key-to-value map
-func flatten(values map[string][]string) map[string]string {
+func formatName(c test.Case, method, url string) string {
+	return fmt.Sprintf("%v %v @ line %d\n", method, url, c.Source.Line)
+}
+
+// Flatten a header to a one-to-one key-to-value map
+func flattenHeader(header http.Header) map[string]string {
 	f := make(map[string]string)
-	for k, v := range values {
+	for k, v := range header {
 		if len(v) > 0 {
 			f[k] = v[0]
 		} else {

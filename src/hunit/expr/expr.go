@@ -7,7 +7,11 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 
-	"github.com/bww/epl"
+	"github.com/bww/epl/v1"
+)
+
+var (
+	ErrEndOfInput = fmt.Errorf("Unexpected end-of-input")
 )
 
 // Variables
@@ -51,63 +55,71 @@ func interpolate(s, pre, suf string, context interface{}) (string, error) {
 	fp := pre[0]
 	fs := suf[0]
 
-	var out string
-	var i, esc int
+	out := &strings.Builder{}
+	var expr *strings.Builder
+	var i, esc, start int
+
 	for {
 		if i >= len(s) {
-			break
+			if expr != nil {
+				return "", ErrEndOfInput
+			} else {
+				break
+			}
 		}
 
 		if s[i] == '\\' {
 			esc++
 			if (esc % 2) == 0 {
-				out += "\\"
+				if expr != nil {
+					expr.WriteRune('\\')
+				} else {
+					out.WriteRune('\\')
+				}
 			}
 			i++
 			continue
 		}
 
-		if s[i] == fp && (esc%2) == 0 && matchAhead(s[i:], pre) {
-			i += len(pre)
-			start := i
-			for {
-				if i >= len(s) {
-					return "", fmt.Errorf("Unexpected end-of-input")
+		if expr != nil {
+			if s[i] == fs && (esc%2) == 0 && matchAhead(s[i:], suf) {
+				prg, err := epl.Compile(expr.String())
+				if err != nil {
+					return "", err
 				}
-				if s[i] == fs && matchAhead(s[i:], suf) {
 
-					prg, err := epl.Compile(s[start:i])
-					if err != nil {
-						return "", err
-					}
-
-					res, err := prg.Exec(context)
-					if err != nil {
-						return "", fmt.Errorf("Could not evaluate expression: {%v}: %v", s[start:i], err)
-					}
-
-					switch v := res.(type) {
-					case string:
-						out += v
-					default:
-						out += fmt.Sprintf("%v", v)
-					}
-
-					i += len(suf)
-					break
-				} else {
-					i++
+				res, err := prg.Exec(context)
+				if err != nil {
+					return "", fmt.Errorf("Could not evaluate expression: {%v}: %v", s[start:i], err)
 				}
+
+				switch v := res.(type) {
+				case string:
+					out.WriteString(v)
+				default:
+					out.WriteString(fmt.Sprint(v))
+				}
+
+				i += len(suf)
+				start = 0
+				expr = nil
+			} else {
+				expr.WriteByte(s[i])
+				i++
 			}
+		} else if s[i] == fp && (esc%2) == 0 && matchAhead(s[i:], pre) {
+			i += len(pre)
+			start = i
+			expr = &strings.Builder{}
 		} else {
-			out += string(s[i])
+			out.WriteByte(s[i])
 			i++
 		}
 
 		esc = 0
 	}
 
-	return out, nil
+	return out.String(), nil
 }
 
 // Match ahead

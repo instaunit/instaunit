@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/script"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 // Options
@@ -68,21 +66,33 @@ type MessageExchange struct {
 	Input  *string       `yaml:"receive"`
 }
 
+// Source comments
+type Comments struct {
+	Head, Line, Tail string
+}
+
+// Source annotation
+type Source struct {
+	Line, Column int
+	Comments     Comments
+}
+
 // A test case
 type Case struct {
-	Id         string            `yaml:"id"`
-	Wait       time.Duration     `yaml:"wait"`
-	Repeat     int               `yaml:"repeat"`
-	Concurrent int               `yaml:"concurrent"`
-	Gendoc     bool              `yaml:"gendoc"`
-	Title      string            `yaml:"title"`
-	Comments   string            `yaml:"doc"`
-	Require    bool              `yaml:"require"`
-	Params     map[string]string `yaml:"params"`
-	Request    Request           `yaml:"request"`
-	Response   Response          `yaml:"response"`
-	Stream     *Stream           `yaml:"websocket"`
-	Vars       yaml.MapSlice     `yaml:"vars"`
+	Id         string                 `yaml:"id"`
+	Wait       time.Duration          `yaml:"wait"`
+	Repeat     int                    `yaml:"repeat"`
+	Concurrent int                    `yaml:"concurrent"`
+	Gendoc     bool                   `yaml:"gendoc"`
+	Title      string                 `yaml:"title"`
+	Comments   string                 `yaml:"doc"`
+	Require    bool                   `yaml:"require"`
+	Params     map[string]string      `yaml:"params"`
+	Request    Request                `yaml:"request"`
+	Response   Response               `yaml:"response"`
+	Stream     *Stream                `yaml:"websocket"`
+	Vars       map[string]interface{} `yaml:"vars"`
+	Source     Source
 }
 
 // Determine if this case is documented or not
