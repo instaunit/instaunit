@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-lambda-go v1.12.1 // indirect
 	github.com/bww/epl v1.1.0
 	github.com/bww/go-router v0.0.0-20190818190848-535bb17b039c
-	github.com/bww/go-util v0.0.0-20190123023739-e1f71f0d9eac
+	github.com/bww/go-util v1.3.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.7.0

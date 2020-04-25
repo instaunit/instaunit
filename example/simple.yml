@@ -1,6 +1,6 @@
 
 vars:
-  global_to_the_max: Hello, there. I'm a global.
+  global: Hello, there. I'm a global.
 
 tests:
   -
@@ -15,7 +15,7 @@ tests:
       params:
         first: ${"A"+"B"}
         second: ${vars.hello}
-        third: ${vars.global_to_the_max}
+        third: ${vars.global}
     
     response:
       status: 400
@@ -26,17 +26,21 @@ tests:
     vars:
       a: Hello
       b: World
+      global: Local version
     
     request:
       method: GET
       url: https://raw.githubusercontent.com/instaunit/instaunit/${vars.a}_${vars.b}
+      params:
+        first: ${vars.global}
+        second: ${global}
     
     response:
       status: 200
       assert:
         type: javascript
         source: |
-          console.log("FIRST:", first.response.status);
+          console.log("FIRST:", first.response.status, global);
           if(test.Request.Method != "POST"){
             console.log("Ok, I'm the script! This is wrong.")
             false
@@ -57,5 +61,5 @@ tests:
       assert:
         type: javascript
         source: |
-          console.log("SECOND:", second.response.status);
+          console.log("SECOND:", second.response.status, global);
           true

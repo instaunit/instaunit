@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/bww/epl/v1"
-	"github.com/bww/go-util/rand"
-	"github.com/bww/go-util/uuid"
+	"github.com/bww/go-util/v1/rand"
+	"github.com/bww/go-util/v1/uuid"
 )
 
 func deprecated(a, b string) {

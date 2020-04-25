@@ -20,7 +20,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	textutil "github.com/bww/go-util/text"
+	textutil "github.com/bww/go-util/v1/text"
 )
 
 // HTTP client
