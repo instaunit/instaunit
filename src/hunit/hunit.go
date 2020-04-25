@@ -18,9 +18,8 @@ import (
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
 
-	"github.com/gorilla/websocket"
-
 	textutil "github.com/bww/go-util/v1/text"
+	"github.com/gorilla/websocket"
 )
 
 // HTTP client
@@ -172,6 +171,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 
 // Run a test case
 func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variables, error) {
+	var vdef expr.Variables
 	start := time.Now()
 
 	// wait if we need to
@@ -201,7 +201,6 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		"test": c,
 		"vars": locals,
 	}
-	// merge into context
 	context.AddVars(vars)
 
 	// update the method
@@ -310,12 +309,12 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 			return nil, nil, nil, err
 		}
 
-		// add to our context
-		vars["websocket"] = expr.Variables{
+		// websocket variables
+		vdef = expr.Variables{
 			"url": url,
 		}
-		// merge into context
-		context.AddVars(vars)
+		vars["websocket"] = vdef
+		context.AddVars(vdef)
 
 		// depending on the I/O mode, resolve or return a future
 		switch m := c.Stream.Mode; m {
@@ -458,15 +457,15 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		result.Rspdata = rspbuf.Bytes()
 	}
 
-	// test case variables
-	vars["response"] = expr.Variables{
+	// response variables
+	vdef = expr.Variables{
 		"headers": flattenHeader(rsp.Header),
 		"entity":  rspdata,
 		"value":   rspvalue,
 		"status":  rsp.StatusCode,
 	}
-	// merge into context
-	context.AddVars(vars)
+	vars["response"] = vdef
+	context.AddVars(vdef)
 
 	// assertions
 	if assert := c.Response.Assert; assert != nil {

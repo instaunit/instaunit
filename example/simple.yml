@@ -1,6 +1,6 @@
 
 vars:
-  global: Hello, there. I'm a global.
+  global: GLOBAL
 
 tests:
   -
@@ -8,6 +8,7 @@ tests:
     
     vars:
       hello: Hello world
+      # global: Different
     
     request:
       method: GET
@@ -16,6 +17,7 @@ tests:
         first: ${"A"+"B"}
         second: ${vars.hello}
         third: ${vars.global}
+        fourth: ${global}
     
     response:
       status: 400
@@ -26,7 +28,7 @@ tests:
     vars:
       a: Hello
       b: World
-      global: Local version
+      global: Local
     
     request:
       method: GET
@@ -34,13 +36,14 @@ tests:
       params:
         first: ${vars.global}
         second: ${global}
+        fifth: ${vars.first.response.status}
     
     response:
       status: 200
       assert:
         type: javascript
         source: |
-          console.log("FIRST:", first.response.status, global);
+          console.log("FIRST:", first.response.status, global, vars.global);
           if(test.Request.Method != "POST"){
             console.log("Ok, I'm the script! This is wrong.")
             false
