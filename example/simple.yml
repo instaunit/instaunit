@@ -1,5 +1,5 @@
 
-vars:
+globals:
   global: GLOBAL
 
 tests:
@@ -15,7 +15,6 @@ tests:
       url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
       params:
         first: ${"A"+"B"}
-        second: ${vars.hello}
         third: ${vars.global}
         fourth: ${global}
     
