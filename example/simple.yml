@@ -1,6 +1,8 @@
 
-globals:
+vars:
   global: GLOBAL
+  object:
+    property: PROPTOWN
 
 tests:
   -
@@ -15,6 +17,7 @@ tests:
       url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
       params:
         first: ${"A"+"B"}
+        second: ${object.property}
         third: ${vars.global}
         fourth: ${global}
     

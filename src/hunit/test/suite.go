@@ -44,7 +44,7 @@ type Suite struct {
 	Teardown []*exec.Command        `yaml:"teardown"`
 	Exec     *exec.Command          `yaml:"process"`
 	Deps     *Dependencies          `yaml:"depends"`
-	Globals  map[string]interface{} `yaml:"globals"`
+	Globals  map[string]interface{} `yaml:"vars"`
 }
 
 // Load a test suite
