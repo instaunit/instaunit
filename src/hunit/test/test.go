@@ -2,7 +2,8 @@ package test
 
 import (
 	"time"
-	// yaml "gopkg.in/yaml.v3"
+
+	"github.com/instaunit/instaunit/hunit/script"
 )
 
 // Options
@@ -47,6 +48,7 @@ type Response struct {
 	Entity     string            `yaml:"entity"`
 	Comparison Comparison        `yaml:"compare"`
 	Format     string            `yaml:"format"`
+	Assert     *script.Script    `yaml:"assert"`
 	Title      string            `yaml:"title"`
 	Comments   string            `yaml:"doc"`
 }

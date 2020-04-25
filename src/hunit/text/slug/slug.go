@@ -2,7 +2,7 @@ package slug
 
 import (
 	"fmt"
-	"github.com/bww/go-util/slug"
+	"github.com/bww/go-util/v1/slug"
 	"unicode"
 )
 

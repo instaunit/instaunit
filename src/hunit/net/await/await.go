@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bww/go-util/debug"
+	"github.com/bww/go-util/v1/debug"
 )
 
 const defaultRetry = time.Second

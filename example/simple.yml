@@ -1,14 +1,70 @@
 
--
-  vars:
-    hello: Hello world
-  
-  request:
-    method: GET
-    url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
-    params:
-      first: ${"A"+"B"}
-      second: ${vars.hello}
-  
-  response:
-    status: 400
+vars:
+  global: GLOBAL
+  object:
+    property: PROPTOWN
+
+tests:
+  -
+    id: first
+    
+    vars:
+      hello: Hello world
+      # global: Different
+    
+    request:
+      method: GET
+      url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
+      params:
+        first: ${"A"+"B"}
+        second: ${object.property}
+        third: ${vars.global}
+        fourth: ${global}
+    
+    response:
+      status: 400
+
+  -
+    id: second
+    
+    vars:
+      a: Hello
+      b: World
+      global: Local
+    
+    request:
+      method: GET
+      url: https://raw.githubusercontent.com/instaunit/instaunit/${vars.a}_${vars.b}
+      params:
+        first: ${vars.global}
+        second: ${global}
+        fifth: ${vars.first.response.status}
+    
+    response:
+      status: 200
+      assert:
+        type: javascript
+        source: |
+          console.log("FIRST:", first.response.status, global, vars.global);
+          if(test.Request.Method != "POST"){
+            console.log("Ok, I'm the script! This is wrong.")
+            false
+          }else{
+            console.log("Ok, I'm the script! Lookin' good!")
+            true
+          }
+
+  -
+    id: third
+    
+    request:
+      method: GET
+      url: https://raw.githubusercontent.com/instaunit/instaunit/${second.test.Request.Method}_${second.response.status}
+    
+    response:
+      status: 400
+      assert:
+        type: javascript
+        source: |
+          console.log("SECOND:", second.response.status, global);
+          true

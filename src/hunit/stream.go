@@ -8,8 +8,8 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/test"
 
-	"github.com/bww/go-util/debug"
-	"github.com/bww/go-util/text"
+	"github.com/bww/go-util/v1/debug"
+	"github.com/bww/go-util/v1/text"
 	"github.com/gorilla/websocket"
 )
 

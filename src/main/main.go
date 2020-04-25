@@ -26,7 +26,7 @@ import (
 	doc_emit "github.com/instaunit/instaunit/hunit/doc/emit"
 	report_emit "github.com/instaunit/instaunit/hunit/report/emit"
 
-	"github.com/bww/go-util/debug"
+	"github.com/bww/go-util/v1/debug"
 	"github.com/fatih/color"
 )
 

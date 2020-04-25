@@ -19,8 +19,8 @@ import (
 	"github.com/instaunit/instaunit/hunit/service"
 
 	"github.com/bww/go-router"
-	"github.com/bww/go-util/debug"
-	"github.com/bww/go-util/text"
+	"github.com/bww/go-util/v1/debug"
+	"github.com/bww/go-util/v1/text"
 	humanize "github.com/dustin/go-humanize"
 )
 

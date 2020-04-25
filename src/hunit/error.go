@@ -3,20 +3,20 @@ package hunit
 import (
 	"reflect"
 
+	"github.com/instaunit/instaunit/hunit/script"
+	"github.com/instaunit/instaunit/hunit/text"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-cmp/cmp"
 )
 
 // An assertion error
 type AssertionError struct {
-	Expected interface{}
-	Actual   interface{}
-	Message  string
+	Expected, Actual interface{}
+	Message          string
 }
 
-// Error
 func (e AssertionError) Error() string {
-
 	m := e.Message
 	if e.Message != "" {
 		m += ":\n"
@@ -30,6 +30,24 @@ func (e AssertionError) Error() string {
 		m += "  actual: " + spew.Sdump(e.Actual)
 	}
 
+	return m
+}
+
+// A script error
+type ScriptError struct {
+	Message          string
+	Expected, Actual interface{}
+	Script           *script.Script
+}
+
+func (e ScriptError) Error() string {
+	m := e.Message
+	if m != "" {
+		m += ":\n"
+	}
+	m += "expected: " + spew.Sdump(e.Expected)
+	m += "  actual: " + spew.Sdump(e.Actual)
+	m += "--\n" + text.IndentWithOptions(e.Script.Source, `{{ printf "%03d: " .Line }}`, text.IndentOptionIndentFirstLine|text.IndentOptionIndentTemplate)
 	return m
 }
 
