@@ -314,7 +314,9 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 			"url": url,
 		}
 		vars["websocket"] = vdef
-		context.AddVars(vdef)
+		context.AddVars(expr.Variables{
+			"websocket": vdef,
+		})
 
 		// depending on the I/O mode, resolve or return a future
 		switch m := c.Stream.Mode; m {
@@ -465,7 +467,9 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		"status":  rsp.StatusCode,
 	}
 	vars["response"] = vdef
-	context.AddVars(vdef)
+	context.AddVars(expr.Variables{
+		"response": vdef,
+	})
 
 	// assertions
 	if assert := c.Response.Assert; assert != nil {
