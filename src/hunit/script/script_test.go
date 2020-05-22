@@ -86,7 +86,7 @@ func TestScripts(t *testing.T) {
 		{
 			Script{"epl", `"Not a bool"`},
 			false,
-			ErrInvalidTypeError{`"Not a bool"`, "bool", "Not a bool"},
+			InvalidTypeError{`"Not a bool"`, "bool", "Not a bool"},
 		},
 		{
 			Script{"epl", `c.b`},
