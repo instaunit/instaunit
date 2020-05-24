@@ -211,15 +211,17 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		return nil, nil, nil, fmt.Errorf("Request requires a method (set 'method')")
 	}
 
-	// incrementally update the name as we evaluate it
-	result.Name = formatName(c, method, c.Request.URL)
-
-	var url string
-	if isAbsoluteURL(c.Request.URL) {
-		url = c.Request.URL
-	} else {
-		url = joinPath(context.BaseURL, c.Request.URL)
+	// update the url
+	url, err := interpolateIfRequired(context, c.Request.URL)
+	if err != nil {
+		return result.Error(err), nil, vars, nil
 	}
+	if !isAbsoluteURL(url) {
+		url = joinPath(context.BaseURL, url)
+	}
+
+	// incrementally update the name as we evaluate it
+	result.Name = formatName(c, method, url)
 
 	if len(c.Request.Params) > 0 {
 		url, err = mergeQueryParams(url, c.Request.Params, context)
