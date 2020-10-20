@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -53,6 +54,26 @@ func strToBool(s string, d ...bool) bool {
 		}
 	}
 	return strings.EqualFold(s, "t") || strings.EqualFold(s, "true") || strings.EqualFold(s, "y") || strings.EqualFold(s, "yes")
+}
+
+// String to int
+func strToInt(s string, d ...int) int {
+	if s == "" {
+		if len(d) > 0 {
+			return d[0]
+		} else {
+			return 0
+		}
+	}
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		if len(d) > 0 {
+			return d[0]
+		} else {
+			return 0
+		}
+	}
+	return v
 }
 
 // String to duration
