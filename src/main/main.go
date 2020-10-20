@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -77,6 +78,7 @@ func app() int {
 		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections. Overrides: $HUNIT_NET_IO_GRACE_PERIOD.")
 		fExec            = cmdline.String("exec", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests, usually the program that is being tested. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
 		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output. Overrides: $HUNIT_EXEC_LOG.")
+		fMaxRedirs       = cmdline.Int("http:redirects", strToInt(os.Getenv("HUNIT_HTTP_MAX_REDIRECTS"), -1), "The maximum number of redirects to follow; specify: 0 to disable redirects, -1 for unlimited redirects. Overrides: $HUNIT_HTTP_MAX_REDIRECTS.")
 		fDebug           = cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode. Overrides: $HUNIT_DEBUG.")
 		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal. Overrides: $HUNIT_COLOR_OUTPUT.")
 		fVerbose         = cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_VERBOSE and $VERBOSE.")
@@ -164,31 +166,26 @@ func app() int {
 			color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
 			return 1
 		}
-
 		rtype, err := report_emit.ParseDoctype(*fReportType)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Invalid report type: %v\n", err)
 			return 1
 		}
-
 		out, err := os.OpenFile(path.Join(*fReportPath, rtype.String()+rtype.Ext()), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not open report output: %v\n", err)
 			return 1
 		}
-
 		gen, err := report.New(rtype, out, fmt.Sprint(time.Now().Unix()))
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could create report generator: %v\n", err)
 			return 1
 		}
-
 		err = gen.Init()
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could initialize report generator: %v\n", err)
 			return 1
 		}
-
 		reports = []report.Generator{gen} // just one for now
 	}
 
@@ -412,8 +409,28 @@ suites:
 			}
 		}
 
+		maxredir := *fMaxRedirs
+		client := &http.Client{
+			Timeout: time.Second * 30,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if maxredir < 0 || len(via) < maxredir {
+					return nil
+				} else {
+					return http.ErrUseLastResponse
+				}
+			},
+		}
+
 		startSuite := time.Now()
-		results, err := hunit.RunSuite(suite, hunit.Context{BaseURL: *fBaseURL, Options: options, Headers: globalHeaders, Debug: debug.DEBUG, Gendoc: gendoc, Config: cdup})
+		results, err := hunit.RunSuite(suite, hunit.Context{
+			BaseURL: *fBaseURL,
+			Options: options,
+			Headers: globalHeaders,
+			Debug:   debug.DEBUG,
+			Gendoc:  gendoc,
+			Config:  cdup,
+			Client:  client,
+		})
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not run test suite: %v\n", err)
 			errno++

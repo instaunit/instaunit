@@ -22,9 +22,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// HTTP client
-var client = http.Client{Timeout: time.Second * 30}
-
 // A test context
 type Context struct {
 	BaseURL   string
@@ -34,6 +31,7 @@ type Context struct {
 	Debug     bool
 	Gendoc    []doc.Generator
 	Variables expr.Variables
+	Client    *http.Client
 }
 
 // Derive a context from the receiver with the provided variables
@@ -51,6 +49,7 @@ func (c Context) WithVars(vars ...expr.Variables) Context {
 		Headers:   c.Headers,
 		Debug:     c.Debug,
 		Gendoc:    c.Gendoc,
+		Client:    c.Client,
 		Variables: v,
 	}
 }
@@ -378,7 +377,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		result.Reqdata = reqbuf.Bytes()
 	}
 
-	rsp, err := client.Do(req)
+	rsp, err := context.Client.Do(req)
 	if rsp != nil && rsp.Body != nil {
 		defer rsp.Body.Close()
 	}
