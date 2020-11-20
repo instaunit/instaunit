@@ -515,12 +515,12 @@ suites:
 	fmt.Printf("Finished in %v.\n\n", duration)
 
 	if !success {
-		color.New(color.BgHiRed, color.Bold, color.FgBlack).Printf(" FAIL! ")
+		color.New(color.FgHiRed, color.Bold, color.ReverseVideo).Printf(" FAIL! ")
 		fmt.Printf(" %d of %d tests failed (%d implicit).\n", failures, tests, skipped)
 		return 1
 	}
 
-	color.New(color.BgHiGreen, color.Bold, color.FgBlack).Printf(" PASS! ")
+	color.New(color.FgHiGreen, color.Bold, color.ReverseVideo).Printf(" PASS! ")
 	if tests == 0 {
 		fmt.Printf(" Hmm, nothing to do, really...\n")
 	} else if tests == 1 {
