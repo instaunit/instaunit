@@ -16,9 +16,9 @@ jobs:
         uses: actions/checkout@v2
       - name: Build
         run: |
-          make package PRODUCT=instaunit-${GITHUB_SHA::8}-linux-amd64 GOOS=linux GOARCH=amd64
-          make package PRODUCT=instaunit-${GITHUB_SHA::8}-freebsd-amd64 GOOS=freebsd GOARCH=amd64
-          make package PRODUCT=instaunit-${GITHUB_SHA::8}-darwin-amd64 GOOS=darwin GOARCH=amd64
+          make package PRODUCT=instaunit-${GITHUB_SHA}-linux-amd64 GOOS=linux GOARCH=amd64
+          make package PRODUCT=instaunit-${GITHUB_SHA}-freebsd-amd64 GOOS=freebsd GOARCH=amd64
+          make package PRODUCT=instaunit-${GITHUB_SHA}-darwin-amd64 GOOS=darwin GOARCH=amd64
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
@@ -36,8 +36,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/linux_amd64/instaunit-${GITHUB_SHA::8}-linux-amd64.tgz
-          asset_name: instaunit-${GITHUB_SHA::8}-linux-amd64.tgz
+          asset_path: ./target/linux_amd64/instaunit-${{ github.sha }}-linux-amd64.tgz
+          asset_name: instaunit-${{ github.sha }}-linux-amd64.tgz
           asset_content_type: application/x-tgz
       - name: Upload artifact
         id: upload_artifact_freebsd_amd64
@@ -46,8 +46,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/freebsd_amd64/instaunit-${GITHUB_SHA::8}-freebsd-amd64.tgz
-          asset_name: instaunit-${GITHUB_SHA::8}-freebsd-amd64.tgz
+          asset_path: ./target/freebsd_amd64/instaunit-${{ github.sha }}-freebsd-amd64.tgz
+          asset_name: instaunit-${{ github.sha }}-freebsd-amd64.tgz
           asset_content_type: application/x-tgz
       - name: Upload artifact
         id: upload_artifact_darwin_amd64
@@ -56,6 +56,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/darwin_amd64/instaunit-${GITHUB_SHA::8}-darwin-amd64.tgz
-          asset_name: instaunit-${GITHUB_SHA::8}-darwin-amd64.tgz
+          asset_path: ./target/darwin_amd64/instaunit-${{ github.sha }}-darwin-amd64.tgz
+          asset_name: instaunit-${{ github.sha }}-darwin-amd64.tgz
           asset_content_type: application/x-tgz
