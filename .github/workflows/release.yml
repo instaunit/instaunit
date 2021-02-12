@@ -36,7 +36,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/linux_amd64/instaunit-${{ github.sha }}-linux-amd64.tgz
+          asset_path: ./target/instaunit-${{ github.sha }}-linux-amd64.tgz
           asset_name: instaunit-${{ github.sha }}-linux-amd64.tgz
           asset_content_type: application/x-tgz
       - name: Upload artifact
@@ -46,7 +46,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/freebsd_amd64/instaunit-${{ github.sha }}-freebsd-amd64.tgz
+          asset_path: ./target/instaunit-${{ github.sha }}-freebsd-amd64.tgz
           asset_name: instaunit-${{ github.sha }}-freebsd-amd64.tgz
           asset_content_type: application/x-tgz
       - name: Upload artifact
@@ -56,6 +56,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/darwin_amd64/instaunit-${{ github.sha }}-darwin-amd64.tgz
+          asset_path: ./target/instaunit-${{ github.sha }}-darwin-amd64.tgz
           asset_name: instaunit-${{ github.sha }}-darwin-amd64.tgz
           asset_content_type: application/x-tgz
