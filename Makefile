@@ -29,13 +29,9 @@ SRC = $(shell find src -name \*.go -print)
 # tests
 TEST_PKGS = $(MODULE)/hunit/...
 
-.PHONY: all test clean install release build package formula
+.PHONY: all test clean install build package
 
 all: build
-
-gate:
-	@echo && echo "AWS Profile: $(AWS_PROFILE)" && echo "    Version: $(VERSION)" && echo "     Branch: $(BRANCH)"
-	@echo && read -p "Release version $(VERSION)? [y/N] " -r continue && echo && [ "$${continue:-N}" = "y" ]
 
 $(TARGET_DIR)/bin/$(NAME): $(SRC)
 	(cd src && go build -ldflags="-X main.version=$(VERSION) -X main.githash=$(GITHASH)" -o $@ $(MAIN))
@@ -46,21 +42,6 @@ $(PACKAGE): $(TARGET_DIR)/bin/$(NAME)
 	(cd $(BUILD_DIR) && tar -zcf $(ARCHIVE) $(PRODUCT))
 
 package: $(PACKAGE)
-
-publish: package
-	aws s3 cp --acl public-read $(PACKAGE) $(ARTIFACTS)/$(VERSION)/$(ARCHIVE)
-
-formula: publish
-	$(PWD)/build/update-formula -v $(VERSION) -o $(TARGET_DIR)/$(NAME).rb $(PACKAGE)
-	aws s3 cp --acl public-read $(TARGET_DIR)/$(NAME).rb $(ARTIFACTS)/$(LATEST)/$(NAME).rb
-	aws s3 cp --acl public-read $(TARGET_DIR)/$(NAME).rb $(ARTIFACTS)/$(VERSION)/$(NAME).rb
-	@echo "\nHomebrew formula for version $(VERSION):\n\thttps://instaunit.s3.amazonaws.com/releases/$(LATEST)/$(NAME).rb"
-
-release: gate test ## Build for all supported architectures
-	make publish PRODUCT=$(NAME)-$(VERSION)-linux-amd64 GOOS=linux GOARCH=amd64
-	make publish PRODUCT=$(NAME)-$(VERSION)-freebsd-amd64 GOOS=freebsd GOARCH=amd64
-	make formula PRODUCT=$(NAME)-$(VERSION)-darwin-amd64 GOOS=darwin GOARCH=amd64
-	@echo && echo "Tag this release:\n\t$ git commit -a -m \"Version $(VERSION)\" && git tag $(VERSION)" && echo
 
 install: build ## Build and install
 	install -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/
