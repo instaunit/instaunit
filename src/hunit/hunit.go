@@ -18,6 +18,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
 
+	"github.com/bww/go-util/v1/debug"
 	textutil "github.com/bww/go-util/v1/text"
 	"github.com/gorilla/websocket"
 )
@@ -472,11 +473,16 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		"response": vdef,
 	})
 
+	// update request with final context
+	result.Context = context
+
 	// assertions
 	if assert := c.Response.Assert; assert != nil {
 		ok, err := assert.Bool(context.Variables)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("Could not evaluate assertion: %v", err)
+			b := &strings.Builder{}
+			debug.Dumpf(b, context.Variables)
+			return nil, nil, nil, fmt.Errorf("Could not evaluate assertion: %v\n%s", err, b.String())
 		}
 		if !ok {
 			result.Error(&ScriptError{"Script assertion failed", true, ok, assert})

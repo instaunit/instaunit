@@ -12,6 +12,7 @@ type Result struct {
 	Errors  []string      `json:"errors,omitempty"`
 	Reqdata []byte        `json:"request_data,omitempty"`
 	Rspdata []byte        `json:"response_data,omitempty"`
+	Context Context       `json:"context"`
 	Runtime time.Duration `json:"duration"`
 }
 
