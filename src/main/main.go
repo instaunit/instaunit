@@ -82,6 +82,7 @@ func app() int {
 		fDebug           = cmdline.Bool("debug", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode. Overrides: $HUNIT_DEBUG.")
 		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal. Overrides: $HUNIT_COLOR_OUTPUT.")
 		fVerbose         = cmdline.Bool("verbose", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_VERBOSE and $VERBOSE.")
+		fQuiet           = cmdline.Bool("quiet", strToBool(os.Getenv("HUNIT_QUIET")), "Minimal output; generally only errors. Overrides: $HUNIT_QUIET and $QUIET.")
 		fVersion         = cmdline.Bool("version", false, "Display the version and exit.")
 	)
 	cmdline.Var(&headerSpecs, "header", "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
@@ -111,7 +112,9 @@ func app() int {
 	if *fDumpResponse {
 		options |= test.OptionDisplayResponses
 	}
-	if debug.VERBOSE {
+	if *fQuiet {
+		options |= test.OptionQuiet
+	} else if debug.VERBOSE {
 		options |= test.OptionDisplayRequests | test.OptionDisplayResponses
 	}
 
@@ -221,7 +224,7 @@ func app() int {
 	if *fExec != "" {
 		var proc *exec.Process
 		var err error
-		proc, done, err = execCommandAsync(exec.NewCommand(*fExec, *fExec), *fExecLog)
+		proc, done, err = execCommandAsync(options, exec.NewCommand(*fExec, *fExec), *fExecLog)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * %v\n", err)
 			return 1
@@ -263,7 +266,9 @@ func app() int {
 			color.New(colorErr...).Println("* * *", err)
 			return 1
 		} else if b := c.Binary; b != nil && b.Path == *fExec && b.Checksum == sum.Checksum {
-			fmt.Println("----> Using results cache:", cachePath)
+			if !options.On(test.OptionQuiet) {
+				fmt.Println("----> Using results cache:", cachePath)
+			}
 			rcache = c
 		} else {
 			fmt.Println("----> Results cache is outdated:", cachePath)
@@ -271,7 +276,9 @@ func app() int {
 	}
 
 	if len(awaitURLs) > 0 {
-		fmt.Println("----> Waiting for resources:", strings.Join(awaitURLs, ", "))
+		if !options.On(test.OptionQuiet) {
+			fmt.Println("----> Waiting for resources:", strings.Join(awaitURLs, ", "))
+		}
 		err := await.Await(context.Background(), awaitURLs, 0)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Error waiting for resources: %v\n", err)
@@ -372,7 +379,7 @@ suites:
 		}
 
 		if len(suite.Setup) > 0 {
-			if execCommands(suite.Setup) != nil {
+			if execCommands(options, suite.Setup) != nil {
 				continue suites
 			}
 		}
@@ -380,7 +387,7 @@ suites:
 		if suite.Exec != nil {
 			cmd := suite.Exec
 			cmd.Environment = exec.Environ(cmd.Environment)
-			proc, _, err = execCommandAsync(*cmd, *fExecLog) // ignore done on per-suite tests
+			proc, _, err = execCommandAsync(options, *cmd, *fExecLog) // ignore done on per-suite tests
 			if err != nil {
 				color.New(colorErr...).Printf("* * * %v\n", err)
 				continue suites
@@ -463,7 +470,7 @@ suites:
 		}
 
 		if len(suite.Teardown) > 0 {
-			if execCommands(suite.Teardown) != nil {
+			if execCommands(options, suite.Teardown) != nil {
 				continue suites
 			}
 		}
@@ -544,14 +551,17 @@ func reportResults(options test.Options, cached bool, results []*hunit.Result, t
 			success = false
 			*failures++
 		}
+		quiet := options.On(test.OptionQuiet) && r.Success
 		if r.Skipped {
-			color.New(color.FgYellow).Printf("----> %s%v", prefix, r.Name)
+			if !quiet {
+				color.New(color.FgYellow).Printf("----> %s%v", prefix, r.Name)
+			}
 			*skipped++
 			continue
 		}
-		if r.Success {
+		if r.Success && !quiet {
 			color.New(color.FgCyan).Printf("----> %s%v", prefix, r.Name)
-		} else {
+		} else if !r.Success {
 			color.New(color.FgRed).Printf("----> %s%v", prefix, r.Name)
 		}
 		if r.Errors != nil {
@@ -561,19 +571,21 @@ func reportResults(options test.Options, cached bool, results []*hunit.Result, t
 				fmt.Println()
 			}
 		}
-		preq := len(r.Reqdata) > 0 && ((options&test.OptionDisplayRequests) == test.OptionDisplayRequests || (!r.Success && (options&test.OptionDisplayRequestsOnFailure) == test.OptionDisplayRequestsOnFailure))
-		prsp := len(r.Rspdata) > 0 && ((options&test.OptionDisplayResponses) == test.OptionDisplayResponses || (!r.Success && (options&test.OptionDisplayResponsesOnFailure) == test.OptionDisplayResponsesOnFailure))
-		if preq {
-			fmt.Println(text.Indent(string(r.Reqdata), "      > "))
-		}
-		if preq && prsp {
-			fmt.Println("      * ")
-		}
-		if prsp {
-			fmt.Println(text.Indent(string(r.Rspdata), "      < "))
-		}
-		if preq || prsp {
-			fmt.Println()
+		if !quiet {
+			preq := len(r.Reqdata) > 0 && ((options&test.OptionDisplayRequests) == test.OptionDisplayRequests || (!r.Success && (options&test.OptionDisplayRequestsOnFailure) == test.OptionDisplayRequestsOnFailure))
+			prsp := len(r.Rspdata) > 0 && ((options&test.OptionDisplayResponses) == test.OptionDisplayResponses || (!r.Success && (options&test.OptionDisplayResponsesOnFailure) == test.OptionDisplayResponsesOnFailure))
+			if preq {
+				fmt.Println(text.Indent(string(r.Reqdata), "      > "))
+			}
+			if preq && prsp {
+				fmt.Println("      * ")
+			}
+			if prsp {
+				fmt.Println(text.Indent(string(r.Rspdata), "      < "))
+			}
+			if preq || prsp {
+				fmt.Println()
+			}
 		}
 	}
 	return success
@@ -581,7 +593,7 @@ func reportResults(options test.Options, cached bool, results []*hunit.Result, t
 
 // Execute a set of commands in sequence, allowing each to terminate before
 // the next is executed.
-func execCommands(cmds []*exec.Command) error {
+func execCommands(options test.Options, cmds []*exec.Command) error {
 	for i, e := range cmds {
 		if i > 0 && debug.VERBOSE {
 			fmt.Println()
@@ -617,7 +629,7 @@ func execCommands(cmds []*exec.Command) error {
 }
 
 // Execute a single command and do not wait for it to terminate
-func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, <-chan struct{}, error) {
+func execCommandAsync(options test.Options, cmd exec.Command, logs string) (*exec.Process, <-chan struct{}, error) {
 	if cmd.Command == "" {
 		return nil, nil, fmt.Errorf("Empty command (did you set 'run'?)")
 	}
@@ -630,6 +642,9 @@ func execCommandAsync(cmd exec.Command, logs string) (*exec.Process, <-chan stru
 			return nil, nil, fmt.Errorf("Could not open exec log: %v", err)
 		}
 		wout, werr = out, out
+	} else if options.On(test.OptionQuiet) {
+		wout = exec.NewDiscardWriter()
+		werr = exec.NewDiscardWriter()
 	} else {
 		wout = exec.NewPrefixWriter(syncStdout, "      ◇ ")
 		werr = exec.NewPrefixWriter(syncStdout, color.New(color.FgRed).Sprint("      ◆ "))

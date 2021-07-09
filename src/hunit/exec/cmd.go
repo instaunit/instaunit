@@ -15,6 +15,16 @@ import (
 
 const newline = '\n'
 
+// A writer that discards output
+type discardWriter struct{}
+
+func (s discardWriter) Write(p []byte) (int, error) { return len(p), nil }
+func (s discardWriter) Close() error                { return nil }
+
+func NewDiscardWriter() discardWriter {
+	return discardWriter{}
+}
+
 // A writer that indents lines with a prefix string
 type prefixWriter struct {
 	writer io.Writer

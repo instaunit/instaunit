@@ -7,17 +7,22 @@ import (
 )
 
 // Options
-type Options uint32
+type Options uint64
+
+func (o Options) On(v int) bool {
+	return (o & Options(v)) == Options(v)
+}
 
 const (
-	OptionNone                         = 0
-	OptionDebug                        = 1 << 0
-	OptionEntityTrimTrailingWhitespace = 1 << 1
-	OptionInterpolateVariables         = 1 << 2
-	OptionDisplayRequests              = 1 << 3
-	OptionDisplayResponses             = 1 << 4
-	OptionDisplayRequestsOnFailure     = 1 << 5
-	OptionDisplayResponsesOnFailure    = 1 << 6
+	OptionNone                         = iota
+	OptionDebug                        = 1 << iota
+	OptionQuiet                        = 1 << iota
+	OptionEntityTrimTrailingWhitespace = 1 << iota
+	OptionInterpolateVariables         = 1 << iota
+	OptionDisplayRequests              = 1 << iota
+	OptionDisplayResponses             = 1 << iota
+	OptionDisplayRequestsOnFailure     = 1 << iota
+	OptionDisplayResponsesOnFailure    = 1 << iota
 )
 
 // Basic credentials
