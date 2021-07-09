@@ -559,10 +559,10 @@ func reportResults(options test.Options, cached bool, results []*hunit.Result, t
 			*skipped++
 			continue
 		}
-		if r.Success && !quiet {
-			color.New(color.FgCyan).Printf("----> %s%v", prefix, r.Name)
-		} else if !r.Success {
+		if !r.Success {
 			color.New(color.FgRed).Printf("----> %s%v", prefix, r.Name)
+		} else if !options.On(test.OptionQuiet) {
+			color.New(color.FgCyan).Printf("----> %s%v", prefix, r.Name)
 		}
 		if r.Errors != nil {
 			for _, e := range r.Errors {
