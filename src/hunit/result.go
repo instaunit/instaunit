@@ -62,6 +62,7 @@ type Stats struct {
 
 func NewStats(v []*Result) Stats {
 	s := make(map[string]RouteStats)
+	var rids []string
 
 	for _, e := range v {
 		if r := e.Route; r != nil {
@@ -70,6 +71,7 @@ func NewStats(v []*Result) Stats {
 			if t, ok = s[r.Id]; !ok {
 				t.Route = r
 				t.Statuses = make(map[int]StatusStats)
+				rids = append(rids, r.Id)
 			}
 			x := t.Statuses[e.Status]
 			x.Count++
@@ -81,8 +83,8 @@ func NewStats(v []*Result) Stats {
 	}
 
 	d := make([]RouteStats, 0, len(s))
-	for _, e := range s {
-		d = append(d, e)
+	for _, e := range rids {
+		d = append(d, s[e])
 	}
 
 	return Stats{
