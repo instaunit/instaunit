@@ -469,6 +469,23 @@ suites:
 			wcache.AddSuite(sum, results)
 		}
 
+		stats := hunit.NewStats(results)
+		if len(stats.Routes) > 0 {
+			color.New(colorSuite...).Println("\n====> Summary")
+			for _, e := range stats.Routes {
+				fmt.Printf("----> %s ", e.Route.Name)
+				var i int
+				for s, n := range e.Statuses {
+					if i > 0 {
+						fmt.Print(", ")
+					}
+					fmt.Printf("%d: %d", s, n)
+					i++
+				}
+				fmt.Println()
+			}
+		}
+
 		if len(suite.Teardown) > 0 {
 			if execCommands(options, suite.Teardown) != nil {
 				continue suites

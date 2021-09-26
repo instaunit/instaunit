@@ -388,6 +388,9 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		return result.Error(err), nil, vars, nil
 	}
 
+	// note the result status
+	result.Status = rsp.StatusCode
+
 	// if we have route headers defined, add a route to the result
 	if id := rsp.Header.Get("X-Route-Id"); id != "" {
 		result.Route = &route.Route{

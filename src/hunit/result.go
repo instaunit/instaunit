@@ -37,3 +37,43 @@ func (r *Result) Error(e error) *Result {
 	r.Errors = append(r.Errors, e.Error())
 	return r
 }
+
+// Route states
+type RouteStats struct {
+	Route    *route.Route
+	Requests int         // request count
+	Statuses map[int]int // result status counts
+}
+
+// Result set stats
+type Stats struct {
+	Routes []RouteStats // distinct routes
+}
+
+func NewStats(v []*Result) Stats {
+	s := make(map[string]RouteStats)
+
+	for _, e := range v {
+		if r := e.Route; r != nil {
+			var t RouteStats
+			var ok bool
+			if t, ok = s[r.Id]; !ok {
+				t.Route = r
+				t.Statuses = make(map[int]int)
+			}
+			t.Requests++
+			n := t.Statuses[e.Status]
+			t.Statuses[e.Status] = n + 1
+			s[r.Id] = t
+		}
+	}
+
+	d := make([]RouteStats, 0, len(s))
+	for _, e := range s {
+		d = append(d, e)
+	}
+
+	return Stats{
+		Routes: d,
+	}
+}
