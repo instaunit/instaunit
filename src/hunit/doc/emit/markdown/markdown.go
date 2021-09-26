@@ -119,7 +119,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c emit.Case) error {
 	if c.Case.Title != "" {
 		t = strings.TrimSpace(c.Case.Title)
 	} else if c.Route != nil && c.Route.Name != "" {
-		t = fmt.Sprintf("%s %s", c.Case.Request.Method, c.Route.Name)
+		t = c.Route.Name
 	} else {
 		t = fmt.Sprintf("%s %s", c.Case.Request.Method, c.Case.Request.URL)
 	}

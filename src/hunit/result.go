@@ -39,10 +39,20 @@ func (r *Result) Error(e error) *Result {
 }
 
 // Route states
+type StatusStats struct {
+	Count   int           // request count
+	Runtime time.Duration // total request runtime
+}
+
+func (s StatusStats) AvgRuntime() time.Duration {
+	return s.Runtime / time.Duration(s.Count)
+}
+
+// Route states
 type RouteStats struct {
 	Route    *route.Route
-	Requests int         // request count
-	Statuses map[int]int // result status counts
+	Requests int                 // request count
+	Statuses map[int]StatusStats // result status counts
 }
 
 // Result set stats
@@ -59,11 +69,13 @@ func NewStats(v []*Result) Stats {
 			var ok bool
 			if t, ok = s[r.Id]; !ok {
 				t.Route = r
-				t.Statuses = make(map[int]int)
+				t.Statuses = make(map[int]StatusStats)
 			}
+			x := t.Statuses[e.Status]
+			x.Count++
+			x.Runtime += e.Runtime
 			t.Requests++
-			n := t.Statuses[e.Status]
-			t.Statuses[e.Status] = n + 1
+			t.Statuses[e.Status] = x
 			s[r.Id] = t
 		}
 	}

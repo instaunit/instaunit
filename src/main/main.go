@@ -42,8 +42,9 @@ var ( // set at compile time via the linker
 )
 
 var (
-	colorErr   = []color.Attribute{color.FgYellow}
-	colorSuite = []color.Attribute{color.Bold}
+	colorErr    = []color.Attribute{color.FgYellow}
+	colorSuite  = []color.Attribute{color.Bold}
+	colorHeader = []color.Attribute{color.Bold}
 )
 
 var syncStdout = syncio.NewWriter(os.Stdout)
@@ -473,14 +474,19 @@ suites:
 		if len(stats.Routes) > 0 {
 			color.New(colorSuite...).Println("\n====> Summary")
 			for _, e := range stats.Routes {
-				fmt.Printf("----> %s ", e.Route.Name)
-				var i int
-				for s, n := range e.Statuses {
-					if i > 0 {
-						fmt.Print(", ")
+				fmt.Printf("----> %s\n", e.Route.Name)
+				var width int
+				labels := make(map[int]string)
+				for s, _ := range e.Statuses {
+					v := fmt.Sprintf("%d %s", s, http.StatusText(s))
+					labels[s] = v
+					if l := len(v); l > width {
+						width = l
 					}
-					fmt.Printf("%d: %d", s, n)
-					i++
+				}
+				spec := fmt.Sprintf("%%%ds", width)
+				for s, x := range e.Statuses {
+					fmt.Printf("      "+spec+": %d cases, %v avg duration\n", labels[s], x.Count, x.AvgRuntime())
 				}
 				fmt.Println()
 			}
