@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/http"
 	"sort"
 	"strings"
 
+	"github.com/instaunit/instaunit/hunit/doc/emit"
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
 	"github.com/instaunit/instaunit/hunit/text/slug"
@@ -17,13 +17,17 @@ import (
 type Generator struct {
 	w        io.WriteCloser
 	b        *bytes.Buffer
-	sections map[string]string
+	sections []string
+	sectmap  map[string]string
 	slugs    map[string]int
 }
 
 // Produce a new emitter
 func New(w io.WriteCloser) *Generator {
-	return &Generator{w, nil, make(map[string]string), nil}
+	return &Generator{
+		w:       w,
+		sectmap: make(map[string]string),
+	}
 }
 
 // Init a suite
@@ -60,8 +64,8 @@ func (g *Generator) Close() error {
 }
 
 // Generate documentation
-func (g *Generator) Case(conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
-	return g.generate(g.b, conf, c, req, reqdata, rsp, rspdata)
+func (g *Generator) Case(conf test.Config, c emit.Case) error {
+	return g.generate(g.b, conf, c)
 }
 
 // Generate documentation preamble
@@ -91,7 +95,8 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 
 	doc += "## Contents\n\n"
 
-	for s, t := range g.sections {
+	for _, e := range g.sections {
+		s, t := e, g.sectmap[e]
 		doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(t), s)
 	}
 
@@ -106,40 +111,45 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 }
 
 // Generate documentation
-func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+func (g *Generator) generate(w io.Writer, conf test.Config, c emit.Case) error {
 	var err error
 	var doc string
 
 	var t string
-	if c.Title != "" {
-		t = strings.TrimSpace(c.Title)
+	if c.Case.Title != "" {
+		t = strings.TrimSpace(c.Case.Title)
+	} else if c.Route != nil && c.Route.Name != "" {
+		t = fmt.Sprintf("%s %s", c.Case.Request.Method, c.Route.Name)
 	} else {
-		t = fmt.Sprintf("%s %s", c.Request.Method, c.Request.URL)
+		t = fmt.Sprintf("%s %s", c.Case.Request.Method, c.Case.Request.URL)
 	}
 
 	doc += fmt.Sprintf("## %s\n\n", t)
 	var s string
 	s, g.slugs = slug.Github(t, g.slugs)
-	g.sections[s] = t
-
-	if c.Comments != "" {
-		doc += strings.TrimSpace(c.Comments) + "\n\n"
+	if _, ok := g.sectmap[s]; !ok {
+		g.sections = append(g.sections, s)
+		g.sectmap[s] = t
 	}
 
-	if c.Params != nil {
+	if c.Case.Comments != "" {
+		doc += strings.TrimSpace(c.Case.Comments) + "\n\n"
+	}
+
+	if c.Case.Params != nil {
 		types, maxkey, maxtype := false, 5, 5
 		var tmap map[string]string
 
 		params := make(map[string]string)
-		keys := make([]string, len(c.Params))
+		keys := make([]string, len(c.Case.Params))
 		i := 0
-		for k, _ := range c.Params {
+		for k, _ := range c.Case.Params {
 			keys[i] = k
 			i++
 		}
 		sort.Strings(keys)
 
-		for k, v := range c.Params {
+		for k, v := range c.Case.Params {
 			t := strings.TrimSpace(k)
 			v = strings.TrimSpace(v)
 			if l := len(t); l > maxkey {
@@ -187,30 +197,30 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
 		doc += "\n\n"
 	}
 
-	if req != nil {
+	if c.Request != nil {
 		b := &bytes.Buffer{}
-		if len(reqdata) > 0 && conf.Doc.FormatEntities {
-			t := text.Coalesce(c.Request.Format, req.Header.Get("Content-Type"))
-			f, err := text.FormatEntity([]byte(reqdata), t)
+		if len(c.Reqdata) > 0 && conf.Doc.FormatEntities {
+			t := text.Coalesce(c.Case.Request.Format, c.Request.Header.Get("Content-Type"))
+			f, err := text.FormatEntity([]byte(c.Reqdata), t)
 			if err == nil {
-				reqdata = string(f)
+				c.Reqdata = f
 			} else if err != nil && err != text.ErrUnsupportedContentType {
 				fmt.Printf("* * * Invalid request entity could not be formatted: %v\n", t)
 			}
 		}
-		err = text.WriteRequest(b, req, reqdata)
+		err = text.WriteRequest(b, c.Request, string(c.Reqdata))
 		if err != nil {
 			return err
 		}
-		if c.Request.Title != "" {
-			doc += fmt.Sprintf("### %s\n\n", strings.TrimSpace(c.Request.Title))
+		if c.Case.Request.Title != "" {
+			doc += fmt.Sprintf("### %s\n\n", strings.TrimSpace(c.Case.Request.Title))
 		} else if b.Len() > 0 {
 			doc += "### Example request\n\n"
-		} else if c.Request.Comments != "" {
+		} else if c.Case.Request.Comments != "" {
 			doc += "### Request\n\n"
 		}
-		if c.Request.Comments != "" {
-			doc += strings.TrimSpace(c.Request.Comments) + "\n\n"
+		if c.Case.Request.Comments != "" {
+			doc += strings.TrimSpace(c.Case.Request.Comments) + "\n\n"
 		}
 		if b.Len() > 0 {
 			doc += "```http\n"
@@ -219,30 +229,30 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
 		}
 	}
 
-	if rsp != nil {
+	if c.Response != nil {
 		b := &bytes.Buffer{}
-		if len(rspdata) > 0 && conf.Doc.FormatEntities {
-			t := text.Coalesce(c.Response.Format, rsp.Header.Get("Content-Type"))
-			f, err := text.FormatEntity(rspdata, t)
+		if len(c.Rspdata) > 0 && conf.Doc.FormatEntities {
+			t := text.Coalesce(c.Case.Response.Format, c.Response.Header.Get("Content-Type"))
+			f, err := text.FormatEntity(c.Rspdata, t)
 			if err == nil {
-				rspdata = f
+				c.Rspdata = f
 			} else if err != nil && err != text.ErrUnsupportedContentType {
 				fmt.Printf("* * * Invalid entity could not be formatted: %v\n", t)
 			}
 		}
-		err = text.WriteResponse(b, rsp, rspdata)
+		err = text.WriteResponse(b, c.Response, c.Rspdata)
 		if err != nil {
 			return err
 		}
-		if c.Response.Title != "" {
-			doc += fmt.Sprintf("### %s\n\n", strings.TrimSpace(c.Response.Title))
+		if c.Case.Response.Title != "" {
+			doc += fmt.Sprintf("### %s\n\n", strings.TrimSpace(c.Case.Response.Title))
 		} else if b.Len() > 0 {
 			doc += "### Example response\n\n"
-		} else if c.Response.Comments != "" {
+		} else if c.Case.Response.Comments != "" {
 			doc += "### Response\n\n"
 		}
-		if c.Response.Comments != "" {
-			doc += strings.TrimSpace(c.Response.Comments) + "\n\n"
+		if c.Case.Response.Comments != "" {
+			doc += strings.TrimSpace(c.Case.Response.Comments) + "\n\n"
 		}
 		if b.Len() > 0 {
 			doc += "```http\n"

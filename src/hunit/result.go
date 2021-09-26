@@ -2,6 +2,8 @@ package hunit
 
 import (
 	"time"
+
+	"github.com/instaunit/instaunit/hunit/route"
 )
 
 // A test result
@@ -9,9 +11,11 @@ type Result struct {
 	Name    string        `json:"name"`
 	Success bool          `json:"success"`
 	Skipped bool          `json:"skipped"`
+	Route   *route.Route  `json:"route,omitempty"`
 	Errors  []string      `json:"errors,omitempty"`
 	Reqdata []byte        `json:"request_data,omitempty"`
 	Rspdata []byte        `json:"response_data,omitempty"`
+	Status  int           `json:"status,omitempty"`
 	Context Context       `json:"context"`
 	Runtime time.Duration `json:"duration"`
 }

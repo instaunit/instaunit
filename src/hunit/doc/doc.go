@@ -3,7 +3,6 @@ package doc
 import (
 	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/instaunit/instaunit/hunit/doc/emit"
 	"github.com/instaunit/instaunit/hunit/doc/emit/markdown"
@@ -13,7 +12,7 @@ import (
 // Implemented by documentation generators
 type Generator interface {
 	Init(*test.Suite) error
-	Case(test.Config, test.Case, *http.Request, string, *http.Response, []byte) error
+	Case(test.Config, emit.Case) error
 	Finalize(*test.Suite) error
 	Close() error
 }
