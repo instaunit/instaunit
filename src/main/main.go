@@ -482,12 +482,8 @@ suites:
 						fmt.Println()
 					}
 					fmt.Printf("----> %s", e.Route.Name)
-					if d, _ := e.AvgRuntime(hunit.SuccessStatusFilter); d > 0 {
-						fmt.Printf(" (%v avg on success)\n", d)
-					} else {
-						fmt.Println()
-					}
 					if *fRoutesVerbose {
+						fmt.Println()
 						var width int
 						var keys []int
 						labels := make(map[int]string)
@@ -504,6 +500,10 @@ suites:
 						for _, s := range keys {
 							x := e.Statuses[s]
 							fmt.Printf("      "+spec+" %d requests, %v avg\n", labels[s], x.Count, x.AvgRuntime())
+						}
+					} else {
+						if d, n := e.AvgRuntime(hunit.SuccessStatusFilter); n > 0 {
+							fmt.Printf(" (%d successful @ %v avg)\n", n, d)
 						}
 					}
 				}
