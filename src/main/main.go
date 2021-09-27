@@ -73,7 +73,8 @@ func app() int {
 		fDoctype         = cmdline.String("doc:type", coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"), "The format to generate documentation in. Overrides: $HUNIT_DOC_TYPE.")
 		fDocInclHTTP     = cmdline.Bool("doc:include-http", strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")), "Include HTTP in request and response examples (as opposed to just routes and entities). Overrides: $HUNIT_DOC_INCLUDE_HTTP.")
 		fDocFormatEntity = cmdline.Bool("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")), "Pretty-print supported request and response entities in documentation output. Overrides: $HUNIT_DOC_FORMAT_ENTITIES.")
-		fStats           = cmdline.Bool("stats", strToBool(os.Getenv("HUNIT_STATS")), "Display a smmary of stats for requests made in each test suite. Overrides: $HUNIT_STATS.")
+		fRoutes          = cmdline.Bool("routes", strToBool(os.Getenv("HUNIT_ROUTES")), "Display a smmary of routes for requests made in each test suite. Overrides: $HUNIT_ROUTES.")
+		fRoutesVerbose   = cmdline.Bool("routes:verbose", strToBool(os.Getenv("HUNIT_ROUTES_VERBOSE")), "Display a breakdown of response codes for routes encountered in each test suite. Overrides: $HUNIT_ROUTES_VERBOSE.")
 		fReport          = cmdline.Bool("report", strToBool(os.Getenv("HUNIT_REPORT")), "Generate a report. Overrides: $HUNIT_REPORT.")
 		fReportPath      = cmdline.String("report:output", coalesce(os.Getenv("HUNIT_REPORT_OUTPUT"), "./reports"), "The directory in which generated reports should be written. Overrides: $HUNIT_REPORT_OUTPUT.")
 		fReportType      = cmdline.String("report:type", coalesce(os.Getenv("HUNIT_REPORT_TYPE"), "junit"), "The format to generate reports in. Overrides: $HUNIT_REPORT_TYPE.")
@@ -472,31 +473,38 @@ suites:
 			wcache.AddSuite(sum, results)
 		}
 
-		if *fStats {
+		if *fRoutes || *fRoutesVerbose {
 			stats := hunit.NewStats(results)
 			if len(stats.Routes) > 0 {
-				color.New(colorSuite...).Println("====> Stats for", base)
+				color.New(colorSuite...).Println("====>", base, "endpoint routes")
 				for i, e := range stats.Routes {
-					if i > 0 {
+					if *fRoutesVerbose && i > 0 {
 						fmt.Println()
 					}
-					fmt.Printf("----> %s\n", e.Route.Name)
-					var width int
-					var keys []int
-					labels := make(map[int]string)
-					for s, _ := range e.Statuses {
-						v := fmt.Sprintf("%d %s", s, http.StatusText(s))
-						keys = append(keys, s)
-						labels[s] = v
-						if l := len(v); l > width {
-							width = l
-						}
+					fmt.Printf("----> %s", e.Route.Name)
+					if d, _ := e.AvgRuntime(hunit.SuccessStatusFilter); d > 0 {
+						fmt.Printf(" (%v avg on success)\n", d)
+					} else {
+						fmt.Println()
 					}
-					spec := fmt.Sprintf("%%-%ds", width)
-					sort.Ints(keys)
-					for _, s := range keys {
-						x := e.Statuses[s]
-						fmt.Printf("      "+spec+" %d requests, %v avg duration\n", labels[s], x.Count, x.AvgRuntime())
+					if *fRoutesVerbose {
+						var width int
+						var keys []int
+						labels := make(map[int]string)
+						for s, _ := range e.Statuses {
+							v := fmt.Sprintf("%d %s", s, http.StatusText(s))
+							keys = append(keys, s)
+							labels[s] = v
+							if l := len(v); l > width {
+								width = l
+							}
+						}
+						spec := fmt.Sprintf("%%-%ds", width)
+						sort.Ints(keys)
+						for _, s := range keys {
+							x := e.Statuses[s]
+							fmt.Printf("      "+spec+" %d requests, %v avg\n", labels[s], x.Count, x.AvgRuntime())
+						}
 					}
 				}
 			}

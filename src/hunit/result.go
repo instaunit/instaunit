@@ -38,6 +38,12 @@ func (r *Result) Error(e error) *Result {
 	return r
 }
 
+type StatusFilter func(int) bool
+
+func SuccessStatusFilter(s int) bool {
+	return !(s >= 400 && s < 600)
+}
+
 // Route states
 type StatusStats struct {
 	Count   int           // request count
@@ -55,9 +61,40 @@ type RouteStats struct {
 	Statuses map[int]StatusStats // result status counts
 }
 
+func (s RouteStats) AvgRuntime(filter StatusFilter) (time.Duration, int) {
+	var t time.Duration
+	var n int
+	for k, v := range s.Statuses {
+		if filter == nil || filter(k) {
+			t += v.Runtime
+			n += v.Count
+		}
+	}
+	if n > 0 {
+		return t / time.Duration(n), n
+	} else {
+		return -1, n
+	}
+}
+
 // Result set stats
 type Stats struct {
 	Routes []RouteStats // distinct routes
+}
+
+func (s Stats) AvgRuntime(filter StatusFilter) (time.Duration, int) {
+	var t time.Duration
+	var n int
+	for _, e := range s.Routes {
+		x, y := e.AvgRuntime(filter)
+		t += x
+		n += y
+	}
+	if n > 0 {
+		return t / time.Duration(n), n
+	} else {
+		return -1, n
+	}
 }
 
 func NewStats(v []*Result) Stats {
