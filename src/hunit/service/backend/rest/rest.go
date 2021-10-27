@@ -3,12 +3,14 @@ package rest
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -18,9 +20,11 @@ import (
 	"github.com/instaunit/instaunit/hunit/net/await"
 	"github.com/instaunit/instaunit/hunit/service"
 
-	"github.com/bww/go-router"
+	"github.com/bww/go-router/v1"
+	"github.com/bww/go-router/v1/entity"
 	"github.com/bww/go-util/v1/debug"
 	"github.com/bww/go-util/v1/text"
+
 	humanize "github.com/dustin/go-humanize"
 )
 
@@ -61,10 +65,35 @@ func New(conf service.Config) (service.Service, error) {
 		}
 	}
 
+	entityHandler := func(endpoints []Endpoint) router.Handler {
+		return func(req *router.Request, cxt router.Context) (*router.Response, error) {
+			for _, e := range endpoints {
+				if routeMatches(e, req) {
+					bodyMatch, err := bodyMatches(e.Request.Entity, req)
+					if err != nil {
+						return nil, err
+					}
+
+					if bodyMatch {
+						return handleRequest((*http.Request)(req), cxt, e, vars)
+					}
+				}
+			}
+			return nil, fmt.Errorf("%s * * * Could not find matching route based on request body: %v: %v\n", prefix, req.URL, err)
+		}
+	}
+
 	r := router.New()
+
 	for _, e := range suite.Endpoints {
+		routeHandler := handler(e)
 		if e.Request != nil {
-			r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
+			// if endpoint has request entity defined, use entityHandler
+			if e.Request.Entity != "" {
+				routeHandler = entityHandler(suite.Endpoints)
+			}
+
+			r.Add(e.Request.Path, routeHandler).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
 		}
 	}
 
@@ -74,6 +103,68 @@ func New(conf service.Config) (service.Service, error) {
 		router: r,
 		vars:   vars,
 	}, nil
+}
+
+// routeMatches is a simple check to see if request method, path, and query parameters match
+// what is defined in the endpoint
+func routeMatches(e Endpoint, req *router.Request) bool {
+	if req.RequestURI != e.Request.Path {
+		return false
+	}
+
+	if !stringInSlice(req.Method, e.Request.Methods) {
+		return false
+	}
+
+	var params url.Values
+	for k, v := range e.Request.Params {
+		params.Add(k, v)
+	}
+
+	if params.Encode() != req.URL.Query().Encode() {
+		return false
+	}
+
+	return true
+}
+
+func bodyMatches(entityBody string, req *router.Request) (bool, error) {
+	reqBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		fmt.Printf("%s * * * Could not read request reqBody: %v: %v\n", prefix, req.URL, err)
+		return false, err
+	}
+
+	// replace request body in case it's needed later
+	req.Body = ioutil.NopCloser(bytes.NewReader(reqBody))
+
+	// check if request body is not empty, check if matches this endpoint's entity
+	if len(reqBody) != 0 {
+		var reqData interface{}
+		if err := json.Unmarshal(reqBody, &reqData); err != nil {
+			fmt.Printf("%s * * * Could not unmarshal request body: %v: %v\n", prefix, req.URL, err)
+			return false, err
+		}
+
+		var endpointBody interface{}
+		if err := json.Unmarshal([]byte(entityBody), &endpointBody); err != nil {
+			fmt.Printf("%s * * * Could not unmarshal endpoint entity: %v: %v, Entity: %s\n", prefix, req.URL, err, entityBody)
+			return false, err
+		}
+
+		return reflect.DeepEqual(endpointBody, reqData), nil
+	}
+
+	return false, fmt.Errorf("")
+}
+
+func stringInSlice(needle string, haystack []string) bool {
+	for _, s := range haystack {
+		if strings.ToLower(needle) == strings.ToLower(s) {
+			return true
+		}
+	}
+	return false
 }
 
 // Start the service
@@ -227,7 +318,14 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 
 	x := router.NewResponse(r.Status)
 	if l := len(e); l > 0 {
-		x.SetStringEntity("binary/octet-stream", e)
+		ent, err := entity.NewString("binary/octet-stream", e)
+		if err != nil {
+			return nil, err
+		}
+		_, err = x.SetEntity(ent)
+		if err != nil {
+			return nil, err
+		}
 		x.SetHeader("Content-Length", strconv.FormatInt(int64(l), 10))
 	}
 	for k, v := range r.Headers {
