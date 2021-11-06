@@ -86,11 +86,14 @@ func New(conf service.Config) (service.Service, error) {
 	r := router.New()
 
 	for _, e := range suite.Endpoints {
-		routeHandler := handler(e)
 		if e.Request != nil {
+			var routeHandler router.Handler
+
 			// if endpoint has request entity defined, use entityHandler
 			if e.Request.Entity != "" {
 				routeHandler = entityHandler(suite.Endpoints)
+			} else {
+				routeHandler = handler(e)
 			}
 
 			r.Add(e.Request.Path, routeHandler).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
@@ -131,7 +134,6 @@ func routeMatches(e Endpoint, req *router.Request) bool {
 func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 	reqBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		fmt.Printf("%s * * * Could not read request reqBody: %v: %v\n", prefix, req.URL, err)
 		return false, err
 	}
 
@@ -142,20 +144,18 @@ func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 	if len(reqBody) != 0 {
 		var reqData interface{}
 		if err := json.Unmarshal(reqBody, &reqData); err != nil {
-			fmt.Printf("%s * * * Could not unmarshal request body: %v: %v\n", prefix, req.URL, err)
 			return false, err
 		}
 
 		var endpointBody interface{}
 		if err := json.Unmarshal([]byte(entityBody), &endpointBody); err != nil {
-			fmt.Printf("%s * * * Could not unmarshal endpoint entity: %v: %v, Entity: %s\n", prefix, req.URL, err, entityBody)
 			return false, err
 		}
 
 		return reflect.DeepEqual(endpointBody, reqData), nil
 	}
 
-	return false, fmt.Errorf("")
+	return false, nil
 }
 
 func stringInSlice(needle string, haystack []string) bool {
