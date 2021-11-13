@@ -65,38 +65,22 @@ func New(conf service.Config) (service.Service, error) {
 		}
 	}
 
-	entityHandler := func(endpoints []Endpoint) router.Handler {
-		return func(req *router.Request, cxt router.Context) (*router.Response, error) {
-			for _, e := range endpoints {
-				if routeMatches(e, req) {
-					bodyMatch, err := bodyMatches(e.Request.Entity, req)
-					if err != nil {
-						return nil, err
-					}
-
-					if bodyMatch {
-						return handleRequest((*http.Request)(req), cxt, e, vars)
-					}
-				}
-			}
-			return nil, fmt.Errorf("%s * * * Could not find matching route based on request body: %v: %v\n", prefix, req.URL, err)
-		}
-	}
-
 	r := router.New()
 
 	for _, e := range suite.Endpoints {
 		if e.Request != nil {
-			var routeHandler router.Handler
+			endpoint := e
+			r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params)).Match(func(req *router.Request, route router.Route) bool {
+				if endpoint.Request.Entity == "" {
+					return true
+				}
 
-			// if endpoint has request entity defined, use entityHandler
-			if e.Request.Entity != "" {
-				routeHandler = entityHandler(suite.Endpoints)
-			} else {
-				routeHandler = handler(e)
-			}
-
-			r.Add(e.Request.Path, routeHandler).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
+				bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
+				if err != nil {
+					fmt.Printf("%s * * * Error checking if request body matches expected endpoint entity: %v: %v\n", prefix, req.URL, err)
+				}
+				return bodyMatch
+			})
 		}
 	}
 
@@ -108,29 +92,8 @@ func New(conf service.Config) (service.Service, error) {
 	}, nil
 }
 
-// routeMatches is a simple check to see if request method, path, and query parameters match
-// what is defined in the endpoint
-func routeMatches(e Endpoint, req *router.Request) bool {
-	if req.RequestURI != e.Request.Path {
-		return false
-	}
-
-	if !stringInSlice(req.Method, e.Request.Methods) {
-		return false
-	}
-
-	var params url.Values
-	for k, v := range e.Request.Params {
-		params.Add(k, v)
-	}
-
-	if params.Encode() != req.URL.Query().Encode() {
-		return false
-	}
-
-	return true
-}
-
+// bodyMatches compares the request entity object with the request body for a match
+// because it has to read the body from the router.Request it replaces it for future processing
 func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 	reqBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -156,15 +119,6 @@ func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 	}
 
 	return false, nil
-}
-
-func stringInSlice(needle string, haystack []string) bool {
-	for _, s := range haystack {
-		if strings.ToLower(needle) == strings.ToLower(s) {
-			return true
-		}
-	}
-	return false
 }
 
 // Start the service
