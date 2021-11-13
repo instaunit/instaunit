@@ -92,8 +92,8 @@ func New(conf service.Config) (service.Service, error) {
 	}, nil
 }
 
-// bodyMatches compares the request entity object with the request body for a match
-// because it has to read the body from the router.Request it replaces it for future processing
+// bodyMatches compares the request entity object with the request body for a match.
+// Since it has to read the body from the router.Request it replaces it for future processing
 func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 	reqBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
