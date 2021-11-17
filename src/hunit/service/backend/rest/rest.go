@@ -70,17 +70,16 @@ func New(conf service.Config) (service.Service, error) {
 	for _, e := range suite.Endpoints {
 		if e.Request != nil {
 			endpoint := e
-			r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params)).Match(func(req *router.Request, route router.Route) bool {
-				if endpoint.Request.Entity == "" {
-					return true
-				}
-
-				bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
-				if err != nil {
-					fmt.Printf("%s * * * Error checking if request body matches expected endpoint entity: %v: %v\n", prefix, req.URL, err)
-				}
-				return bodyMatch
-			})
+			b := r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
+			if endpoint.Request.Entity != "" {
+				b.Match(func(req *router.Request, route router.Route) bool {
+					bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
+					if err != nil {
+						fmt.Printf("%s * * * Error checking if request body matches expected endpoint entity: %v: %v\n", prefix, req.URL, err)
+					}
+					return bodyMatch
+				})
+			}
 		}
 	}
 
