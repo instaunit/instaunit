@@ -3,12 +3,14 @@ package rest
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -18,9 +20,11 @@ import (
 	"github.com/instaunit/instaunit/hunit/net/await"
 	"github.com/instaunit/instaunit/hunit/service"
 
-	"github.com/bww/go-router"
+	"github.com/bww/go-router/v1"
+	"github.com/bww/go-router/v1/entity"
 	"github.com/bww/go-util/v1/debug"
 	"github.com/bww/go-util/v1/text"
+
 	humanize "github.com/dustin/go-humanize"
 )
 
@@ -62,9 +66,20 @@ func New(conf service.Config) (service.Service, error) {
 	}
 
 	r := router.New()
+
 	for _, e := range suite.Endpoints {
 		if e.Request != nil {
-			r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
+			endpoint := e
+			b := r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
+			if endpoint.Request.Entity != "" {
+				b.Match(func(req *router.Request, route router.Route) bool {
+					bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
+					if err != nil {
+						fmt.Printf("%s * * * Error checking if request body matches expected endpoint entity: %v: %v\n", prefix, req.URL, err)
+					}
+					return bodyMatch
+				})
+			}
 		}
 	}
 
@@ -74,6 +89,35 @@ func New(conf service.Config) (service.Service, error) {
 		router: r,
 		vars:   vars,
 	}, nil
+}
+
+// bodyMatches compares the request entity object with the request body for a match.
+// Since it has to read the body from the router.Request it replaces it for future processing
+func bodyMatches(entityBody string, req *router.Request) (bool, error) {
+	reqBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return false, err
+	}
+
+	// replace request body in case it's needed later
+	req.Body = ioutil.NopCloser(bytes.NewReader(reqBody))
+
+	// check if request body is not empty, check if matches this endpoint's entity
+	if len(reqBody) != 0 {
+		var reqData interface{}
+		if err := json.Unmarshal(reqBody, &reqData); err != nil {
+			return false, err
+		}
+
+		var endpointBody interface{}
+		if err := json.Unmarshal([]byte(entityBody), &endpointBody); err != nil {
+			return false, err
+		}
+
+		return reflect.DeepEqual(endpointBody, reqData), nil
+	}
+
+	return false, nil
 }
 
 // Start the service
@@ -227,7 +271,14 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 
 	x := router.NewResponse(r.Status)
 	if l := len(e); l > 0 {
-		x.SetStringEntity("binary/octet-stream", e)
+		ent, err := entity.NewString("binary/octet-stream", e)
+		if err != nil {
+			return nil, err
+		}
+		_, err = x.SetEntity(ent)
+		if err != nil {
+			return nil, err
+		}
 		x.SetHeader("Content-Length", strconv.FormatInt(int64(l), 10))
 	}
 	for k, v := range r.Headers {

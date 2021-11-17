@@ -8,3 +8,6 @@
 
 # Apple garbage
 .DS_Store
+
+# IDE files
+.idea/
