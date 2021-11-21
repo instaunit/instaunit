@@ -64,6 +64,11 @@ func TestInterpolateVariables(t *testing.T) {
 			`Before ${a
 }, after.`, `Before 123, after.`, nil,
 		},
+		{
+			`{
+	"id": "${proj_mon1.response.value.id"
+}`, "", ErrEndOfInput,
+		},
 	}
 	for _, e := range tests {
 		testInterpolate(t, e.Text, e.Expect, e.Error, context)

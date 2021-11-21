@@ -191,7 +191,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		v := textutil.Stringer(e)
 		r, err := interpolateIfRequired(context, v)
 		if err != nil {
-			return result.Error(err), nil, nil, nil
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, nil, nil
 		}
 		locals[k] = r
 	}
@@ -206,7 +206,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	// update the method
 	method, err := interpolateIfRequired(context, c.Request.Method)
 	if err != nil {
-		return result.Error(err), nil, vars, nil
+		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	} else if method == "" {
 		return nil, nil, nil, fmt.Errorf("Request requires a method (set 'method')")
 	}
@@ -214,7 +214,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	// update the url
 	url, err := interpolateIfRequired(context, c.Request.URL)
 	if err != nil {
-		return result.Error(err), nil, vars, nil
+		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	}
 	if !isAbsoluteURL(url) {
 		url = joinPath(context.BaseURL, url)
@@ -235,7 +235,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 
 	url, err = interpolateIfRequired(context, url)
 	if err != nil {
-		return result.Error(err), nil, vars, nil
+		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	} else if url == "" {
 		return nil, nil, nil, fmt.Errorf("Request requires a URL (set 'url')")
 	}
@@ -248,11 +248,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		for k, v := range context.Headers {
 			k, err = interpolateIfRequired(context, k)
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
 			v, err = interpolateIfRequired(context, v)
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
 			header.Add(k, v)
 		}
@@ -262,11 +262,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		for k, v := range c.Request.Headers {
 			k, err = interpolateIfRequired(context, k)
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
 			v, err = interpolateIfRequired(context, v)
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
 			header.Add(k, v)
 		}
@@ -275,11 +275,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	if c.Request.BasicAuth != nil {
 		u, err := interpolateIfRequired(context, c.Request.BasicAuth.Username)
 		if err != nil {
-			return result.Error(err), nil, vars, nil
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
 		p, err := interpolateIfRequired(context, c.Request.BasicAuth.Password)
 		if err != nil {
-			return result.Error(err), nil, vars, nil
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
 		header.Set("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(u+":"+p))))
 	}
@@ -298,11 +298,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		}
 		url, err := urlWithScheme("ws", url)
 		if err != nil {
-			return result.Error(err), nil, vars, nil
+			return result.Error(fmt.Errorf("Could not upgrade URL scheme: %w", err)), nil, vars, nil
 		}
 		conn, _, err := dialer.Dial(url, header)
 		if err != nil {
-			return result.Error(err), nil, vars, nil
+			return result.Error(fmt.Errorf("Could not dial websocket: %w", err)), nil, vars, nil
 		}
 
 		monitor := NewStreamMonitor(url, context, conn, messages)
@@ -325,7 +325,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		case test.IOModeSync:
 			r, err := monitor.Finish(time.Time{})
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not finish I/O: %w", err)), nil, vars, nil
 			}
 			return r, nil, vars, nil
 		case test.IOModeAsync:
@@ -340,7 +340,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	if c.Request.Entity != "" {
 		reqdata, err = interpolateIfRequired(context, c.Request.Entity)
 		if err != nil {
-			return result.Error(err), nil, vars, nil
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		} else {
 			entity = bytes.NewBuffer([]byte(reqdata))
 		}
@@ -360,11 +360,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		for k, v := range c.Request.Cookies {
 			k, err = interpolateIfRequired(context, k)
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
 			v, err = interpolateIfRequired(context, v)
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
 			req.AddCookie(&http.Cookie{Name: k, Value: v})
 		}
@@ -373,7 +373,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	reqbuf := &bytes.Buffer{}
 	err = text.WriteRequest(reqbuf, req, reqdata)
 	if err != nil {
-		return result.Error(err), nil, vars, nil
+		return result.Error(fmt.Errorf("Could not write: %w", err)), nil, vars, nil
 	} else {
 		result.Reqdata = reqbuf.Bytes()
 	}
@@ -383,7 +383,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		defer rsp.Body.Close()
 	}
 	if err != nil {
-		return result.Error(err), nil, vars, nil
+		return result.Error(fmt.Errorf("Could not read response body: %w", err)), nil, vars, nil
 	}
 
 	// check the response status
@@ -399,7 +399,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 
 	contentType, err = interpolateIfRequired(context, contentType)
 	if err != nil {
-		return result.Error(err), nil, vars, nil
+		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	}
 
 	// check response headers, if necessary
@@ -407,11 +407,11 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		for k, v := range headers {
 			k, err = interpolateIfRequired(context, k)
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
 			v, err = interpolateIfRequired(context, v)
 			if err != nil {
-				return result.Error(err), nil, vars, nil
+				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
 			result.AssertEqual(v, rsp.Header.Get(k), "Headers do not match: %v", k)
 		}
@@ -422,7 +422,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	if rsp.Body != nil {
 		rspdata, err = ioutil.ReadAll(rsp.Body)
 		if err != nil {
-			result.Error(err)
+			result.Error(fmt.Errorf("Could not read response body: %w", err))
 		}
 	}
 
@@ -431,7 +431,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	if c.Response.Comparison == test.CompareSemantic {
 		rspvalue, err = unmarshalEntity(context, contentType, rspdata)
 		if err != nil {
-			return result.Error(err), nil, vars, nil
+			return result.Error(fmt.Errorf("Could not unmarshal entity: %w", err)), nil, vars, nil
 		}
 	} else if c.Id != "" { // attempt it but don't produce an error if we fail
 		val, err := unmarshalEntity(context, contentType, rspdata)
@@ -444,19 +444,19 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	if entity := c.Response.Entity; entity != "" {
 		entity, err = interpolateIfRequired(context, entity)
 		if err != nil {
-			return result.Error(err), nil, vars, nil
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
 		if len(rspdata) == 0 {
 			result.AssertEqual(entity, "", "Entities do not match")
 		} else if err = entitiesEqual(context, c.Response.Comparison, contentType, []byte(entity), rspvalue); err != nil {
-			result.Error(err)
+			result.Error(fmt.Errorf("Could not compare entities: %w", err))
 		}
 	}
 
 	rspbuf := &bytes.Buffer{}
 	err = text.WriteResponse(rspbuf, rsp, rspdata)
 	if err != nil {
-		return result.Error(err), nil, vars, nil
+		return result.Error(fmt.Errorf("Could not write: %w", err)), nil, vars, nil
 	} else {
 		result.Rspdata = rspbuf.Bytes()
 	}
