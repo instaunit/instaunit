@@ -2,6 +2,8 @@ package hunit
 
 import (
 	"time"
+
+	"github.com/instaunit/instaunit/hunit/route"
 )
 
 // A test result
@@ -9,9 +11,11 @@ type Result struct {
 	Name    string        `json:"name"`
 	Success bool          `json:"success"`
 	Skipped bool          `json:"skipped"`
+	Route   *route.Route  `json:"route,omitempty"`
 	Errors  []string      `json:"errors,omitempty"`
 	Reqdata []byte        `json:"request_data,omitempty"`
 	Rspdata []byte        `json:"response_data,omitempty"`
+	Status  int           `json:"status,omitempty"`
 	Context Context       `json:"context"`
 	Runtime time.Duration `json:"duration"`
 }
@@ -32,4 +36,95 @@ func (r *Result) Error(e error) *Result {
 	r.Success = false
 	r.Errors = append(r.Errors, e.Error())
 	return r
+}
+
+type StatusFilter func(int) bool
+
+func SuccessStatusFilter(s int) bool {
+	return !(s >= 400 && s < 600)
+}
+
+// Route states
+type StatusStats struct {
+	Count   int           // request count
+	Runtime time.Duration // total request runtime
+}
+
+func (s StatusStats) AvgRuntime() time.Duration {
+	return s.Runtime / time.Duration(s.Count)
+}
+
+// Route states
+type RouteStats struct {
+	Route    *route.Route
+	Requests int                 // request count
+	Statuses map[int]StatusStats // result status counts
+}
+
+func (s RouteStats) AvgRuntime(filter StatusFilter) (time.Duration, int) {
+	var t time.Duration
+	var n int
+	for k, v := range s.Statuses {
+		if filter == nil || filter(k) {
+			t += v.Runtime
+			n += v.Count
+		}
+	}
+	if n > 0 {
+		return t / time.Duration(n), n
+	} else {
+		return -1, n
+	}
+}
+
+// Result set stats
+type Stats struct {
+	Routes []RouteStats // distinct routes
+}
+
+func (s Stats) AvgRuntime(filter StatusFilter) (time.Duration, int) {
+	var t time.Duration
+	var n int
+	for _, e := range s.Routes {
+		x, y := e.AvgRuntime(filter)
+		t += x
+		n += y
+	}
+	if n > 0 {
+		return t / time.Duration(n), n
+	} else {
+		return -1, n
+	}
+}
+
+func NewStats(v []*Result) Stats {
+	s := make(map[string]RouteStats)
+	var rids []string
+
+	for _, e := range v {
+		if r := e.Route; r != nil {
+			var t RouteStats
+			var ok bool
+			if t, ok = s[r.Id]; !ok {
+				t.Route = r
+				t.Statuses = make(map[int]StatusStats)
+				rids = append(rids, r.Id)
+			}
+			x := t.Statuses[e.Status]
+			x.Count++
+			x.Runtime += e.Runtime
+			t.Requests++
+			t.Statuses[e.Status] = x
+			s[r.Id] = t
+		}
+	}
+
+	d := make([]RouteStats, 0, len(s))
+	for _, e := range rids {
+		d = append(d, s[e])
+	}
+
+	return Stats{
+		Routes: d,
+	}
 }

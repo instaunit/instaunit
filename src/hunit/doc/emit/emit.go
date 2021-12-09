@@ -2,7 +2,21 @@ package emit
 
 import (
 	"fmt"
+	"net/http"
+
+	"github.com/instaunit/instaunit/hunit/route"
+	"github.com/instaunit/instaunit/hunit/test"
 )
+
+// A test case to be documented
+type Case struct {
+	Case     test.Case
+	Route    *route.Route
+	Request  *http.Request
+	Reqdata  []byte
+	Response *http.Response
+	Rspdata  []byte
+}
 
 // Documentation format type
 type Doctype uint32

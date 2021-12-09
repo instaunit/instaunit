@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/doc"
+	"github.com/instaunit/instaunit/hunit/doc/emit"
 	"github.com/instaunit/instaunit/hunit/expr"
+	"github.com/instaunit/instaunit/hunit/route"
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
 
@@ -386,6 +388,17 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 		return result.Error(fmt.Errorf("Could not read response body: %w", err)), nil, vars, nil
 	}
 
+	// note the result status
+	result.Status = rsp.StatusCode
+
+	// if we have route headers defined, add a route to the result
+	if id := rsp.Header.Get("X-Route-Id"); id != "" {
+		result.Route = &route.Route{
+			Id:   id,
+			Name: rsp.Header.Get("X-Route-Name"),
+		}
+	}
+
 	// check the response status
 	result.AssertEqual(c.Response.Status, rsp.StatusCode, "Unexpected status code")
 
@@ -492,7 +505,14 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	// generate documentation if necessary
 	if c.Documented() && len(context.Gendoc) > 0 {
 		for _, e := range context.Gendoc {
-			err := e.Case(context.Config, c, req, reqdata, rsp, rspdata)
+			err := e.Case(context.Config, emit.Case{
+				Case:     c,
+				Route:    result.Route,
+				Request:  req,
+				Reqdata:  []byte(reqdata),
+				Response: rsp,
+				Rspdata:  rspdata,
+			})
 			if err != nil {
 				return nil, nil, nil, fmt.Errorf("Could not generate documentation: %v", err)
 			}
