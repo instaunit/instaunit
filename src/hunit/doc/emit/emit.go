@@ -9,7 +9,6 @@ type Doctype uint32
 
 const (
 	DoctypeMarkdown Doctype = iota
-	DoctypeConfluence
 	DoctypeInvalid
 )
 

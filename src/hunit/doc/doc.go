@@ -13,7 +13,7 @@ import (
 // Implemented by documentation generators
 type Generator interface {
 	Init(*test.Suite) error
-	Case(test.Config, test.Case, *http.Request, string, *http.Response, []byte) error
+	Case(*test.Suite, test.Case, *http.Request, string, *http.Response, []byte) error
 	Finalize(*test.Suite) error
 	Close() error
 }

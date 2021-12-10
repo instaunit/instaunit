@@ -13,17 +13,28 @@ import (
 	"github.com/instaunit/instaunit/hunit/text/slug"
 )
 
+const defaultSection = ""
+
+type entry struct {
+	Slug, Title, Section string
+}
+
+type section struct {
+	Title   string
+	Entries []entry
+}
+
 // A markdown documentation generator
 type Generator struct {
-	w        io.WriteCloser
-	b        *bytes.Buffer
-	sections map[string]string
-	slugs    map[string]int
+	w       io.WriteCloser
+	b       *bytes.Buffer
+	entries []entry
+	slugs   map[string]int
 }
 
 // Produce a new emitter
 func New(w io.WriteCloser) *Generator {
-	return &Generator{w, nil, make(map[string]string), nil}
+	return &Generator{w, nil, make([]entry, 0), nil}
 }
 
 // Init a suite
@@ -60,8 +71,8 @@ func (g *Generator) Close() error {
 }
 
 // Generate documentation
-func (g *Generator) Case(conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
-	return g.generate(g.b, conf, c, req, reqdata, rsp, rspdata)
+func (g *Generator) Case(suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+	return g.generate(g.b, suite, c, req, reqdata, rsp, rspdata)
 }
 
 // Generate documentation preamble
@@ -91,8 +102,42 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 
 	doc += "## Contents\n\n"
 
-	for s, t := range g.sections {
-		doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(t), s)
+	if len(suite.TOC.Sections) > 0 {
+		groups := make(map[string][]entry)
+		rem := make([]entry, 0)
+		for _, e := range g.entries {
+			if e.Section == defaultSection {
+				rem = append(rem, e)
+			} else {
+				s, ok := groups[e.Section]
+				if !ok {
+					s = make([]entry, 0, 1)
+				}
+				s = append(s, e)
+				groups[e.Section] = s
+			}
+		}
+		for i, e := range suite.TOC.Sections {
+			if i > 0 {
+				doc += "\n"
+			}
+			doc += fmt.Sprintf("### %s\n\n", text.Coalesce(e.Title, e.Key))
+			for _, e := range groups[e.Key] {
+				doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(e.Title), e.Slug)
+			}
+		}
+		if !suite.TOC.SuppressUnassigned && len(rem) > 0 {
+			if len(suite.TOC.Sections) > 0 {
+				doc += "\n### Additional\n\n"
+			}
+			for _, e := range rem {
+				doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(e.Title), e.Slug)
+			}
+		}
+	} else {
+		for _, e := range g.entries {
+			doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(e.Title), e.Slug)
+		}
 	}
 
 	doc += "\n"
@@ -106,7 +151,7 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 }
 
 // Generate documentation
-func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+func (g *Generator) generate(w io.Writer, suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
 	var err error
 	var doc string
 
@@ -120,7 +165,11 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
 	doc += fmt.Sprintf("## %s\n\n", t)
 	var s string
 	s, g.slugs = slug.Github(t, g.slugs)
-	g.sections[s] = t
+	g.entries = append(g.entries, entry{
+		Slug:    s,
+		Title:   t,
+		Section: c.Section,
+	})
 
 	if c.Comments != "" {
 		doc += strings.TrimSpace(c.Comments) + "\n\n"
@@ -189,7 +238,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
 
 	if req != nil {
 		b := &bytes.Buffer{}
-		if len(reqdata) > 0 && conf.Doc.FormatEntities {
+		if len(reqdata) > 0 && suite.Config.Doc.FormatEntities {
 			t := text.Coalesce(c.Request.Format, req.Header.Get("Content-Type"))
 			f, err := text.FormatEntity([]byte(reqdata), t)
 			if err == nil {
@@ -221,7 +270,7 @@ func (g *Generator) generate(w io.Writer, conf test.Config, c test.Case, req *ht
 
 	if rsp != nil {
 		b := &bytes.Buffer{}
-		if len(rspdata) > 0 && conf.Doc.FormatEntities {
+		if len(rspdata) > 0 && suite.Config.Doc.FormatEntities {
 			t := text.Coalesce(c.Response.Format, rsp.Header.Get("Content-Type"))
 			f, err := text.FormatEntity(rspdata, t)
 			if err == nil {
