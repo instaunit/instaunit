@@ -108,10 +108,10 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 
 	if len(suite.TOC.Sections) > 0 {
 		groups := make(map[string][]entry)
-		rem := make([]entry, 0)
+		extra := make([]entry, 0)
 		for _, e := range g.entries {
 			if e.Section == unassignedSection {
-				rem = append(rem, e)
+				extra = append(extra, e)
 			} else {
 				s, ok := groups[e.Section]
 				if !ok {
@@ -130,11 +130,11 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 				doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(e.Title), e.Slug)
 			}
 		}
-		if !suite.TOC.SuppressUnassigned && len(rem) > 0 {
+		if !suite.TOC.SuppressUnassigned && len(extra) > 0 {
 			if len(suite.TOC.Sections) > 0 {
 				doc += "\n### Additional\n\n"
 			}
-			for _, e := range rem {
+			for _, e := range extra {
 				doc += fmt.Sprintf("* [%s](#%s)\n", strings.TrimSpace(e.Title), e.Slug)
 			}
 		}
