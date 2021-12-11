@@ -43,6 +43,7 @@ type Section struct {
 // Table of contents
 type TOC struct {
 	Sections           []Section `yaml:"sections"`
+	Comments           string    `yaml:"doc"`
 	SuppressUnassigned bool      `yaml:"suppress-unassigned"`
 }
 

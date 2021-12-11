@@ -102,6 +102,10 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 
 	doc += "## Contents\n\n"
 
+	if s := suite.TOC.Comments; s != "" {
+		doc += s + "\n\n"
+	}
+
 	if len(suite.TOC.Sections) > 0 {
 		groups := make(map[string][]entry)
 		rem := make([]entry, 0)
