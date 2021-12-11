@@ -13,7 +13,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/text/slug"
 )
 
-const defaultSection = ""
+const unassignedSection = ""
 
 type entry struct {
 	Slug, Title, Section string
@@ -110,7 +110,7 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 		groups := make(map[string][]entry)
 		rem := make([]entry, 0)
 		for _, e := range g.entries {
-			if e.Section == defaultSection {
+			if e.Section == unassignedSection {
 				rem = append(rem, e)
 			} else {
 				s, ok := groups[e.Section]
