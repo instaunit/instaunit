@@ -34,10 +34,24 @@ type Dependencies struct {
 	Timeout   time.Duration `yaml:"timeout"`
 }
 
+// A contents section
+type Section struct {
+	Key   string `yaml:"key"`
+	Title string `yaml:"title"`
+}
+
+// Table of contents
+type TOC struct {
+	Sections           []Section `yaml:"sections"`
+	Comments           string    `yaml:"doc"`
+	SuppressUnassigned bool      `yaml:"suppress-unassigned"`
+}
+
 // A test suite
 type Suite struct {
 	Title    string                 `yaml:"title"`
 	Comments string                 `yaml:"doc"`
+	TOC      TOC                    `yaml:"toc"`
 	Cases    []Case                 `yaml:"tests"`
 	Config   Config                 `yaml:"options"`
 	Setup    []*exec.Command        `yaml:"setup"`

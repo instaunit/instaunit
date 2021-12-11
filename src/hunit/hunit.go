@@ -61,20 +61,20 @@ func (c *Context) AddVars(vars ...expr.Variables) {
 }
 
 // Run a test suite
-func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
+func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 	var futures []FutureResult
 	results := make([]*Result, 0)
-	globals := dupVars(s.Globals)
+	globals := dupVars(suite.Globals)
 
 	for _, e := range context.Gendoc {
-		err := e.Init(s)
+		err := e.Init(suite)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	precond := true
-	for _, e := range s.Cases {
+	for _, e := range suite.Cases {
 		if !precond {
 			results = append(results, &Result{Name: fmt.Sprintf("%v %v (dependency failed)\n", e.Request.Method, e.Request.URL), Skipped: true})
 			continue
@@ -113,7 +113,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 				lock.Lock()
 				g := dupVars(globals)
 				lock.Unlock()
-				r, f, v, err := RunTest(e, context.WithVars(g))
+				r, f, v, err := RunTest(suite, e, context.WithVars(g))
 				lock.Lock()
 				if v != nil && e.Id != "" {
 					globals[e.Id] = v
@@ -146,7 +146,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 	}
 
 	for _, e := range context.Gendoc {
-		err := e.Finalize(s)
+		err := e.Finalize(suite)
 		if err != nil {
 			return nil, err
 		}
@@ -170,7 +170,7 @@ func RunSuite(s *test.Suite, context Context) ([]*Result, error) {
 }
 
 // Run a test case
-func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variables, error) {
+func RunTest(suite *test.Suite, c test.Case, context Context) (*Result, FutureResult, expr.Variables, error) {
 	var vdef expr.Variables
 	start := time.Now()
 
@@ -492,7 +492,7 @@ func RunTest(c test.Case, context Context) (*Result, FutureResult, expr.Variable
 	// generate documentation if necessary
 	if c.Documented() && len(context.Gendoc) > 0 {
 		for _, e := range context.Gendoc {
-			err := e.Case(context.Config, c, req, reqdata, rsp, rspdata)
+			err := e.Case(suite, c, req, reqdata, rsp, rspdata)
 			if err != nil {
 				return nil, nil, nil, fmt.Errorf("Could not generate documentation: %v", err)
 			}

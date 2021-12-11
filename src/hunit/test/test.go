@@ -90,6 +90,7 @@ type Case struct {
 	Concurrent int                    `yaml:"concurrent"`
 	Gendoc     bool                   `yaml:"gendoc"`
 	Title      string                 `yaml:"title"`
+	Section    string                 `yaml:"section"`
 	Comments   string                 `yaml:"doc"`
 	Require    bool                   `yaml:"require"`
 	Params     map[string]string      `yaml:"params"`
