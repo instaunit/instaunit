@@ -6,10 +6,10 @@ type Content struct {
 }
 
 type Suite struct {
-	Title    string     `json:"title,omitempty"`
-	Detail   *Content   `json:"detail,omitempty"`
-	Sections []*Section `json:"sections,omitempty"`
-	Routes   []*Route   `json:"routes,omitempty"`
+	Title  string   `json:"title,omitempty"`
+	Detail *Content `json:"detail,omitempty"`
+	TOC    *TOC     `json:"toc,omitempty"`
+	Routes []*Route `json:"routes,omitempty"`
 }
 
 type Header struct {
@@ -17,12 +17,19 @@ type Header struct {
 	Detail *Content `json:"detail,omitempty"`
 }
 
+type TOC struct {
+	Detail   *Content   `json:"detail,omitempty"`
+	Sections []*Section `json:"sections,omitempty"`
+}
+
 type Section struct {
+	Key    string   `json:"key,omitempty"`
 	Title  string   `json:"title,omitempty"`
 	Detail *Content `json:"detail,omitempty"`
 }
 
 type Route struct {
+	Sections []string               `json:"sections,omitempty"`
 	Title    string                 `json:"title,omitempty"`
 	Detail   *Content               `json:"detail,omitempty"`
 	Method   string                 `json:"method,omitempty"`

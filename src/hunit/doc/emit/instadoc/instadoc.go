@@ -21,16 +21,39 @@ const (
 // A markdown documentation generator
 type Generator struct {
 	w      io.WriteCloser
+	toc    *TOC
 	routes []*Route
 }
 
 // Produce a new emitter
 func New(w io.WriteCloser) *Generator {
-	return &Generator{w, nil}
+	return &Generator{w, nil, nil}
 }
 
 // Init a suite
 func (g *Generator) Init(suite *test.Suite) error {
+	var sects []*Section
+	for _, e := range suite.TOC.Sections {
+		sects = append(sects, &Section{
+			Key:   e.Key,
+			Title: e.Title,
+		})
+	}
+
+	if len(sects) > 0 {
+		var detail *Content
+		if t := suite.TOC.Comments; t != "" {
+			detail = &Content{
+				Type: typeMarkdown,
+				Data: t,
+			}
+		}
+		g.toc = &TOC{
+			Detail:   detail,
+			Sections: sects,
+		}
+	}
+
 	g.routes = make([]*Route, 0)
 	return nil
 }
@@ -41,6 +64,7 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 	enc.SetIndent("", "  ")
 	return enc.Encode(Suite{
 		Title:  "Document",
+		TOC:    g.toc,
 		Routes: g.routes,
 	})
 }
@@ -58,6 +82,11 @@ func (g *Generator) Case(suite *test.Suite, c test.Case, req *http.Request, reqd
 // Generate documentation
 func (g *Generator) generate(suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
 	var err error
+
+	var sections []string
+	if c.Section != "" {
+		sections = []string{c.Section}
+	}
 
 	var title string
 	if c.Title != "" {
@@ -167,6 +196,7 @@ func (g *Generator) generate(suite *test.Suite, c test.Case, req *http.Request, 
 	}
 
 	g.routes = append(g.routes, &Route{
+		Sections: sections,
 		Title:    title,
 		Detail:   comment,
 		Method:   req.Method,
