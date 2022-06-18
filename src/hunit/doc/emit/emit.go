@@ -9,16 +9,19 @@ type Doctype uint32
 
 const (
 	DoctypeMarkdown Doctype = iota
+	DoctypeInstadoc
 	DoctypeInvalid
 )
 
 var doctypeNames = []string{
 	"markdown",
+	"instadoc",
 	"<invalid>",
 }
 
 var doctypeExts = []string{
 	".md",
+	".instadoc",
 	".???",
 }
 
@@ -27,6 +30,8 @@ func ParseDoctype(s string) (Doctype, error) {
 	switch s {
 	case "markdown":
 		return DoctypeMarkdown, nil
+	case "instadoc":
+		return DoctypeInstadoc, nil
 	default:
 		return DoctypeInvalid, fmt.Errorf("Unsupported type: %v", s)
 	}

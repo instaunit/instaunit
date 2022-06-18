@@ -1,0 +1,178 @@
+package instadoc
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"sort"
+	"strings"
+
+	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/text"
+)
+
+const (
+	typePlain    = "text/plain"
+	typeMarkdown = "text/markdown"
+)
+
+// A markdown documentation generator
+type Generator struct {
+	w      io.WriteCloser
+	routes []*Route
+}
+
+// Produce a new emitter
+func New(w io.WriteCloser) *Generator {
+	return &Generator{w, nil}
+}
+
+// Init a suite
+func (g *Generator) Init(suite *test.Suite) error {
+	g.routes = make([]*Route, 0)
+	return nil
+}
+
+// Finish a suite
+func (g *Generator) Finalize(suite *test.Suite) error {
+	enc := json.NewEncoder(g.w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(Suite{
+		Title:  "Document",
+		Routes: g.routes,
+	})
+}
+
+// Close the wroter
+func (g *Generator) Close() error {
+	return g.w.Close()
+}
+
+// Generate documentation
+func (g *Generator) Case(suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+	return g.generate(suite, c, req, reqdata, rsp, rspdata)
+}
+
+// Generate documentation
+func (g *Generator) generate(suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+	var err error
+
+	var title string
+	if c.Title != "" {
+		title = strings.TrimSpace(c.Title)
+	} else {
+		title = fmt.Sprintf("%s %s", c.Request.Method, c.Request.URL)
+	}
+
+	var comment *Content
+	if c.Comments != "" {
+		comment = &Content{
+			Type: typeMarkdown,
+			Data: strings.TrimSpace(c.Comments),
+		}
+	}
+
+	var params []*Parameter
+	if c.Params != nil {
+		params = make([]*Parameter, 0, len(c.Params))
+
+		keys := make([]string, 0, len(c.Params))
+		for k, _ := range c.Params {
+			keys = append(keys, k)
+		}
+
+		sort.Strings(keys)
+		for _, k := range keys {
+			params = append(params, &Parameter{
+				Name: strings.TrimSpace(k),
+				Type: typePlain,
+				Detail: &Content{
+					Type: typePlain,
+					Data: strings.TrimSpace(c.Params[k]),
+				},
+			})
+		}
+	}
+
+	var request *Listing
+	if req != nil {
+		b := &bytes.Buffer{}
+		if len(reqdata) > 0 && suite.Config.Doc.FormatEntities {
+			t := text.Coalesce(c.Request.Format, req.Header.Get("Content-Type"))
+			f, err := text.FormatEntity([]byte(reqdata), t)
+			if err == nil {
+				reqdata = string(f)
+			} else if err != nil && err != text.ErrUnsupportedContentType {
+				fmt.Printf("* * * Invalid request entity could not be formatted: %v\n", t)
+			}
+		}
+		err = text.WriteRequest(b, req, reqdata)
+		if err != nil {
+			return err
+		}
+		var comment *Content
+		if c.Request.Comments != "" {
+			comment = &Content{
+				Type: typeMarkdown,
+				Data: strings.TrimSpace(c.Request.Comments),
+			}
+		}
+		request = &Listing{
+			Title:  strings.TrimSpace(c.Request.Title),
+			Detail: comment,
+			Data:   string(b.Bytes()),
+		}
+	}
+
+	var response *Listing
+	if rsp != nil {
+		b := &bytes.Buffer{}
+		if len(rspdata) > 0 && suite.Config.Doc.FormatEntities {
+			t := text.Coalesce(c.Response.Format, rsp.Header.Get("Content-Type"))
+			f, err := text.FormatEntity(rspdata, t)
+			if err == nil {
+				rspdata = f
+			} else if err != nil && err != text.ErrUnsupportedContentType {
+				fmt.Printf("* * * Invalid entity could not be formatted: %v\n", t)
+			}
+		}
+		err = text.WriteResponse(b, rsp, rspdata)
+		if err != nil {
+			return err
+		}
+		var comment *Content
+		if c.Request.Comments != "" {
+			comment = &Content{
+				Type: typeMarkdown,
+				Data: strings.TrimSpace(c.Request.Comments),
+			}
+		}
+		response = &Listing{
+			Title:  strings.TrimSpace(c.Request.Title),
+			Detail: comment,
+			Data:   string(b.Bytes()),
+		}
+	}
+
+	var examples []*Example
+	if request != nil {
+		examples = []*Example{
+			{
+				Request:  request,
+				Response: response,
+			},
+		}
+	}
+
+	g.routes = append(g.routes, &Route{
+		Title:    title,
+		Detail:   comment,
+		Method:   req.Method,
+		Resource: req.URL.Path,
+		Params:   params,
+		Examples: examples,
+	})
+	return nil
+}
