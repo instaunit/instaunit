@@ -60,10 +60,19 @@ func (g *Generator) Init(suite *test.Suite) error {
 
 // Finish a suite
 func (g *Generator) Finalize(suite *test.Suite) error {
+	var detail *Content
+	if v := suite.Comments; v != "" {
+		detail = &Content{
+			Type: typeMarkdown,
+			Data: v,
+		}
+	}
+
 	enc := json.NewEncoder(g.w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(Suite{
-		Title:  "Document",
+		Title:  suite.Title,
+		Detail: detail,
 		TOC:    g.toc,
 		Routes: g.routes,
 	})
