@@ -464,6 +464,7 @@ func RunTest(suite *test.Suite, c test.Case, context Context) (*Result, FutureRe
 	// response variables
 	vdef = expr.Variables{
 		"headers": flattenHeader(rsp.Header),
+		"cookies": flattenCookies(rsp.Cookies()),
 		"entity":  rspdata,
 		"value":   rspvalue,
 		"status":  rsp.StatusCode,
@@ -515,6 +516,15 @@ func flattenHeader(header http.Header) map[string]string {
 		} else {
 			f[k] = ""
 		}
+	}
+	return f
+}
+
+// Flatten cookies to a one-to-one key-to-value map
+func flattenCookies(cookies []*http.Cookie) map[string]string {
+	f := make(map[string]string)
+	for _, v := range cookies {
+		f[v.Name] = v.Value
 	}
 	return f
 }
