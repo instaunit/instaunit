@@ -1,13 +1,37 @@
 package rest
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 	"sync"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
+
+type alternateErrors []error
+
+func (errs alternateErrors) Error() string {
+	switch len(errs) {
+	case 0:
+		return "No error"
+	case 1:
+		return errs[0].Error()
+	}
+
+	b := &strings.Builder{}
+	b.WriteString(fmt.Sprintf("One of %d possible errors occurred:\n", len(errs)))
+
+	for i, err := range errs {
+		b.WriteString("\n")
+		b.WriteString(fmt.Sprintf("#%d: %v\n", i+1, err))
+	}
+
+	return b.String()
+}
 
 // A request
 type Request struct {
@@ -43,29 +67,39 @@ type Suite struct {
 // Load a test suite
 func LoadSuite(src io.ReadCloser) (*Suite, error) {
 	suite := &Suite{}
-	var ferr error
+	var errs []error
 
 	data, err := ioutil.ReadAll(src)
 	if err != nil {
 		return nil, err
 	}
 
-	err = yaml.Unmarshal(data, suite)
+	err = unmarshal(data, suite)
 	if err != nil {
-		ferr = err
+		errs = append(errs, err)
 	}
 
 	if len(suite.Endpoints) < 1 {
 		var endpoints []Endpoint
-		err := yaml.Unmarshal(data, &endpoints)
+		err := unmarshal(data, &endpoints)
 		if err != nil {
-			return nil, coalesce(ferr, err)
+			errs = append(errs, err)
 		} else {
 			suite.Endpoints = endpoints
 		}
 	}
 
-	return suite, nil
+	if len(suite.Endpoints) < 1 && len(errs) > 0 {
+		return nil, alternateErrors(errs)
+	} else {
+		return suite, nil
+	}
+}
+
+func unmarshal(data []byte, dest interface{}) error {
+	dec := yaml.NewDecoder(bytes.NewReader(data))
+	dec.KnownFields(true)
+	return dec.Decode(dest)
 }
 
 // Return the first non-nil error or nil if there are none.
