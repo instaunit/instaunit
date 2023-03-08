@@ -1,10 +1,12 @@
 package runtime
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"os"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -19,12 +21,17 @@ func deprecated(a, b string) {
 
 // The standard library
 type stdlib struct {
-	Base64 stdBase64
-	JSON   stdJSON
+	Base64    stdBase64
+	RawBase64 stdBase64
+	JSON      stdJSON
 }
 
 // Builtins
-var Stdlib stdlib
+var Stdlib = stdlib{
+	Base64:    stdBase64{base64.StdEncoding},
+	RawBase64: stdBase64{base64.RawStdEncoding},
+	JSON:      stdJSON{},
+}
 
 // Generate a random string
 func (s stdlib) RandomString(n float64) string {
@@ -90,6 +97,24 @@ func (s stdlib) ToTitle(v string) string {
 // Trim space from both ends of a string
 func (s stdlib) TrimSpace(v string) string {
 	return strings.TrimSpace(v)
+}
+
+// Match a regular expression
+func (s stdlib) Match(expr, text string) (bool, error) {
+	r, err := regexp.Compile(expr)
+	if err != nil {
+		return false, err
+	}
+	return r.MatchString(text), nil
+}
+
+// Match and replace a regular expression
+func (s stdlib) Replace(expr, text, replace string) (string, error) {
+	r, err := regexp.Compile(expr)
+	if err != nil {
+		return "", err
+	}
+	return r.ReplaceAllString(text, replace), nil
 }
 
 // Get the current timestamp as time.Time
