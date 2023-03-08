@@ -6,14 +6,16 @@ import (
 )
 
 // base64 libs
-type stdBase64 struct{}
+type stdBase64 struct {
+	*base64.Encoding
+}
 
 func (s stdBase64) Encode(v interface{}) (string, error) {
 	switch c := v.(type) {
 	case []byte:
-		return base64.StdEncoding.EncodeToString(c), nil
+		return s.EncodeToString(c), nil
 	case string:
-		return base64.StdEncoding.EncodeToString([]byte(c)), nil
+		return s.EncodeToString([]byte(c)), nil
 	default:
 		return "", fmt.Errorf("Unsupported type: %T", v)
 	}
@@ -24,9 +26,9 @@ func (s stdBase64) Decode(v interface{}) (string, error) {
 	var err error
 	switch c := v.(type) {
 	case []byte:
-		d, err = base64.StdEncoding.DecodeString(string(c))
+		d, err = s.DecodeString(string(c))
 	case string:
-		d, err = base64.StdEncoding.DecodeString(c)
+		d, err = s.DecodeString(c)
 	default:
 		err = fmt.Errorf("Unsupported type: %T", v)
 	}
