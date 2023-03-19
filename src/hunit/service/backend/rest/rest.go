@@ -23,6 +23,7 @@ import (
 	"github.com/bww/go-router/v1"
 	"github.com/bww/go-router/v1/entity"
 	"github.com/bww/go-util/v1/debug"
+	"github.com/bww/go-util/v1/maps"
 	"github.com/bww/go-util/v1/text"
 
 	humanize "github.com/dustin/go-humanize"
@@ -61,7 +62,7 @@ func New(conf service.Config) (service.Service, error) {
 
 	handler := func(e Endpoint) router.Handler {
 		return func(req *router.Request, cxt router.Context) (*router.Response, error) {
-			return handleRequest((*http.Request)(req), cxt, e, vars)
+			return handleRequest((*http.Request)(req), cxt, e, maps.Copy(vars))
 		}
 	}
 
@@ -309,7 +310,6 @@ func handleResponse(rsp http.ResponseWriter, req *http.Request, res *router.Resp
 	}
 }
 
-// Create a
 func convertParams(p map[string]string) url.Values {
 	var r url.Values
 	if len(p) > 0 {
