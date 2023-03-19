@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bww/epl v1.1.2
 	github.com/bww/go-router v1.7.0
-	github.com/bww/go-util v1.14.1
+	github.com/bww/go-util v1.24.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.13.0
