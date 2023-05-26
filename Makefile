@@ -44,7 +44,8 @@ $(PACKAGE): $(TARGET_DIR)/bin/$(NAME)
 package: $(PACKAGE)
 
 install: build ## Build and install
-	install -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/
+	@echo "Using sudo to install; you may be prompted for a password..."
+	sudo install -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/
 
 test: ## Run tests
 	(cd src && go test $(FLAGS) $(TEST_PKGS))
