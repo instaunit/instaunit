@@ -17,6 +17,7 @@ jobs:
           make package VERSION=${{ github.ref }} PRODUCT=instaunit-${GITHUB_SHA}-linux-amd64 GOOS=linux GOARCH=amd64
           make package VERSION=${{ github.ref }} PRODUCT=instaunit-${GITHUB_SHA}-freebsd-amd64 GOOS=freebsd GOARCH=amd64
           make package VERSION=${{ github.ref }} PRODUCT=instaunit-${GITHUB_SHA}-darwin-amd64 GOOS=darwin GOARCH=amd64
+          make package VERSION=${{ github.ref }} PRODUCT=instaunit-${GITHUB_SHA}-darwin-arm64 GOOS=darwin GOARCH=arm64
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
@@ -56,4 +57,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./target/instaunit-${{ github.sha }}-darwin-amd64.tgz
           asset_name: instaunit-${{ github.sha }}-darwin-amd64.tgz
+          asset_content_type: application/x-tgz
+      - name: Upload artifact
+        id: upload_artifact_darwin_arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./target/instaunit-${{ github.sha }}-darwin-arm64.tgz
+          asset_name: instaunit-${{ github.sha }}-darwin-arm64.tgz
           asset_content_type: application/x-tgz
