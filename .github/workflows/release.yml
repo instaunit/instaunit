@@ -34,7 +34,7 @@ jobs:
             os: ubuntu-latest
           - target: freebsd
             arch: amd64
-            os: freebsd-latest
+            os: ubuntu-latest
           - target: darwin
             arch: amd64
             os: macos-latest
