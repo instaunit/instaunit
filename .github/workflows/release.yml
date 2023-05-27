@@ -57,7 +57,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.release.outputs.artifact_upload_url }}
           asset_path: ./target/instaunit-${{ github.sha }}-${{ matrix.target }}-${{ matrix.arch }}.tgz
           asset_name: instaunit-${{ github.sha }}-${{ matrix.target }}-${{ matrix.arch }}.tgz
           asset_content_type: application/x-tgz
