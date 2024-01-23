@@ -24,6 +24,7 @@ type stdlib struct {
 	Base64    stdBase64
 	RawBase64 stdBase64
 	JSON      stdJSON
+	URL       stdURL
 }
 
 // Builtins
@@ -31,6 +32,7 @@ var Stdlib = stdlib{
 	Base64:    stdBase64{base64.StdEncoding},
 	RawBase64: stdBase64{base64.RawStdEncoding},
 	JSON:      stdJSON{},
+	URL:       stdURL{},
 }
 
 // Generate a random string

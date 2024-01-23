@@ -10,4 +10,5 @@
 .DS_Store
 
 # IDE files
+.*.swp
 .idea/
