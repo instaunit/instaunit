@@ -61,12 +61,13 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 				} else {
 					id = fmt.Sprintf("%s:%s", k, m)
 				}
-				var reqcnt Reference
+				var reqcnt Payload
 				if req := e.Req; len(req.Data) > 0 {
-					reqcnt = Reference{
-						Content: map[string]Content{
-							text.Coalesce(firstValue(req.Req.Header["Content-Type"]), "text/plain"): Content{
-								Example: Value{Value: string(req.Data)},
+					ctype := text.Coalesce(firstValue(req.Req.Header["Content-Type"]), "text/plain")
+					reqcnt = Payload{
+						Content: map[string]Schema{
+							ctype: Schema{
+								Example: newValue(ctype, []byte(req.Data)),
 							},
 						},
 					}
@@ -79,18 +80,22 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 					Responses:   make(map[string]Status),
 				}
 			}
-			var rspcnt map[string]Content
+			var rspcnt map[string]Reference
 			if rsp := e.Rsp; len(rsp.Data) > 0 {
-				rspcnt = map[string]Content{
-					text.Coalesce(firstValue(rsp.Rsp.Header["Content-Type"]), "text/plain"): Content{
-						Example: Value{Value: string(rsp.Data)},
+				ctype := text.Coalesce(firstValue(rsp.Rsp.Header["Content-Type"]), "text/plain")
+				rspcnt = map[string]Reference{
+					ctype: Reference{
+						Schema: Schema{
+							Type:    "object",
+							Example: newValue(ctype, []byte(rsp.Data)),
+						},
 					},
 				}
 			}
 			o.Responses[e.Rsp.Rsp.Status] = Status{
-				Status:      e.Rsp.Rsp.Status,
 				Summary:     e.Case.Response.Title,
 				Description: e.Case.Response.Comments,
+				Status:      e.Rsp.Rsp.Status,
 				Content:     rspcnt,
 			}
 			p.Operations[m] = o
@@ -99,7 +104,7 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 	}
 
 	return enc.Encode(Service{
-		Swagger:  version,
+		Standard: version,
 		Consumes: []string{"application/json"},
 		Produces: []string{"application/json"},
 		Schemes:  []string{"https"},

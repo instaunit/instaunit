@@ -7,7 +7,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/test"
 )
 
-const version = "2.0"
+const version = "3.0.3"
 
 type Request struct {
 	Req  *http.Request
@@ -36,19 +36,33 @@ type Value struct {
 	Value       any    `json:"value"`
 }
 
-type Content struct {
-	Example Value `json:"example,omitempty"`
+func newValue(ctype string, data []byte) interface{} {
+	switch ctype {
+	case "application/json":
+		return json.RawMessage(data)
+	default:
+		return Value{Value: string(data)}
+	}
+}
+
+type Schema struct {
+	Type    string      `json:"type,omitempty"`
+	Example interface{} `json:"example,omitempty"` // representative object or Value
+}
+
+type Payload struct {
+	Content map[string]Schema `json:"content,omitempty"`
 }
 
 type Reference struct {
-	Summary     string             `json:"summary,omitempty"`
-	Description string             `json:"description,omitempty"`
-	Content     map[string]Content `json:"content,omitempty"`
+	Schema Schema `json:"schema"`
 }
 
 type Status struct {
-	Reference
-	Status string `json:"status"`
+	Summary     string               `json:"summary,omitempty"`
+	Description string               `json:"description,omitempty"`
+	Status      string               `json:"status"`
+	Content     map[string]Reference `json:"content,omitempty"`
 }
 
 type Operation struct {
@@ -56,7 +70,7 @@ type Operation struct {
 	Summary     string            `json:"summary,omitempty"`
 	Description string            `json:"description,omitempty"`
 	Tags        []string          `json:"tags,omitempty"`
-	Request     Content           `json:"requestBody"`
+	Request     Payload           `json:"requestBody"`
 	Responses   map[string]Status `json:"responses"`
 }
 
@@ -76,7 +90,7 @@ type Info struct {
 }
 
 type Service struct {
-	Swagger  string          `json:"swagger"`
+	Standard string          `json:"openapi"`
 	Consumes []string        `json:"consumes"`
 	Produces []string        `json:"produces"`
 	Schemes  []string        `json:"schemes"`
