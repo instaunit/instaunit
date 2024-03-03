@@ -38,6 +38,7 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 	enc := json.NewEncoder(g.w)
 	enc.SetIndent("", "  ")
 
+	var host string
 	paths := make(map[string]Path)
 	for k, v := range g.routes {
 		p, ok := paths[k]
@@ -48,6 +49,9 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 			}
 		}
 		for _, e := range v.Tests {
+			if host == "" {
+				host = e.Req.Req.Host
+			}
 			m := strings.ToLower(e.Req.Req.Method)
 			o, ok := p.Operations[m]
 			if !ok {
@@ -57,17 +61,37 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 				} else {
 					id = fmt.Sprintf("%s:%s", k, m)
 				}
+				var reqcnt Reference
+				if req := e.Req; len(req.Data) > 0 {
+					reqcnt = Reference{
+						Content: map[string]Content{
+							text.Coalesce(firstValue(req.Req.Header["Content-Type"]), "text/plain"): Content{
+								Example: Value{Value: string(req.Data)},
+							},
+						},
+					}
+				}
 				o = Operation{
 					Id:          id,
 					Summary:     text.Coalesce(e.Case.Request.Title, e.Case.Title),
 					Description: text.Coalesce(e.Case.Request.Comments, e.Case.Comments),
+					Request:     reqcnt,
 					Responses:   make(map[string]Status),
+				}
+			}
+			var rspcnt map[string]Content
+			if rsp := e.Rsp; len(rsp.Data) > 0 {
+				rspcnt = map[string]Content{
+					text.Coalesce(firstValue(rsp.Rsp.Header["Content-Type"]), "text/plain"): Content{
+						Example: Value{Value: string(rsp.Data)},
+					},
 				}
 			}
 			o.Responses[e.Rsp.Rsp.Status] = Status{
 				Status:      e.Rsp.Rsp.Status,
 				Summary:     e.Case.Response.Title,
 				Description: e.Case.Response.Comments,
+				Content:     rspcnt,
 			}
 			p.Operations[m] = o
 		}
@@ -75,6 +99,15 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 	}
 
 	return enc.Encode(Service{
+		Swagger:  version,
+		Consumes: []string{"application/json"},
+		Produces: []string{"application/json"},
+		Schemes:  []string{"https"},
+		Info: Info{
+			Title:       text.Coalesce(suite.Title, "API"),
+			Description: suite.Comments,
+		},
+		Host:  host,
 		Paths: paths,
 	})
 }
@@ -110,4 +143,13 @@ func (g *Generator) generate(suite *test.Suite, c test.Case, req *http.Request, 
 	})
 	g.routes[path] = route
 	return nil
+}
+
+func firstValue[E any](v []E) E {
+	var z E
+	if len(v) > 0 {
+		return v[0]
+	} else {
+		return z
+	}
 }
