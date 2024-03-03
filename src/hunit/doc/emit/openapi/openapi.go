@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/text"
 )
 
 const (
@@ -57,12 +58,16 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 					id = fmt.Sprintf("%s:%s", k, m)
 				}
 				o = Operation{
-					Id:        id,
-					Responses: make(map[string]Status),
+					Id:          id,
+					Summary:     text.Coalesce(e.Case.Request.Title, e.Case.Title),
+					Description: text.Coalesce(e.Case.Request.Comments, e.Case.Comments),
+					Responses:   make(map[string]Status),
 				}
 			}
 			o.Responses[e.Rsp.Rsp.Status] = Status{
-				Status: e.Rsp.Rsp.Status,
+				Status:      e.Rsp.Rsp.Status,
+				Summary:     e.Case.Response.Title,
+				Description: e.Case.Response.Comments,
 			}
 			p.Operations[m] = o
 		}

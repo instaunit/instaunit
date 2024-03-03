@@ -29,16 +29,17 @@ type Route struct {
 }
 
 type Status struct {
-	Status string `json:"status"`
+	Status      string `json:"status"`
+	Summary     string `json:"summary,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 type Operation struct {
-	Id        string            `json:"operationId"`
-	Responses map[string]Status // by status
-}
-
-func (o Operation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(o.Responses)
+	Id          string            `json:"operationId"`
+	Summary     string            `json:"summary,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Tags        []string          `json:"tags,omitempty"`
+	Responses   map[string]Status `json:"responses"`
 }
 
 type Path struct {
