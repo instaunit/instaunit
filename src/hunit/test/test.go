@@ -82,6 +82,12 @@ type Source struct {
 	Comments     Comments
 }
 
+// Route descrition for documentation
+type Route struct {
+	Id   string `yaml:"id"`   // dynamic
+	Path string `yaml:"path"` // dynamic; e.g., '/users/{user_id}'
+}
+
 // A test case
 type Case struct {
 	Id         string                 `yaml:"id"`
@@ -89,6 +95,7 @@ type Case struct {
 	Repeat     int                    `yaml:"repeat"`
 	Concurrent int                    `yaml:"concurrent"`
 	Gendoc     bool                   `yaml:"gendoc"`
+	Route      Route                  `yaml:"route"` // the route description for documentation purposes
 	Title      string                 `yaml:"title"`
 	Section    string                 `yaml:"section"`
 	Comments   string                 `yaml:"doc"`

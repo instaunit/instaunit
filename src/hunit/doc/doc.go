@@ -8,6 +8,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/doc/emit"
 	"github.com/instaunit/instaunit/hunit/doc/emit/instadoc"
 	"github.com/instaunit/instaunit/hunit/doc/emit/markdown"
+	"github.com/instaunit/instaunit/hunit/doc/emit/openapi"
 	"github.com/instaunit/instaunit/hunit/test"
 )
 
@@ -26,6 +27,8 @@ func New(t emit.Doctype, o io.WriteCloser) (Generator, error) {
 		return Generator(markdown.New(o)), nil
 	case emit.DoctypeInstadoc:
 		return Generator(instadoc.New(o)), nil
+	case emit.DoctypeOpenAPI:
+		return Generator(openapi.New(o)), nil
 	default:
 		return nil, fmt.Errorf("Unsupported doctype: %v", t)
 	}

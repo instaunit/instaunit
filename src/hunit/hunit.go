@@ -477,6 +477,22 @@ func RunTest(suite *test.Suite, c test.Case, context Context) (*Result, FutureRe
 	// update request with final context
 	result.Context = context
 
+	// update test case dynamic post-fields with response
+	if r := c.Route.Id; r != "" {
+		r, err = interpolateIfRequired(context, r)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+		}
+		c.Route.Id = r
+	}
+	if r := c.Route.Path; r != "" {
+		r, err = interpolateIfRequired(context, r)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+		}
+		c.Route.Path = r
+	}
+
 	// assertions
 	if assert := c.Response.Assert; assert != nil {
 		ok, err := assert.Bool(context.Variables)
