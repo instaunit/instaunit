@@ -22,9 +22,10 @@ type Response struct {
 }
 
 type Specimen struct {
-	Case test.Case
-	Req  Request
-	Rsp  Response
+	Suite *test.Suite
+	Case  test.Case
+	Req   Request
+	Rsp   Response
 }
 
 func (s Specimen) Id(path string) string {

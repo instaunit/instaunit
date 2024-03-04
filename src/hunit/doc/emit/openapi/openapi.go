@@ -9,7 +9,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync/atomic"
 
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
@@ -20,19 +19,16 @@ const (
 	typeMarkdown = "text/markdown"
 )
 
-var instance int32
-
 // An OpenAPI documentation generator
 type Generator struct {
 	docpath string
 	w       io.WriteCloser
 	routes  map[string]*Route
-	inst    int32
 }
 
 // Produce a new emitter
 func New(docpath string) *Generator {
-	return &Generator{docpath, nil, nil, atomic.AddInt32(&instance, 1)}
+	return &Generator{docpath, nil, make(map[string]*Route)}
 }
 
 // Init a suite
@@ -44,14 +40,12 @@ func (g *Generator) Init(suite *test.Suite, docs string) error {
 		}
 		g.w = out
 	}
-	g.routes = make(map[string]*Route)
 	return nil
 }
 
 // Finish a suite
 func (g *Generator) Finalize(suite *test.Suite) error {
-	// nothing to do
-	return nil
+	return nil // nothing to do
 }
 
 // Finalize and close the writer
@@ -145,6 +139,7 @@ func (g *Generator) Close() error {
 			Id:          id,
 			Summary:     text.Coalesce(rep.Case.Request.Title, rep.Case.Title),
 			Description: text.Coalesce(rep.Case.Request.Comments, rep.Case.Comments),
+			Tags:        []string{rep.Suite.Title},
 			Request:     reqcnt,
 			Responses:   rsps,
 		}
@@ -168,11 +163,6 @@ func (g *Generator) Close() error {
 
 // Generate documentation
 func (g *Generator) Case(suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
-	return g.generate(suite, c, req, reqdata, rsp, rspdata)
-}
-
-// Generate documentation
-func (g *Generator) generate(suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
 	var path string
 	if r := c.Route.Path; r != "" {
 		path = strings.TrimSpace(r)
@@ -186,9 +176,10 @@ func (g *Generator) generate(suite *test.Suite, c test.Case, req *http.Request, 
 		route = &Route{Path: path}
 	}
 	route.Tests = append(route.Tests, Specimen{
-		Case: c,
-		Req:  Request{Req: req, Data: reqdata},
-		Rsp:  Response{Rsp: rsp, Data: rspdata},
+		Suite: suite,
+		Case:  c,
+		Req:   Request{Req: req, Data: reqdata},
+		Rsp:   Response{Rsp: rsp, Data: rspdata},
 	})
 	g.routes[path] = route
 	return nil
