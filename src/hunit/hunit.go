@@ -66,13 +66,6 @@ func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 	results := make([]*Result, 0)
 	globals := dupVars(suite.Globals)
 
-	for _, e := range context.Gendoc {
-		err := e.Init(suite)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	precond := true
 	for _, e := range suite.Cases {
 		if !precond {
@@ -142,13 +135,6 @@ func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 
 		if len(errs) > 0 {
 			return nil, errs[0]
-		}
-	}
-
-	for _, e := range context.Gendoc {
-		err := e.Finalize(suite)
-		if err != nil {
-			return nil, err
 		}
 	}
 

@@ -288,7 +288,7 @@ func app() int {
 
 	var gendoc []doc.Generator
 	if *fGendoc {
-		gen, err := doc.New(doctype)
+		gen, err := doc.New(doctype, *fDocpath)
 		if err != nil {
 			color.New(colorErr...).Println("* * * Could create documentation generator:", err)
 			return 1
@@ -372,7 +372,7 @@ suites:
 
 		for _, e := range gendoc {
 			base := disambigFile(base, doctype.Ext(), docname)
-			err := e.Init(suite, *fDocpath, base)
+			err := e.Init(suite, base)
 			if err != nil {
 				color.New(colorErr...).Println("* * * Could not initialize documentation suite:", err)
 				return 1

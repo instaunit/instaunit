@@ -22,19 +22,20 @@ const (
 
 // A markdown documentation generator
 type Generator struct {
-	w      io.WriteCloser
-	toc    *TOC
-	routes []*Route
+	docpath string
+	w       io.WriteCloser
+	toc     *TOC
+	routes  []*Route
 }
 
 // Produce a new emitter
-func New(w io.WriteCloser) *Generator {
-	return &Generator{w, nil, nil}
+func New(docpath string) *Generator {
+	return &Generator{docpath, nil, nil, nil}
 }
 
-// Init a suite
-func (g *Generator) Init(suite *test.Suite, base, docs string) error {
-	out, err := os.OpenFile(path.Join(base, docs), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+// Init a suite; one doc output per suite
+func (g *Generator) Init(suite *test.Suite, docs string) error {
+	out, err := os.OpenFile(path.Join(g.docpath, docs), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
@@ -68,6 +69,11 @@ func (g *Generator) Init(suite *test.Suite, base, docs string) error {
 
 // Finish a suite
 func (g *Generator) Finalize(suite *test.Suite) error {
+	defer func() {
+		g.w.Close()
+		g.w = nil
+	}()
+
 	var detail *Content
 	if v := suite.Comments; v != "" {
 		detail = &Content{
@@ -84,13 +90,8 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 		TOC:    g.toc,
 		Routes: g.routes,
 	})
-
-	err = g.w.Close()
-	g.w = nil
-	return err
 }
 
-// Close the writer
 func (g *Generator) Close() error {
 	return nil
 }

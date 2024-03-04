@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -22,25 +24,43 @@ var instance int32
 
 // An OpenAPI documentation generator
 type Generator struct {
-	w      io.WriteCloser
-	routes map[string]*Route
-	inst   int32
+	docpath string
+	w       io.WriteCloser
+	routes  map[string]*Route
+	inst    int32
 }
 
 // Produce a new emitter
-func New(w io.WriteCloser) *Generator {
-	return &Generator{w, nil, atomic.AddInt32(&instance, 1)}
+func New(docpath string) *Generator {
+	return &Generator{docpath, nil, nil, atomic.AddInt32(&instance, 1)}
 }
 
 // Init a suite
-func (g *Generator) Init(suite *test.Suite) error {
-	fmt.Printf("INIT: %d %s\n", g.inst, suite)
+func (g *Generator) Init(suite *test.Suite, docs string) error {
+	if g.w == nil {
+		out, err := os.OpenFile(path.Join(g.docpath, "service.json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		g.w = out
+	}
 	g.routes = make(map[string]*Route)
 	return nil
 }
 
 // Finish a suite
 func (g *Generator) Finalize(suite *test.Suite) error {
+	// nothing to do
+	return nil
+}
+
+// Finalize and close the writer
+func (g *Generator) Close() error {
+	defer func() {
+		g.w.Close()
+		g.w = nil
+	}()
+
 	enc := json.NewEncoder(g.w)
 	enc.SetIndent("", "  ")
 
@@ -138,17 +158,12 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 		Produces: []string{"application/json"},
 		Schemes:  []string{"https"},
 		Info: Info{
-			Title:       text.Coalesce(suite.Title, "API"),
-			Description: suite.Comments,
+			Title: "API",
+			// Description: suite.Comments,
 		},
 		Host:  host,
 		Paths: paths,
 	})
-}
-
-// Close the writer
-func (g *Generator) Close() error {
-	return g.w.Close()
 }
 
 // Generate documentation
