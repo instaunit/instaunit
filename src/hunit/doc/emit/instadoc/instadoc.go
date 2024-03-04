@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path"
 	"sort"
 	"strings"
 
@@ -31,7 +33,12 @@ func New(w io.WriteCloser) *Generator {
 }
 
 // Init a suite
-func (g *Generator) Init(suite *test.Suite) error {
+func (g *Generator) Init(suite *test.Suite, base, docs string) error {
+	out, err := os.OpenFile(path.Join(base, docs), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+
 	var sects []*Section
 	for _, e := range suite.TOC.Sections {
 		sects = append(sects, &Section{
@@ -55,6 +62,7 @@ func (g *Generator) Init(suite *test.Suite) error {
 	}
 
 	g.routes = make([]*Route, 0)
+	g.w = out
 	return nil
 }
 
@@ -76,11 +84,15 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 		TOC:    g.toc,
 		Routes: g.routes,
 	})
+
+	err = g.w.Close()
+	g.w = nil
+	return err
 }
 
-// Close the wroter
+// Close the writer
 func (g *Generator) Close() error {
-	return g.w.Close()
+	return nil
 }
 
 // Generate documentation
