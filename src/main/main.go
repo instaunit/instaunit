@@ -286,6 +286,16 @@ func app() int {
 		}
 	}
 
+	var gendoc []doc.Generator
+	if *fGendoc {
+		gen, err := doc.New(doctype, out)
+		if err != nil {
+			color.New(colorErr...).Println("* * * Could create documentation generator:", err)
+			return 1
+		}
+		gendoc = []doc.Generator{gen} // just one for now
+	}
+
 	var proc *exec.Process
 	success := true
 	start := time.Now()
@@ -360,22 +370,13 @@ suites:
 			}
 		}
 
-		var gendoc []doc.Generator
-		if *fGendoc {
+		for _, e := range gendoc {
 			base := disambigFile(base, doctype.Ext(), docname)
 			out, err := os.OpenFile(path.Join(*fDocpath, base), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 			if err != nil {
 				color.New(colorErr...).Println("* * * Could not open documentation output:", err)
 				return 1
 			}
-
-			gen, err := doc.New(doctype, out)
-			if err != nil {
-				color.New(colorErr...).Println("* * * Could create documentation generator:", err)
-				return 1
-			}
-
-			gendoc = []doc.Generator{gen} // just one for now
 		}
 
 		if len(suite.Setup) > 0 {

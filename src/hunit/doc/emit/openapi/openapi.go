@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
@@ -16,19 +18,23 @@ const (
 	typeMarkdown = "text/markdown"
 )
 
+var instance int32
+
 // An OpenAPI documentation generator
 type Generator struct {
 	w      io.WriteCloser
 	routes map[string]*Route
+	inst   int32
 }
 
 // Produce a new emitter
 func New(w io.WriteCloser) *Generator {
-	return &Generator{w, nil}
+	return &Generator{w, nil, atomic.AddInt32(&instance, 1)}
 }
 
 // Init a suite
 func (g *Generator) Init(suite *test.Suite) error {
+	fmt.Printf("INIT: %d %s\n", g.inst, suite)
 	g.routes = make(map[string]*Route)
 	return nil
 }
@@ -41,6 +47,10 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 	var host string
 	paths := make(map[string]Path)
 	for k, v := range g.routes {
+		if len(v.Tests) < 1 {
+			continue // no specimens
+		}
+
 		p, ok := paths[k]
 		if !ok {
 			p = Path{
@@ -48,37 +58,23 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 				Operations: make(map[string]Operation),
 			}
 		}
-		for _, e := range v.Tests {
+
+		// The representative speciment for this collection. We try to use the
+		// first successful response encountered for this purpose. If one is not
+		// found, the first response is used instead.
+		var first, rep *Specimen
+
+		// Process responses
+		rsps := make(map[string]Status)
+		for i, e := range v.Tests {
+			if i == 0 {
+				first = &e
+			}
+			if rep == nil && e.Rsp.Rsp.StatusCode == http.StatusOK {
+				rep = &e
+			}
 			if host == "" {
 				host = e.Req.Req.Host
-			}
-			m := strings.ToLower(e.Req.Req.Method)
-			o, ok := p.Operations[m]
-			if !ok {
-				var id string
-				if v := e.Case.Route.Id; v != "" {
-					id = v
-				} else {
-					id = fmt.Sprintf("%s:%s", k, m)
-				}
-				var reqcnt Payload
-				if req := e.Req; len(req.Data) > 0 {
-					ctype := text.Coalesce(firstValue(req.Req.Header["Content-Type"]), "text/plain")
-					reqcnt = Payload{
-						Content: map[string]Schema{
-							ctype: Schema{
-								Example: newValue(ctype, []byte(req.Data)),
-							},
-						},
-					}
-				}
-				o = Operation{
-					Id:          id,
-					Summary:     text.Coalesce(e.Case.Request.Title, e.Case.Title),
-					Description: text.Coalesce(e.Case.Request.Comments, e.Case.Comments),
-					Request:     reqcnt,
-					Responses:   make(map[string]Status),
-				}
 			}
 			var rspcnt map[string]Reference
 			if rsp := e.Rsp; len(rsp.Data) > 0 {
@@ -92,14 +88,47 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 					},
 				}
 			}
-			o.Responses[e.Rsp.Rsp.Status] = Status{
+			rsps[strconv.Itoa(e.Rsp.Rsp.StatusCode)] = Status{
 				Summary:     e.Case.Response.Title,
 				Description: e.Case.Response.Comments,
 				Status:      e.Rsp.Rsp.Status,
 				Content:     rspcnt,
 			}
-			p.Operations[m] = o
 		}
+		if rep == nil {
+			rep = first
+		}
+
+		// Process the request
+		m := strings.ToLower(rep.Req.Req.Method)
+		var id string
+		if v := rep.Case.Route.Id; v != "" {
+			id = v
+		} else if v := rep.Case.Route.Path; v != "" {
+			id = v
+		} else {
+			id = fmt.Sprintf("%s:%s", k, m)
+		}
+		var reqcnt Payload
+		if req := rep.Req; len(req.Data) > 0 {
+			ctype := text.Coalesce(firstValue(req.Req.Header["Content-Type"]), "text/plain")
+			reqcnt = Payload{
+				Content: map[string]Schema{
+					ctype: Schema{
+						Example: newValue(ctype, []byte(req.Data)),
+					},
+				},
+			}
+		}
+
+		p.Operations[m] = Operation{
+			Id:          id,
+			Summary:     text.Coalesce(rep.Case.Request.Title, rep.Case.Title),
+			Description: text.Coalesce(rep.Case.Request.Comments, rep.Case.Comments),
+			Request:     reqcnt,
+			Responses:   rsps,
+		}
+
 		paths[k] = p
 	}
 

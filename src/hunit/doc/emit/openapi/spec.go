@@ -2,7 +2,9 @@ package openapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/instaunit/instaunit/hunit/test"
 )
@@ -23,6 +25,16 @@ type Specimen struct {
 	Case test.Case
 	Req  Request
 	Rsp  Response
+}
+
+func (s Specimen) Id(path string) string {
+	if v := s.Case.Route.Id; v != "" {
+		return v
+	} else if v := s.Case.Route.Path; v != "" {
+		return v
+	} else {
+		return fmt.Sprintf("%s:%s", path, strings.ToLower(s.Req.Req.Method))
+	}
 }
 
 type Route struct {
