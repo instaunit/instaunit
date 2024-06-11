@@ -504,7 +504,14 @@ func RunTest(suite *test.Suite, c test.Case, context Context) (*Result, FutureRe
 }
 
 func formatName(c test.Case, method, url string) string {
-	return fmt.Sprintf("%v %v @ line %d\n", method, url, c.Source.Line)
+	sb := &strings.Builder{}
+	sb.WriteString(fmt.Sprintf("%v %v", method, url))
+	if v := c.Response.Status; v != 0 {
+		sb.WriteString(fmt.Sprintf(" (expect: %d/%s)", v, http.StatusText(v)))
+	}
+	sb.WriteString(fmt.Sprintf(" @ line %d", c.Source.Line))
+	sb.WriteString("\n")
+	return sb.String()
 }
 
 // Flatten a header to a one-to-one key-to-value map
