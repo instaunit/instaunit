@@ -286,6 +286,16 @@ func app() int {
 		}
 	}
 
+	var gendoc []doc.Generator
+	if *fGendoc {
+		gen, err := doc.New(doctype, *fDocpath)
+		if err != nil {
+			color.New(colorErr...).Println("* * * Could create documentation generator:", err)
+			return 1
+		}
+		gendoc = []doc.Generator{gen} // just one for now
+	}
+
 	var proc *exec.Process
 	success := true
 	start := time.Now()
@@ -360,22 +370,13 @@ suites:
 			}
 		}
 
-		var gendoc []doc.Generator
-		if *fGendoc {
+		for _, e := range gendoc {
 			base := disambigFile(base, doctype.Ext(), docname)
-			out, err := os.OpenFile(path.Join(*fDocpath, base), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+			err := e.Init(suite, base)
 			if err != nil {
-				color.New(colorErr...).Println("* * * Could not open documentation output:", err)
+				color.New(colorErr...).Println("* * * Could not initialize documentation suite:", err)
 				return 1
 			}
-
-			gen, err := doc.New(doctype, out)
-			if err != nil {
-				color.New(colorErr...).Println("* * * Could create documentation generator:", err)
-				return 1
-			}
-
-			gendoc = []doc.Generator{gen} // just one for now
 		}
 
 		if len(suite.Setup) > 0 {
@@ -458,7 +459,7 @@ suites:
 		}
 
 		for _, e := range gendoc {
-			err := e.Close()
+			err := e.Finalize(suite)
 			if err != nil {
 				color.New(colorErr...).Printf("* * * Could not finalize documentation writer: %v\n", err)
 			}
@@ -473,6 +474,13 @@ suites:
 			if execCommands(options, suite.Teardown) != nil {
 				continue suites
 			}
+		}
+	}
+
+	for _, e := range gendoc {
+		err := e.Close()
+		if err != nil {
+			color.New(colorErr...).Printf("* * * Could not close documentation writer: %v\n", err)
 		}
 	}
 

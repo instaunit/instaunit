@@ -66,13 +66,6 @@ func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 	results := make([]*Result, 0)
 	globals := dupVars(suite.Globals)
 
-	for _, e := range context.Gendoc {
-		err := e.Init(suite)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	precond := true
 	for _, e := range suite.Cases {
 		if !precond {
@@ -142,13 +135,6 @@ func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 
 		if len(errs) > 0 {
 			return nil, errs[0]
-		}
-	}
-
-	for _, e := range context.Gendoc {
-		err := e.Finalize(suite)
-		if err != nil {
-			return nil, err
 		}
 	}
 
@@ -476,6 +462,22 @@ func RunTest(suite *test.Suite, c test.Case, context Context) (*Result, FutureRe
 
 	// update request with final context
 	result.Context = context
+
+	// update test case dynamic post-fields with response
+	if r := c.Route.Id; r != "" {
+		r, err = interpolateIfRequired(context, r)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+		}
+		c.Route.Id = r
+	}
+	if r := c.Route.Path; r != "" {
+		r, err = interpolateIfRequired(context, r)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+		}
+		c.Route.Path = r
+	}
 
 	// assertions
 	if assert := c.Response.Assert; assert != nil {

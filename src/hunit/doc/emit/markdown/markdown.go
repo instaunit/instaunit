@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path"
 	"sort"
 	"strings"
 
@@ -26,6 +28,7 @@ type section struct {
 
 // A markdown documentation generator
 type Generator struct {
+	docpath string
 	w       io.WriteCloser
 	b       *bytes.Buffer
 	entries []entry
@@ -33,20 +36,29 @@ type Generator struct {
 }
 
 // Produce a new emitter
-func New(w io.WriteCloser) *Generator {
-	return &Generator{w, nil, make([]entry, 0), nil}
+func New(docpath string) *Generator {
+	return &Generator{docpath, nil, nil, make([]entry, 0), nil}
 }
 
-// Init a suite
-func (g *Generator) Init(suite *test.Suite) error {
+// Init a suite; one doc output per suite
+func (g *Generator) Init(suite *test.Suite, docs string) error {
+	out, err := os.OpenFile(path.Join(g.docpath, docs), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	g.w = out
 	g.b = &bytes.Buffer{}
 	return nil
 }
 
 // Finish a suite
 func (g *Generator) Finalize(suite *test.Suite) error {
-	var err error
+	defer func() {
+		g.w.Close()
+		g.w = nil
+	}()
 
+	var err error
 	err = g.prefix(g.w, suite)
 	if err != nil {
 		return err
@@ -65,9 +77,8 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 	return nil
 }
 
-// Close the wroter
 func (g *Generator) Close() error {
-	return g.w.Close()
+	return nil
 }
 
 // Generate documentation

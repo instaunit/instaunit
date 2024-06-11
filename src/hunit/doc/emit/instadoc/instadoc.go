@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path"
 	"sort"
 	"strings"
 
@@ -20,18 +22,24 @@ const (
 
 // A markdown documentation generator
 type Generator struct {
-	w      io.WriteCloser
-	toc    *TOC
-	routes []*Route
+	docpath string
+	w       io.WriteCloser
+	toc     *TOC
+	routes  []*Route
 }
 
 // Produce a new emitter
-func New(w io.WriteCloser) *Generator {
-	return &Generator{w, nil, nil}
+func New(docpath string) *Generator {
+	return &Generator{docpath, nil, nil, nil}
 }
 
-// Init a suite
-func (g *Generator) Init(suite *test.Suite) error {
+// Init a suite; one doc output per suite
+func (g *Generator) Init(suite *test.Suite, docs string) error {
+	out, err := os.OpenFile(path.Join(g.docpath, docs), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+
 	var sects []*Section
 	for _, e := range suite.TOC.Sections {
 		sects = append(sects, &Section{
@@ -55,11 +63,17 @@ func (g *Generator) Init(suite *test.Suite) error {
 	}
 
 	g.routes = make([]*Route, 0)
+	g.w = out
 	return nil
 }
 
 // Finish a suite
 func (g *Generator) Finalize(suite *test.Suite) error {
+	defer func() {
+		g.w.Close()
+		g.w = nil
+	}()
+
 	var detail *Content
 	if v := suite.Comments; v != "" {
 		detail = &Content{
@@ -78,9 +92,8 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 	})
 }
 
-// Close the wroter
 func (g *Generator) Close() error {
-	return g.w.Close()
+	return nil
 }
 
 // Generate documentation
