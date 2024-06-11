@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 
 	"github.com/bww/epl/v1"
@@ -48,6 +49,12 @@ func Interpolate(s string, v Variables) (string, error) {
 
 // Interpolate
 func interpolate(s, pre, suf string, context interface{}) (string, error) {
+	defer func() {
+		if err := recover(); err != nil {
+			panic(fmt.Errorf("%w: [%s] with context: %s)", err, s, spew.Sdump(context)))
+		}
+	}()
+
 	if len(pre) < 1 || len(suf) < 1 {
 		return "", fmt.Errorf("Invalid variable prefix/suffix")
 	}

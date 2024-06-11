@@ -2,6 +2,12 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/aws/aws-lambda-go v1.14.0/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/bww/epl v1.1.2 h1:8FxPQt8c4TtDEI91QdCvkRTCVpiFxlXCWnatLQkHpfU=
 github.com/bww/epl v1.1.2/go.mod h1:8CahovY2O3KqBUPSfiQzaSaNd6Bkn+SJH7L98/76vaI=
+github.com/bww/epl v1.1.3 h1:Ejg9pEIbSiloM0HgbwmWWRTlvuKytZaV1z2tvGSuoOU=
+github.com/bww/epl v1.1.3/go.mod h1:8CahovY2O3KqBUPSfiQzaSaNd6Bkn+SJH7L98/76vaI=
+github.com/bww/epl v1.1.4 h1:NsAfLGZuhbrirsack6GKjwVTSK3NzB3bbc6fJwXMbt8=
+github.com/bww/epl v1.1.4/go.mod h1:8CahovY2O3KqBUPSfiQzaSaNd6Bkn+SJH7L98/76vaI=
+github.com/bww/epl v1.1.5 h1:sGIGiWnn0iiY47A2j2yfzKj5Ik0Jd8Pe9T+Ihh9OVng=
+github.com/bww/epl v1.1.5/go.mod h1:8CahovY2O3KqBUPSfiQzaSaNd6Bkn+SJH7L98/76vaI=
 github.com/bww/go-alert v0.0.0-20180325011200-72270072a7e5/go.mod h1:tsrgzda5iuNbbbVRTPaUnXpHwh0qiWg//Xr7lSLV5X8=
 github.com/bww/go-router v1.7.0 h1:DFKRWmIMUHWp+iuwfx/657Bd7T6OkmWhqgPQ+PAvYFM=
 github.com/bww/go-router v1.7.0/go.mod h1:lP+Pg41Tkkxz29JwpgBiSocoCNQLMVxj5hevMb0B6k0=

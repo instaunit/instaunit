@@ -1,9 +1,9 @@
 module github.com/instaunit/instaunit
 
-go 1.20
+go 1.22
 
 require (
-	github.com/bww/epl v1.1.2
+	github.com/bww/epl v1.1.5
 	github.com/bww/go-router v1.7.0
 	github.com/bww/go-util v1.24.0
 	github.com/davecgh/go-spew v1.1.1
