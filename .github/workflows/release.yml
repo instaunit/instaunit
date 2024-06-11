@@ -32,15 +32,19 @@ jobs:
           - target: linux
             arch: amd64
             os: ubuntu-latest
+            go-version: '1.22.x'
           - target: freebsd
             arch: amd64
             os: ubuntu-latest
+            go-version: '1.22.x'
           - target: darwin
             arch: amd64
             os: macos-latest
+            go-version: '1.22.x'
           - target: darwin
             arch: arm64
             os: macos-latest
+            go-version: '1.22.x'
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
