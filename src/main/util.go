@@ -11,20 +11,6 @@ import (
 	"github.com/fatih/color"
 )
 
-// Flag string list
-type flagList []string
-
-// Set a flag
-func (s *flagList) Set(v string) error {
-	*s = append(*s, v)
-	return nil
-}
-
-// Describe
-func (s *flagList) String() string {
-	return fmt.Sprintf("%+v", *s)
-}
-
 // Pluralize
 func plural(v int, s, p string) string {
 	if v == 1 {

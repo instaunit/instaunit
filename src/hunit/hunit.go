@@ -464,14 +464,14 @@ func RunTest(suite *test.Suite, c test.Case, context Context) (*Result, FutureRe
 	result.Context = context
 
 	// update test case dynamic post-fields with response
-	if r := c.Route.Id; r != "" {
+	if r := text.Coalesce(c.Route.Id, suite.Route.Id); r != "" {
 		r, err = interpolateIfRequired(context, r)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
 		c.Route.Id = r
 	}
-	if r := c.Route.Path; r != "" {
+	if r := text.Coalesce(c.Route.Path, suite.Route.Path); r != "" {
 		r, err = interpolateIfRequired(context, r)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil

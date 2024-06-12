@@ -52,6 +52,7 @@ type Suite struct {
 	Title    string                 `yaml:"title"`
 	Comments string                 `yaml:"doc"`
 	TOC      TOC                    `yaml:"toc"`
+	Route    Route                  `yaml:"route"` // the route description for documentation purposes; this may be dynamic and shared by all routes in the suite
 	Cases    []Case                 `yaml:"tests"`
 	Config   Config                 `yaml:"options"`
 	Setup    []*exec.Command        `yaml:"setup"`
