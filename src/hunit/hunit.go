@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/instaunit/instaunit/hunit/doc"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/test"
@@ -67,7 +68,10 @@ func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 	globals := dupVars(suite.Globals)
 
 	precond := true
-	for _, e := range suite.Cases {
+	for _, f := range suite.Frames() {
+		e := f.Case // just unpack the case for now
+		spew.Dump(f)
+
 		if !precond {
 			results = append(results, &Result{Name: fmt.Sprintf("%v %v (dependency failed)\n", e.Request.Method, e.Request.URL), Skipped: true})
 			continue
