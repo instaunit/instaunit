@@ -88,6 +88,37 @@ type Route struct {
 	Path string `yaml:"path"` // dynamic; e.g., '/users/{user_id}'
 }
 
+// A frame encapsulates a test case and assocaited local vars
+type Frame struct {
+	Vars map[string]interface{}
+	Case Case
+}
+
+// Implemented by types that can produce test frames
+type Framer interface {
+	Frames() []Frame
+}
+
+// A matrix of contexts; each test case is run once per variable context
+type Matrix struct {
+	Vars  []map[string]interface{} `yaml:"with"`
+	Cases []Case                   `yaml:"do"`
+}
+
+// Produce a frame for every case in the matrix
+func (m Matrix) Frames() []Frame {
+	var r []Frame
+	for _, v := range m.Vars {
+		for _, c := range m.Cases {
+			r = append(r, Frame{
+				Vars: v,
+				Case: c,
+			})
+		}
+	}
+	return r
+}
+
 // A test case
 type Case struct {
 	Id         string                 `yaml:"id"`
@@ -111,4 +142,25 @@ type Case struct {
 // Determine if this case is documented or not
 func (c Case) Documented() bool {
 	return c.Gendoc || c.Title != "" || c.Comments != ""
+}
+
+// Produce a single case frame representing this case
+func (c Case) Frames() []Frame {
+	return []Frame{{
+		Vars: make(map[string]interface{}),
+		Case: c,
+	}}
+}
+
+type caseOrMatrix struct {
+	Case   `yaml:",inline"`
+	Matrix `yaml:",inline"`
+}
+
+func (c caseOrMatrix) Frames() []Frame {
+	if c.Matrix.Cases != nil {
+		return c.Matrix.Frames()
+	} else {
+		return c.Case.Frames()
+	}
 }

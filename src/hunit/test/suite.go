@@ -53,13 +53,22 @@ type Suite struct {
 	Comments string                 `yaml:"doc"`
 	TOC      TOC                    `yaml:"toc"`
 	Route    Route                  `yaml:"route"` // the route description for documentation purposes; this may be dynamic and shared by all routes in the suite
-	Cases    []Case                 `yaml:"tests"`
+	Cases    []caseOrMatrix         `yaml:"tests"`
 	Config   Config                 `yaml:"options"`
 	Setup    []*exec.Command        `yaml:"setup"`
 	Teardown []*exec.Command        `yaml:"teardown"`
 	Exec     *exec.Command          `yaml:"process"`
 	Deps     *Dependencies          `yaml:"depends"`
 	Globals  map[string]interface{} `yaml:"vars"`
+}
+
+// Produce frames for every case in the suite
+func (s Suite) Frames() []Frame {
+	var f []Frame
+	for _, e := range s.Cases {
+		f = append(f, e.Frames()...)
+	}
+	return f
 }
 
 // Load a test suite

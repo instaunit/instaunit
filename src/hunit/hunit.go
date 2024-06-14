@@ -67,7 +67,8 @@ func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 	globals := dupVars(suite.Globals)
 
 	precond := true
-	for _, e := range suite.Cases {
+	for _, f := range suite.Frames() {
+		e := f.Case // just unpack the case for now
 		if !precond {
 			results = append(results, &Result{Name: fmt.Sprintf("%v %v (dependency failed)\n", e.Request.Method, e.Request.URL), Skipped: true})
 			continue
@@ -106,7 +107,7 @@ func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 				lock.Lock()
 				g := dupVars(globals)
 				lock.Unlock()
-				r, f, v, err := RunTest(suite, e, context.WithVars(g))
+				r, f, v, err := RunTest(suite, e, context.WithVars(g, f.Vars))
 				lock.Lock()
 				if v != nil && e.Id != "" {
 					globals[e.Id] = v
