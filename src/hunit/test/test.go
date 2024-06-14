@@ -158,7 +158,7 @@ type caseOrMatrix struct {
 }
 
 func (c caseOrMatrix) Frames() []Frame {
-	if c.Matrix.Cases != nil {
+	if len(c.Matrix.Cases) > 0 {
 		return c.Matrix.Frames()
 	} else {
 		return c.Case.Frames()
