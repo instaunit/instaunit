@@ -45,6 +45,15 @@ func (c *Context) AddVars(vars ...expr.Variables) {
 	c.Variables = mergeVars(append([]expr.Variables{c.Variables}, vars...)...)
 }
 
+// Interpolate, if we're configured to do so
+func (c *Context) Interpolate(s string) (string, error) {
+	if (c.Options & test.OptionInterpolateVariables) == test.OptionInterpolateVariables {
+		return expr.Interpolate(s, c.Variables)
+	} else {
+		return s, nil
+	}
+}
+
 // Merge maps
 func mergeVars(m ...expr.Variables) expr.Variables {
 	d := make(expr.Variables)

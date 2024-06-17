@@ -61,7 +61,7 @@ outer:
 		}
 
 		if e.Output != nil {
-			d, err := interpolateIfRequired(m.context, *e.Output)
+			d, err := m.context.Interpolate(*e.Output)
 			if err != nil {
 				result.Error(err)
 				break outer
@@ -106,7 +106,7 @@ outer:
 				fmt.Println("---->", m.url)
 				fmt.Println(text.Indent(string(d), "      < "))
 			}
-			x, err := interpolateIfRequired(m.context, *e.Input)
+			x, err := m.context.Interpolate(*e.Input)
 			if err != nil {
 				result.Error(err)
 				break outer

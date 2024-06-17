@@ -139,7 +139,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	locals := make(expr.Variables)
 	for k, e := range c.Vars {
 		v := textutil.Stringer(e)
-		r, err := interpolateIfRequired(context, v)
+		r, err := context.Interpolate(v)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, nil, nil
 		}
@@ -154,7 +154,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	context.AddVars(vars)
 
 	// update the method
-	method, err := interpolateIfRequired(context, c.Request.Method)
+	method, err := context.Interpolate(c.Request.Method)
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	} else if method == "" {
@@ -162,7 +162,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	}
 
 	// update the url
-	url, err := interpolateIfRequired(context, c.Request.URL)
+	url, err := context.Interpolate(c.Request.URL)
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	}
@@ -183,7 +183,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	// incrementally update the name as we evaluate it
 	result.Name = formatName(c, method, url)
 
-	url, err = interpolateIfRequired(context, url)
+	url, err = context.Interpolate(url)
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	} else if url == "" {
@@ -196,11 +196,11 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	header := make(http.Header)
 	if context.Headers != nil {
 		for k, v := range context.Headers {
-			k, err = interpolateIfRequired(context, k)
+			k, err = context.Interpolate(k)
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
-			v, err = interpolateIfRequired(context, v)
+			v, err = context.Interpolate(v)
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
@@ -210,11 +210,11 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 
 	if c.Request.Headers != nil {
 		for k, v := range c.Request.Headers {
-			k, err = interpolateIfRequired(context, k)
+			k, err = context.Interpolate(k)
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
-			v, err = interpolateIfRequired(context, v)
+			v, err = context.Interpolate(v)
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
@@ -223,11 +223,11 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	}
 
 	if c.Request.BasicAuth != nil {
-		u, err := interpolateIfRequired(context, c.Request.BasicAuth.Username)
+		u, err := context.Interpolate(c.Request.BasicAuth.Username)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
-		p, err := interpolateIfRequired(context, c.Request.BasicAuth.Password)
+		p, err := context.Interpolate(c.Request.BasicAuth.Password)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
@@ -288,7 +288,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	var reqdata string
 	var entity io.Reader
 	if c.Request.Entity != "" {
-		reqdata, err = interpolateIfRequired(context, c.Request.Entity)
+		reqdata, err = context.Interpolate(c.Request.Entity)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		} else {
@@ -308,11 +308,11 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 
 	if c.Request.Cookies != nil {
 		for k, v := range c.Request.Cookies {
-			k, err = interpolateIfRequired(context, k)
+			k, err = context.Interpolate(k)
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
-			v, err = interpolateIfRequired(context, v)
+			v, err = context.Interpolate(v)
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
@@ -347,7 +347,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 		contentType = strings.ToLower(rsp.Header.Get("Content-Type"))
 	}
 
-	contentType, err = interpolateIfRequired(context, contentType)
+	contentType, err = context.Interpolate(contentType)
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	}
@@ -355,11 +355,11 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	// check response headers, if necessary
 	if headers := c.Response.Headers; headers != nil {
 		for k, v := range headers {
-			k, err = interpolateIfRequired(context, k)
+			k, err = context.Interpolate(k)
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
-			v, err = interpolateIfRequired(context, v)
+			v, err = context.Interpolate(v)
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 			}
@@ -392,7 +392,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 
 	// check response entity, if necessary
 	if entity := c.Response.Entity; entity != "" {
-		entity, err = interpolateIfRequired(context, entity)
+		entity, err = context.Interpolate(entity)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
@@ -429,14 +429,14 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 
 	// update test case dynamic post-fields with response
 	if r := text.Coalesce(c.Route.Id, suite.Route.Id); r != "" {
-		r, err = interpolateIfRequired(context, r)
+		r, err = context.Interpolate(r)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
 		c.Route.Id = r
 	}
 	if r := text.Coalesce(c.Route.Path, suite.Route.Path); r != "" {
-		r, err = interpolateIfRequired(context, r)
+		r, err = context.Interpolate(r)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}

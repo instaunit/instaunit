@@ -30,7 +30,7 @@ func mergeQueryParams(u string, p map[string]string, c runtime.Context) (string,
 
 	q := v.Query()
 	for k, v := range p {
-		v, err = interpolateIfRequired(c, v)
+		v, err = c.Interpolate(v)
 		if err != nil {
 			return "", fmt.Errorf("Evaluating query parameter %q: %v", k, err)
 		}
