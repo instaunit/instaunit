@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/instaunit/instaunit/hunit/doc"
 	"github.com/instaunit/instaunit/hunit/expr"
+	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/test"
 	"github.com/instaunit/instaunit/hunit/text"
 
@@ -23,45 +23,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// A test context
-type Context struct {
-	BaseURL   string
-	Options   test.Options
-	Config    test.Config
-	Headers   map[string]string
-	Debug     bool
-	Gendoc    []doc.Generator
-	Variables expr.Variables
-	Client    *http.Client
-}
-
-// Derive a context from the receiver with the provided variables
-func (c Context) WithVars(vars ...expr.Variables) Context {
-	var v map[string]interface{}
-	if len(vars) == 1 {
-		v = vars[0]
-	} else {
-		v = mergeVars(vars...)
-	}
-	return Context{
-		BaseURL:   c.BaseURL,
-		Options:   c.Options,
-		Config:    c.Config,
-		Headers:   c.Headers,
-		Debug:     c.Debug,
-		Gendoc:    c.Gendoc,
-		Client:    c.Client,
-		Variables: v,
-	}
-}
-
-// Merge vars into this context's variables, preferring the parameters
-func (c *Context) AddVars(vars ...expr.Variables) {
-	c.Variables = mergeVars(append([]expr.Variables{c.Variables}, vars...)...)
-}
-
 // Run a test suite
-func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
+func RunSuite(suite *test.Suite, context runtime.Context) ([]*Result, error) {
 	var futures []FutureResult
 	results := make([]*Result, 0)
 	globals := dupVars(suite.Globals)
@@ -157,7 +120,7 @@ func RunSuite(suite *test.Suite, context Context) ([]*Result, error) {
 }
 
 // Run a test case
-func RunTest(suite *test.Suite, c test.Case, context Context) (*Result, FutureResult, expr.Variables, error) {
+func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, FutureResult, expr.Variables, error) {
 	var vdef expr.Variables
 	start := time.Now()
 
@@ -544,17 +507,6 @@ func dupVars(m expr.Variables) expr.Variables {
 	d := make(expr.Variables)
 	for k, v := range m {
 		d[k] = v
-	}
-	return d
-}
-
-// Merge maps
-func mergeVars(m ...expr.Variables) expr.Variables {
-	d := make(expr.Variables)
-	for _, e := range m {
-		for k, v := range e {
-			d[k] = v
-		}
 	}
 	return d
 }

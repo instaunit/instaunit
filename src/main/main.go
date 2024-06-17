@@ -17,6 +17,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/exec"
 	"github.com/instaunit/instaunit/hunit/net/await"
 	"github.com/instaunit/instaunit/hunit/report"
+	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/service"
 	"github.com/instaunit/instaunit/hunit/service/backend/rest"
 	"github.com/instaunit/instaunit/hunit/syncio"
@@ -430,7 +431,7 @@ suites:
 		}
 
 		startSuite := time.Now()
-		results, err := hunit.RunSuite(suite, hunit.Context{
+		results, err := hunit.RunSuite(suite, runtime.Context{
 			BaseURL: *fBaseURL,
 			Options: options,
 			Headers: globalHeaders,

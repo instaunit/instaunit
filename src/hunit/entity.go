@@ -9,11 +9,12 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/test"
 )
 
 // Compare entities for equality
-func entitiesEqual(context Context, comparison test.Comparison, contentType string, expected []byte, actual interface{}) error {
+func entitiesEqual(context runtime.Context, comparison test.Comparison, contentType string, expected []byte, actual interface{}) error {
 	if comparison == test.CompareSemantic {
 		return semanticEntitiesEqual(context, contentType, expected, actual)
 	} else {
@@ -22,7 +23,7 @@ func entitiesEqual(context Context, comparison test.Comparison, contentType stri
 }
 
 // Compare entities for equality
-func literalEntitiesEqual(context Context, contentType string, expected []byte, actual interface{}) error {
+func literalEntitiesEqual(context runtime.Context, contentType string, expected []byte, actual interface{}) error {
 	var e, a interface{}
 	var ok bool
 
@@ -47,7 +48,7 @@ func literalEntitiesEqual(context Context, contentType string, expected []byte, 
 }
 
 // Compare entities for equality
-func semanticEntitiesEqual(context Context, contentType string, expected []byte, actual interface{}) error {
+func semanticEntitiesEqual(context runtime.Context, contentType string, expected []byte, actual interface{}) error {
 
 	e, err := unmarshalEntity(context, contentType, expected)
 	if err != nil {
@@ -62,7 +63,7 @@ func semanticEntitiesEqual(context Context, contentType string, expected []byte,
 }
 
 // Unmarshal an entity
-func unmarshalEntity(context Context, contentType string, entity []byte) (interface{}, error) {
+func unmarshalEntity(context runtime.Context, contentType string, entity []byte) (interface{}, error) {
 
 	// trim off the parameters following ';' if we have any
 	if i := strings.Index(contentType, ";"); i > 0 {
@@ -81,7 +82,7 @@ func unmarshalEntity(context Context, contentType string, entity []byte) (interf
 }
 
 // Unmarshal a JSON entity
-func unmarshalJSONEntity(context Context, entity []byte) (interface{}, error) {
+func unmarshalJSONEntity(context runtime.Context, entity []byte) (interface{}, error) {
 	if entity == nil || len(entity) < 1 {
 		return nil, nil
 	}
@@ -94,7 +95,7 @@ func unmarshalJSONEntity(context Context, entity []byte) (interface{}, error) {
 }
 
 // Unmarshal a CSV entity
-func unmarshalCSVEntity(context Context, entity []byte) (interface{}, error) {
+func unmarshalCSVEntity(context runtime.Context, entity []byte) (interface{}, error) {
 	if entity == nil || len(entity) < 1 {
 		return nil, nil
 	}

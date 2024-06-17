@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/test"
 
 	"github.com/bww/go-util/v1/debug"
@@ -22,7 +23,7 @@ type FutureResult interface {
 type StreamMonitor struct {
 	sync.Mutex
 	url      string
-	context  Context
+	context  runtime.Context
 	conn     *websocket.Conn
 	messages []test.MessageExchange
 	finish   chan struct{}
@@ -31,7 +32,7 @@ type StreamMonitor struct {
 }
 
 // Create a stream monitor for the provided stream
-func NewStreamMonitor(url string, context Context, conn *websocket.Conn, messages []test.MessageExchange) *StreamMonitor {
+func NewStreamMonitor(url string, context runtime.Context, conn *websocket.Conn, messages []test.MessageExchange) *StreamMonitor {
 	return &StreamMonitor{sync.Mutex{}, url, context, conn, messages, nil, false, nil}
 }
 

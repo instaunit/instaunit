@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/instaunit/instaunit/hunit/runtime"
 )
 
 // Scheme matcher
@@ -16,7 +18,7 @@ func isAbsoluteURL(u string) bool {
 }
 
 // Merge query parameters with a map
-func mergeQueryParams(u string, p map[string]string, c Context) (string, error) {
+func mergeQueryParams(u string, p map[string]string, c runtime.Context) (string, error) {
 	if len(p) < 1 {
 		return u, nil
 	}

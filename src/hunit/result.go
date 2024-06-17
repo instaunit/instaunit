@@ -2,18 +2,20 @@ package hunit
 
 import (
 	"time"
+
+	"github.com/instaunit/instaunit/hunit/runtime"
 )
 
 // A test result
 type Result struct {
-	Name    string        `json:"name"`
-	Success bool          `json:"success"`
-	Skipped bool          `json:"skipped"`
-	Errors  []string      `json:"errors,omitempty"`
-	Reqdata []byte        `json:"request_data,omitempty"`
-	Rspdata []byte        `json:"response_data,omitempty"`
-	Context Context       `json:"context"`
-	Runtime time.Duration `json:"duration"`
+	Name    string          `json:"name"`
+	Success bool            `json:"success"`
+	Skipped bool            `json:"skipped"`
+	Errors  []string        `json:"errors,omitempty"`
+	Reqdata []byte          `json:"request_data,omitempty"`
+	Rspdata []byte          `json:"response_data,omitempty"`
+	Context runtime.Context `json:"context"`
+	Runtime time.Duration   `json:"duration"`
 }
 
 // Assert equality. If the values are not equal an error is added to the result.
