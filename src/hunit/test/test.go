@@ -3,6 +3,7 @@ package test
 import (
 	"time"
 
+	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/script"
 )
 
@@ -150,6 +151,23 @@ func (c Case) Frames() []Frame {
 		Vars: make(map[string]interface{}),
 		Case: c,
 	}}
+}
+
+// Interpolate dynamic fields using the provided context and
+// return a literalized version of the case.
+func (c Case) Interpolate(vars expr.Variables) (Case, error) {
+	d := c
+	if v, err := expr.Interpolate(c.Title, vars); err != nil {
+		return d, err
+	} else {
+		d.Title = v
+	}
+	if v, err := expr.Interpolate(c.Comments, vars); err != nil {
+		return d, err
+	} else {
+		d.Comments = v
+	}
+	return d, nil
 }
 
 type caseOrMatrix struct {

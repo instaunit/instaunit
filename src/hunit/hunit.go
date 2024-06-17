@@ -459,9 +459,13 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	// generate documentation if necessary
 	if c.Documented() && len(context.Gendoc) > 0 {
 		for _, e := range context.Gendoc {
-			err := e.Case(suite, c, req, reqdata, rsp, rspdata)
+			l, err := c.Interpolate(context.Variables)
 			if err != nil {
-				return nil, nil, nil, fmt.Errorf("Could not generate documentation: %v", err)
+				return nil, nil, nil, fmt.Errorf("Could not generate documentation: %w", err)
+			}
+			err = e.Case(suite, l, req, reqdata, rsp, rspdata)
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf("Could not generate documentation: %w", err)
 			}
 		}
 	}
