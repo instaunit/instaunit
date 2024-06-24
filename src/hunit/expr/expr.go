@@ -47,6 +47,23 @@ func Interpolate(s string, v Variables) (string, error) {
 	return interpolate(s, "${", "}", RuntimeContext(v, os.Environ()))
 }
 
+// Interpolate every expression in one set of variables in terms of another
+func InterpolateAll(a, v Variables) (Variables, error) {
+	var err error
+	d := make(Variables)
+	for k, e := range a {
+		if s, ok := e.(string); ok {
+			d[k], err = Interpolate(s, v)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			d[k] = e
+		}
+	}
+	return d, nil
+}
+
 // Interpolate
 func interpolate(s, pre, suf string, context interface{}) (string, error) {
 	defer func() {
