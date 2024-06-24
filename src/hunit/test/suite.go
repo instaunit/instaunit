@@ -14,6 +14,10 @@ import (
 
 var errMalformedSuite = errors.New("Malformed suite")
 
+type Annotater interface {
+	Annotate(node *yaml.Node, src Source) error
+}
+
 // Suite options
 type Config struct {
 	Net struct {
@@ -53,7 +57,7 @@ type Suite struct {
 	Comments string                 `yaml:"doc"`
 	TOC      TOC                    `yaml:"toc"`
 	Route    Route                  `yaml:"route"` // the route description for documentation purposes; this may be dynamic and shared by all routes in the suite
-	Cases    []caseOrMatrix         `yaml:"tests"`
+	Cases    []*caseOrMatrix        `yaml:"tests"`
 	Config   Config                 `yaml:"options"`
 	Setup    []*exec.Command        `yaml:"setup"`
 	Teardown []*exec.Command        `yaml:"teardown"`
@@ -126,7 +130,7 @@ func decodeSuite(suite *Suite, node *yaml.Node) error {
 	for i, e := range node.Content {
 		if e.Kind == yaml.ScalarNode && e.Value == "tests" {
 			if i+1 < l && node.Content[i+1].Kind == yaml.SequenceNode {
-				return annotate(suite, node.Content[i+1])
+				return annotate(suite.Cases, node.Content[i+1])
 			}
 		}
 	}
@@ -139,17 +143,17 @@ func decodeCases(suite *Suite, node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	return annotate(suite, node)
+	return annotate(suite.Cases, node)
 }
 
 // Annotate test cases using the provided sequence node
-func annotate(suite *Suite, node *yaml.Node) error {
-	if len(suite.Cases) != len(node.Content) {
+func annotate[E Annotater](cases []E, node *yaml.Node) error {
+	if len(cases) != len(node.Content) {
 		return errMalformedSuite
 	}
-	for i, e := range suite.Cases {
+	for i, e := range cases {
 		n := node.Content[i]
-		e.Source = Source{
+		err := e.Annotate(n, Source{
 			Line:   n.Line,
 			Column: n.Column,
 			Comments: Comments{
@@ -157,8 +161,10 @@ func annotate(suite *Suite, node *yaml.Node) error {
 				Line: n.LineComment,
 				Tail: n.FootComment,
 			},
+		})
+		if err != nil {
+			return err
 		}
-		suite.Cases[i] = e
 	}
 	return nil
 }
