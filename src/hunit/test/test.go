@@ -5,6 +5,7 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/script"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Options
@@ -103,7 +104,19 @@ type Framer interface {
 // A matrix of contexts; each test case is run once per variable context
 type Matrix struct {
 	Vars  []map[string]interface{} `yaml:"with"`
-	Cases []Case                   `yaml:"do"`
+	Cases []*Case                  `yaml:"do"`
+}
+
+func (m *Matrix) Annotate(node *yaml.Node, src Source) error {
+	l := len(node.Content)
+	for i, e := range node.Content {
+		if e.Kind == yaml.ScalarNode && e.Value == "do" {
+			if i+1 < l && node.Content[i+1].Kind == yaml.SequenceNode {
+				return annotate(m.Cases, node.Content[i+1]) // once we find it, nothing else to do
+			}
+		}
+	}
+	return nil
 }
 
 // Produce a frame for every case in the matrix
@@ -113,7 +126,7 @@ func (m Matrix) Frames() []Frame {
 		for _, c := range m.Cases {
 			r = append(r, Frame{
 				Vars: v,
-				Case: c,
+				Case: *c,
 			})
 		}
 	}
@@ -145,6 +158,11 @@ func (c Case) Documented() bool {
 	return c.Gendoc || c.Title != "" || c.Comments != ""
 }
 
+func (c *Case) Annotate(node *yaml.Node, src Source) error {
+	c.Source = src
+	return nil
+}
+
 // Produce a single case frame representing this case
 func (c Case) Frames() []Frame {
 	return []Frame{{
@@ -173,6 +191,14 @@ func (c Case) Interpolate(vars expr.Variables) (Case, error) {
 type caseOrMatrix struct {
 	Case   `yaml:",inline"`
 	Matrix `yaml:",inline"`
+}
+
+func (c *caseOrMatrix) Annotate(node *yaml.Node, src Source) error {
+	if c.Matrix.Cases != nil {
+		return (&c.Matrix).Annotate(node, src)
+	} else {
+		return (&c.Case).Annotate(node, src)
+	}
 }
 
 func (c caseOrMatrix) Frames() []Frame {
