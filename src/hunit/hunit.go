@@ -67,10 +67,21 @@ func RunSuite(suite *test.Suite, context runtime.Context) ([]*Result, error) {
 					<-sem
 					wg.Done()
 				}()
+
 				lock.Lock()
 				g := dupVars(globals)
 				lock.Unlock()
-				r, f, v, err := RunTest(suite, e, context.WithVars(g, f.Vars))
+
+				fvars, err := expr.InterpolateAll(f.Vars, g)
+				if err != nil {
+					if e.Require {
+						precond = false
+					}
+					errs = append(errs, err)
+					return // we're not locked here, so we can return early
+				}
+
+				r, f, v, err := RunTest(suite, e, context.WithVars(g, fvars))
 				lock.Lock()
 				if v != nil && e.Id != "" {
 					globals[e.Id] = v
