@@ -79,13 +79,14 @@ type Status struct {
 }
 
 type Operation struct {
-	Id          string            `json:"operationId"`
-	Summary     string            `json:"summary,omitempty"`
-	Description string            `json:"description,omitempty"`
-	Tags        []string          `json:"tags,omitempty"`
-	Params      []Parameter       `json:"parameters,omitempty"`
-	Request     Payload           `json:"requestBody"`
-	Responses   map[string]Status `json:"responses"`
+	Id          string                `json:"operationId"`
+	Summary     string                `json:"summary,omitempty"`
+	Description string                `json:"description,omitempty"`
+	Tags        []string              `json:"tags,omitempty"`
+	Params      []Parameter           `json:"parameters,omitempty"`
+	Request     Payload               `json:"requestBody"`
+	Responses   map[string]Status     `json:"responses"`
+	Security    []SecurityRequirement `json:"security"`
 }
 
 type Path struct {
@@ -130,18 +131,35 @@ type Parameter struct {
 	Schema      Schema            `json:"schema,omitempty"`
 }
 
+type SecurityRequirement map[string][]string
+
+func (a SecurityRequirement) Add(realm string, scopes ...string) SecurityRequirement {
+	a[realm] = append(a[realm], scopes...)
+	return a
+}
+
 type Info struct {
 	Title       string `json:"title,omitempty"`
 	Version     string `json:"version,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
+type SecurityScheme struct {
+	Type        string `json:"type,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	In          string `json:"in,omitempty"`
+	Scheme      string `json:"scheme,omitempty"`
+	Format      string `json:"bearerFormat,omitempty"`
+}
+
 type Service struct {
-	Standard string          `json:"openapi"`
-	Consumes []string        `json:"consumes"`
-	Produces []string        `json:"produces"`
-	Schemes  []string        `json:"schemes"`
-	Info     Info            `json:"info"`
-	Host     string          `json:"host"`
-	Paths    map[string]Path `json:"paths"`
+	Standard string           `json:"openapi"`
+	Consumes []string         `json:"consumes"`
+	Produces []string         `json:"produces"`
+	Schemes  []string         `json:"schemes"`
+	Security []SecurityScheme `json:"securitySchemes"`
+	Info     Info             `json:"info"`
+	Host     string           `json:"host"`
+	Paths    map[string]Path  `json:"paths"`
 }

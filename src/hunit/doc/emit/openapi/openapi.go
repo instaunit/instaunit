@@ -24,11 +24,16 @@ type Generator struct {
 	docpath string
 	w       io.WriteCloser
 	routes  map[string]*Route
+	authns  []test.Authentication
 }
 
 // Produce a new emitter
 func New(docpath string) *Generator {
-	return &Generator{docpath, nil, make(map[string]*Route)}
+	return &Generator{
+		docpath: docpath,
+		w:       nil,
+		routes:  make(map[string]*Route),
+	}
 }
 
 // Init a suite
@@ -40,6 +45,7 @@ func (g *Generator) Init(suite *test.Suite, docs string) error {
 		}
 		g.w = out
 	}
+	g.authns = append(g.authns, suite.Authns...)
 	return nil
 }
 
@@ -146,6 +152,11 @@ func (g *Generator) Close() error {
 			})
 		}
 
+		var acls []SecurityRequirement
+		for k, v := range rep.Case.Security {
+			acls = append(acls, SecurityRequirement{}.Add(k, append(v.Scopes, v.Roles...)...))
+		}
+
 		p.Operations[m] = Operation{
 			Id:          id,
 			Summary:     text.Coalesce(rep.Case.Request.Title, rep.Case.Title),
@@ -154,9 +165,22 @@ func (g *Generator) Close() error {
 			Params:      params,
 			Request:     reqcnt,
 			Responses:   rsps,
+			Security:    acls,
 		}
 
 		paths[k] = p
+	}
+
+	var authns []SecurityScheme
+	for _, e := range g.authns {
+		authns = append(authns, SecurityScheme{
+			Type:        e.Type,
+			Name:        e.Name,
+			Description: e.Description,
+			In:          e.Location,
+			Scheme:      e.Scheme,
+			Format:      e.Format,
+		})
 	}
 
 	return enc.Encode(Service{
@@ -164,6 +188,7 @@ func (g *Generator) Close() error {
 		Consumes: []string{"application/json"},
 		Produces: []string{"application/json"},
 		Schemes:  []string{"https"},
+		Security: authns,
 		Info: Info{
 			Title: "API",
 			// Description: suite.Comments,

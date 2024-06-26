@@ -1,6 +1,8 @@
 package test
 
-import yaml "gopkg.in/yaml.v3"
+import (
+	yaml "gopkg.in/yaml.v3"
+)
 
 type parameter struct {
 	Location    string `yaml:"location"`
@@ -25,4 +27,18 @@ func (p *Parameter) UnmarshalYAML(value *yaml.Node) error {
 	}
 	*p = Parameter{x}
 	return nil
+}
+
+type Authentication struct {
+	Type        string `yaml:"method"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+	Scheme      string `yaml:"scheme"`
+	Format      string `yaml:"format"`
+	Location    string `yaml:"location"`
+}
+
+type AccessControl struct {
+	Scopes []string `yaml:"scopes"`
+	Roles  []string `yaml:"roles"`
 }

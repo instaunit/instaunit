@@ -55,6 +55,7 @@ type TOC struct {
 type Suite struct {
 	Title    string                 `yaml:"title"`
 	Comments string                 `yaml:"doc"`
+	Authns   []Authentication       `yaml:"authentication"`
 	TOC      TOC                    `yaml:"toc"`
 	Route    Route                  `yaml:"route"` // the route description for documentation purposes; this may be dynamic and shared by all routes in the suite
 	Cases    []*caseOrMatrix        `yaml:"tests"`
