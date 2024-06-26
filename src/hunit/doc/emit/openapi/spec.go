@@ -79,12 +79,14 @@ type Status struct {
 }
 
 type Operation struct {
-	Id          string            `json:"operationId"`
-	Summary     string            `json:"summary,omitempty"`
-	Description string            `json:"description,omitempty"`
-	Tags        []string          `json:"tags,omitempty"`
-	Request     Payload           `json:"requestBody"`
-	Responses   map[string]Status `json:"responses"`
+	Id          string                `json:"operationId"`
+	Summary     string                `json:"summary,omitempty"`
+	Description string                `json:"description,omitempty"`
+	Tags        []string              `json:"tags,omitempty"`
+	Params      []Parameter           `json:"parameters,omitempty"`
+	Request     Payload               `json:"requestBody"`
+	Responses   map[string]Status     `json:"responses"`
+	Security    []SecurityRequirement `json:"security"`
 }
 
 type Path struct {
@@ -96,18 +98,72 @@ func (p Path) MarshalJSON() ([]byte, error) {
 	return json.Marshal(p.Operations)
 }
 
+type ParameterLocation int
+
+const (
+	QueryParameter ParameterLocation = iota
+	PathParameter
+	parameterLocationCount
+)
+
+var parameterLocationNames = []string{
+	"query",
+	"path",
+}
+
+func (p ParameterLocation) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.String())
+}
+
+func (p ParameterLocation) String() string {
+	if p < 0 || p > parameterLocationCount {
+		return "invalid"
+	} else {
+		return parameterLocationNames[int(p)]
+	}
+}
+
+type Parameter struct {
+	In          ParameterLocation `json:"in"`
+	Name        string            `json:"name,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Required    bool              `json:"required"`
+	Schema      Schema            `json:"schema,omitempty"`
+}
+
+type SecurityRequirement map[string][]string
+
+func (a SecurityRequirement) Add(realm string, scopes ...string) SecurityRequirement {
+	a[realm] = append(a[realm], scopes...)
+	return a
+}
+
 type Info struct {
 	Title       string `json:"title,omitempty"`
 	Version     string `json:"version,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
+type Components struct {
+	Security map[string]SecurityScheme `json:"securitySchemes"`
+}
+
+type SecurityScheme struct {
+	Type        string `json:"type,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	In          string `json:"in,omitempty"`
+	Scheme      string `json:"scheme,omitempty"`
+	Format      string `json:"bearerFormat,omitempty"`
+}
+
 type Service struct {
-	Standard string          `json:"openapi"`
-	Consumes []string        `json:"consumes"`
-	Produces []string        `json:"produces"`
-	Schemes  []string        `json:"schemes"`
-	Info     Info            `json:"info"`
-	Host     string          `json:"host"`
-	Paths    map[string]Path `json:"paths"`
+	Standard   string          `json:"openapi"`
+	Consumes   []string        `json:"consumes"`
+	Produces   []string        `json:"produces"`
+	Schemes    []string        `json:"schemes"`
+	Components Components      `json:"components"`
+	Info       Info            `json:"info"`
+	Host       string          `json:"host"`
+	Paths      map[string]Path `json:"paths"`
 }

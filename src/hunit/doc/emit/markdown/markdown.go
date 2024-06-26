@@ -203,9 +203,9 @@ func (g *Generator) generate(w io.Writer, suite *test.Suite, c test.Case, req *h
 		}
 		sort.Strings(keys)
 
-		for k, v := range c.Params {
+		for k, d := range c.Params {
 			t := strings.TrimSpace(k)
-			v = strings.TrimSpace(v)
+			v := strings.TrimSpace(d.Description)
 			if l := len(t); l > maxkey {
 				maxkey = l
 			}

@@ -141,7 +141,7 @@ func (g *Generator) generate(suite *test.Suite, c test.Case, req *http.Request, 
 				Type: typePlain,
 				Detail: &Content{
 					Type: typePlain,
-					Data: strings.TrimSpace(c.Params[k]),
+					Data: strings.TrimSpace(c.Params[k].Description),
 				},
 			})
 		}

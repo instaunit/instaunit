@@ -24,11 +24,16 @@ type Generator struct {
 	docpath string
 	w       io.WriteCloser
 	routes  map[string]*Route
+	authns  map[string]test.Authentication
 }
 
 // Produce a new emitter
 func New(docpath string) *Generator {
-	return &Generator{docpath, nil, make(map[string]*Route)}
+	return &Generator{
+		docpath: docpath,
+		w:       nil,
+		routes:  make(map[string]*Route),
+	}
 }
 
 // Init a suite
@@ -39,6 +44,12 @@ func (g *Generator) Init(suite *test.Suite, docs string) error {
 			return err
 		}
 		g.w = out
+	}
+	if len(suite.Authns) > 0 {
+		g.authns = make(map[string]test.Authentication)
+	}
+	for k, v := range suite.Authns {
+		g.authns[k] = v
 	}
 	return nil
 }
@@ -135,16 +146,49 @@ func (g *Generator) Close() error {
 			}
 		}
 
+		var params []Parameter
+		for k, v := range rep.Case.Params {
+			params = append(params, Parameter{
+				In:          QueryParameter,
+				Name:        k,
+				Schema:      Schema{Type: v.Type},
+				Description: v.Description,
+				Required:    v.Required,
+			})
+		}
+
+		var acls []SecurityRequirement
+		for k, v := range rep.Case.Security {
+			acls = append(acls, SecurityRequirement{}.Add(k, append(v.Scopes, v.Roles...)...))
+		}
+
 		p.Operations[m] = Operation{
 			Id:          id,
 			Summary:     text.Coalesce(rep.Case.Request.Title, rep.Case.Title),
 			Description: text.Coalesce(rep.Case.Request.Comments, rep.Case.Comments),
 			Tags:        []string{rep.Suite.Title},
+			Params:      params,
 			Request:     reqcnt,
 			Responses:   rsps,
+			Security:    acls,
 		}
 
 		paths[k] = p
+	}
+
+	var authns map[string]SecurityScheme
+	if len(g.authns) > 0 {
+		authns = make(map[string]SecurityScheme)
+		for k, v := range g.authns {
+			authns[k] = SecurityScheme{
+				Type:        v.Type,
+				Name:        v.Name,
+				Description: v.Description,
+				In:          v.Location,
+				Scheme:      v.Scheme,
+				Format:      v.Format,
+			}
+		}
 	}
 
 	return enc.Encode(Service{
@@ -152,6 +196,9 @@ func (g *Generator) Close() error {
 		Consumes: []string{"application/json"},
 		Produces: []string{"application/json"},
 		Schemes:  []string{"https"},
+		Components: Components{
+			Security: authns,
+		},
 		Info: Info{
 			Title: "API",
 			// Description: suite.Comments,

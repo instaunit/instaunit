@@ -135,21 +135,22 @@ func (m Matrix) Frames() []Frame {
 
 // A test case
 type Case struct {
-	Id         string                 `yaml:"id"`
-	Wait       time.Duration          `yaml:"wait"`
-	Repeat     int                    `yaml:"repeat"`
-	Concurrent int                    `yaml:"concurrent"`
-	Gendoc     bool                   `yaml:"gendoc"`
-	Route      Route                  `yaml:"route"` // the route description for documentation purposes
-	Title      string                 `yaml:"title"`
-	Section    string                 `yaml:"section"`
-	Comments   string                 `yaml:"doc"`
-	Require    bool                   `yaml:"require"`
-	Params     map[string]string      `yaml:"params"`
-	Request    Request                `yaml:"request"`
-	Response   Response               `yaml:"response"`
-	Stream     *Stream                `yaml:"websocket"`
-	Vars       map[string]interface{} `yaml:"vars"`
+	Id         string                   `yaml:"id"`
+	Wait       time.Duration            `yaml:"wait"`
+	Repeat     int                      `yaml:"repeat"`
+	Concurrent int                      `yaml:"concurrent"`
+	Gendoc     bool                     `yaml:"gendoc"`
+	Route      Route                    `yaml:"route"` // the route description for documentation purposes
+	Title      string                   `yaml:"title"`
+	Section    string                   `yaml:"section"`
+	Comments   string                   `yaml:"doc"`
+	Require    bool                     `yaml:"require"`
+	Params     map[string]Parameter     `yaml:"params"`
+	Security   map[string]AccessControl `yaml:"security"`
+	Request    Request                  `yaml:"request"`
+	Response   Response                 `yaml:"response"`
+	Stream     *Stream                  `yaml:"websocket"`
+	Vars       map[string]interface{}   `yaml:"vars"`
 	Source     Source
 }
 
