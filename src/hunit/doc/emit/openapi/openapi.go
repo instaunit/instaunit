@@ -24,7 +24,7 @@ type Generator struct {
 	docpath string
 	w       io.WriteCloser
 	routes  map[string]*Route
-	authns  []test.Authentication
+	authns  map[string]test.Authentication
 }
 
 // Produce a new emitter
@@ -45,7 +45,12 @@ func (g *Generator) Init(suite *test.Suite, docs string) error {
 		}
 		g.w = out
 	}
-	g.authns = append(g.authns, suite.Authns...)
+	if len(suite.Authns) > 0 {
+		g.authns = make(map[string]test.Authentication)
+	}
+	for k, v := range suite.Authns {
+		g.authns[k] = v
+	}
 	return nil
 }
 
@@ -171,16 +176,19 @@ func (g *Generator) Close() error {
 		paths[k] = p
 	}
 
-	var authns []SecurityScheme
-	for _, e := range g.authns {
-		authns = append(authns, SecurityScheme{
-			Type:        e.Type,
-			Name:        e.Name,
-			Description: e.Description,
-			In:          e.Location,
-			Scheme:      e.Scheme,
-			Format:      e.Format,
-		})
+	var authns map[string]SecurityScheme
+	if len(g.authns) > 0 {
+		authns = make(map[string]SecurityScheme)
+		for k, v := range g.authns {
+			authns[k] = SecurityScheme{
+				Type:        v.Type,
+				Name:        v.Name,
+				Description: v.Description,
+				In:          v.Location,
+				Scheme:      v.Scheme,
+				Format:      v.Format,
+			}
+		}
 	}
 
 	return enc.Encode(Service{
@@ -188,7 +196,9 @@ func (g *Generator) Close() error {
 		Consumes: []string{"application/json"},
 		Produces: []string{"application/json"},
 		Schemes:  []string{"https"},
-		Security: authns,
+		Components: Components{
+			Security: authns,
+		},
 		Info: Info{
 			Title: "API",
 			// Description: suite.Comments,

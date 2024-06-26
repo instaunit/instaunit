@@ -144,6 +144,10 @@ type Info struct {
 	Description string `json:"description,omitempty"`
 }
 
+type Components struct {
+	Security map[string]SecurityScheme `json:"securitySchemes"`
+}
+
 type SecurityScheme struct {
 	Type        string `json:"type,omitempty"`
 	Name        string `json:"name,omitempty"`
@@ -154,12 +158,12 @@ type SecurityScheme struct {
 }
 
 type Service struct {
-	Standard string           `json:"openapi"`
-	Consumes []string         `json:"consumes"`
-	Produces []string         `json:"produces"`
-	Schemes  []string         `json:"schemes"`
-	Security []SecurityScheme `json:"securitySchemes"`
-	Info     Info             `json:"info"`
-	Host     string           `json:"host"`
-	Paths    map[string]Path  `json:"paths"`
+	Standard   string          `json:"openapi"`
+	Consumes   []string        `json:"consumes"`
+	Produces   []string        `json:"produces"`
+	Schemes    []string        `json:"schemes"`
+	Components Components      `json:"components"`
+	Info       Info            `json:"info"`
+	Host       string          `json:"host"`
+	Paths      map[string]Path `json:"paths"`
 }
