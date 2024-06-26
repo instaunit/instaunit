@@ -135,11 +135,23 @@ func (g *Generator) Close() error {
 			}
 		}
 
+		var params []Parameter
+		for k, v := range rep.Case.Params {
+			params = append(params, Parameter{
+				In:          QueryParameter,
+				Name:        k,
+				Schema:      Schema{Type: v.Type},
+				Description: v.Description,
+				Required:    v.Required,
+			})
+		}
+
 		p.Operations[m] = Operation{
 			Id:          id,
 			Summary:     text.Coalesce(rep.Case.Request.Title, rep.Case.Title),
 			Description: text.Coalesce(rep.Case.Request.Comments, rep.Case.Comments),
 			Tags:        []string{rep.Suite.Title},
+			Params:      params,
 			Request:     reqcnt,
 			Responses:   rsps,
 		}

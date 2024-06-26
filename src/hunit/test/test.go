@@ -145,7 +145,7 @@ type Case struct {
 	Section    string                 `yaml:"section"`
 	Comments   string                 `yaml:"doc"`
 	Require    bool                   `yaml:"require"`
-	Params     map[string]string      `yaml:"params"`
+	Params     map[string]Parameter   `yaml:"params"`
 	Request    Request                `yaml:"request"`
 	Response   Response               `yaml:"response"`
 	Stream     *Stream                `yaml:"websocket"`

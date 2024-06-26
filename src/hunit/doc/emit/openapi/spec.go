@@ -83,6 +83,7 @@ type Operation struct {
 	Summary     string            `json:"summary,omitempty"`
 	Description string            `json:"description,omitempty"`
 	Tags        []string          `json:"tags,omitempty"`
+	Params      []Parameter       `json:"parameters,omitempty"`
 	Request     Payload           `json:"requestBody"`
 	Responses   map[string]Status `json:"responses"`
 }
@@ -94,6 +95,39 @@ type Path struct {
 
 func (p Path) MarshalJSON() ([]byte, error) {
 	return json.Marshal(p.Operations)
+}
+
+type ParameterLocation int
+
+const (
+	QueryParameter ParameterLocation = iota
+	PathParameter
+	parameterLocationCount
+)
+
+var parameterLocationNames = []string{
+	"query",
+	"path",
+}
+
+func (p ParameterLocation) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.String())
+}
+
+func (p ParameterLocation) String() string {
+	if p < 0 || p > parameterLocationCount {
+		return "invalid"
+	} else {
+		return parameterLocationNames[int(p)]
+	}
+}
+
+type Parameter struct {
+	In          ParameterLocation `json:"in"`
+	Name        string            `json:"name,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Required    bool              `json:"required"`
+	Schema      Schema            `json:"schema,omitempty"`
 }
 
 type Info struct {
