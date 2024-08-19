@@ -82,8 +82,8 @@ func app() int {
 		fMaxRedirs       = cmdline.Int("http:redirects", strToInt(os.Getenv("HUNIT_HTTP_MAX_REDIRECTS"), -1), "The maximum number of redirects to follow; specify: 0 to disable redirects, -1 for unlimited redirects. Overrides: $HUNIT_HTTP_MAX_REDIRECTS.")
 		fDebug           = cmdline.BoolP("debug", "D", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode. Overrides: $HUNIT_DEBUG.")
 		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal. Overrides: $HUNIT_COLOR_OUTPUT.")
-		fVerbose         = cmdline.BoolP("verbose", "v", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_VERBOSE and $VERBOSE.")
-		fQuiet           = cmdline.BoolP("quiet", "q", strToBool(os.Getenv("HUNIT_QUIET")), "Minimal output; generally only errors. Overrides: $HUNIT_QUIET and $QUIET.")
+		fVerbose         = cmdline.BoolP("verbose", "v", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_QUIET and $QUIET.")
+		fQuiet           = cmdline.BoolP("quiet", "q", strToBool(os.Getenv("HUNIT_QUIET")), "Minimal output; generally only errors. Overrides: $HUNIT_VERBOSE and $VERBOSE.")
 		fVersion         = cmdline.Bool("version", false, "Display the version and exit.")
 	)
 	cmdline.StringSliceVar(&headerSpecs, "header", nil, "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
@@ -155,7 +155,7 @@ func app() int {
 			color.New(colorErr...).Printf("* * * Invalid documentation type: %v\n", err)
 			return 1
 		}
-		err = os.MkdirAll(*fDocpath, 0755)
+		err = os.MkdirAll(*fDocpath, 0o755)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
 			return 1
@@ -165,7 +165,7 @@ func app() int {
 
 	var reports []report.Generator
 	if *fReport {
-		err := os.MkdirAll(*fReportPath, 0755)
+		err := os.MkdirAll(*fReportPath, 0o755)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
 			return 1
@@ -175,7 +175,7 @@ func app() int {
 			color.New(colorErr...).Printf("* * * Invalid report type: %v\n", err)
 			return 1
 		}
-		out, err := os.OpenFile(path.Join(*fReportPath, rtype.String()+rtype.Ext()), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		out, err := os.OpenFile(path.Join(*fReportPath, rtype.String()+rtype.Ext()), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not open report output: %v\n", err)
 			return 1
@@ -646,7 +646,7 @@ func execCommandAsync(options test.Options, cmd exec.Command, logs string) (*exe
 	var wout, werr io.WriteCloser
 	if logs != "" {
 		var err error
-		out, err := os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		out, err := os.OpenFile(logs, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0o644)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Could not open exec log: %v", err)
 		}
