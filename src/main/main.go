@@ -313,18 +313,23 @@ suites:
 			proc = nil
 		}
 
-		var suite *test.Suite
-		var base string
-		var err error
+		var (
+			suite *test.Suite
+			base  string
+			root  string
+			err   error
+		)
 		cdup := config // copy global configs and update them
 
 		var reader io.Reader
 		if e == stdinPath {
 			base = "(stdin)"
+			root = "."
 			color.New(colorSuite...).Printf("====> %s", base)
 			reader = os.Stdin
 		} else {
 			base = path.Base(e)
+			root = path.Dir(e)
 			color.New(colorSuite...).Printf("====> %s", base)
 			f, err := os.Open(e)
 			if err != nil {
@@ -336,7 +341,7 @@ suites:
 			reader = f
 		}
 
-		suite, err = test.LoadSuiteFromReader(&cdup, reader)
+		suite, err = test.LoadSuiteFromReader(&cdup, root, reader)
 		if err != nil {
 			color.New(colorErr...).Println("\n* * * Could not load test suite:", err)
 			errno++

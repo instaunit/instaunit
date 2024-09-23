@@ -2,9 +2,12 @@ package test
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/exec"
@@ -55,6 +58,7 @@ type TOC struct {
 type Suite struct {
 	Title    string                    `yaml:"title"`
 	Comments string                    `yaml:"doc"`
+	Imports  []string                  `yaml:"import"`
 	Authns   map[string]Authentication `yaml:"authentication"`
 	TOC      TOC                       `yaml:"toc"`
 	Route    Route                     `yaml:"route"` // the route description for documentation purposes; this may be dynamic and shared by all routes in the suite
@@ -83,20 +87,20 @@ func LoadSuiteFromFile(c *Config, p string) (*Suite, error) {
 		return nil, err
 	}
 	defer file.Close()
-	return LoadSuiteFromReader(c, file)
+	return LoadSuiteFromReader(c, path.Dir(p), file)
 }
 
 // Load a test suite
-func LoadSuiteFromReader(c *Config, r io.Reader) (*Suite, error) {
+func LoadSuiteFromReader(c *Config, root string, r io.Reader) (*Suite, error) {
 	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
-	return LoadSuiteFromData(c, data)
+	return LoadSuiteFromData(c, root, data)
 }
 
 // Load a test suite
-func LoadSuiteFromData(conf *Config, data []byte) (*Suite, error) {
+func LoadSuiteFromData(conf *Config, root string, data []byte) (*Suite, error) {
 	node := &yaml.Node{}
 	err := yaml.Unmarshal(data, node)
 	if err != nil {
@@ -116,6 +120,21 @@ func LoadSuiteFromData(conf *Config, data []byte) (*Suite, error) {
 	default:
 		err = errMalformedSuite
 	}
+
+	var cases []*caseOrMatrix
+	// Imported cases are appended in declaration order before the
+	// current suite's cases...
+	for _, e := range suite.Imports {
+		sub, err := LoadSuiteFromFile(conf, filepath.Join(root, e))
+		if err != nil {
+			return nil, fmt.Errorf("Could not read imported suite: %w", err)
+		}
+		cases = append(cases, sub.Cases...)
+	}
+
+	// ...then the current suite's cases are appended.
+	cases = append(cases, suite.Cases...)
+	suite.Cases = cases
 
 	*conf = suite.Config
 	return suite, nil
