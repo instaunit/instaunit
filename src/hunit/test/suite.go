@@ -12,6 +12,7 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/exec"
 
+	"github.com/bww/go-util/v1/maps"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -121,20 +122,34 @@ func LoadSuiteFromData(conf *Config, root string, data []byte) (*Suite, error) {
 		err = errMalformedSuite
 	}
 
+	// Imported records are appended in declaration order before
+	// those of the current suite...
 	var cases []*caseOrMatrix
-	// Imported cases are appended in declaration order before the
-	// current suite's cases...
+	var authns map[string]Authentication
 	for _, e := range suite.Imports {
 		sub, err := LoadSuiteFromFile(conf, filepath.Join(root, e))
 		if err != nil {
 			return nil, fmt.Errorf("Could not read imported suite: %w", err)
 		}
+		// test cases
 		cases = append(cases, sub.Cases...)
+		// authentications
+		if len(sub.Authns) > 0 {
+			if authns == nil {
+				authns = make(map[string]Authentication)
+			}
+			maps.Merge(authns, sub.Authns)
+		}
 	}
 
-	// ...then the current suite's cases are appended.
+	// ...current test cases
 	cases = append(cases, suite.Cases...)
 	suite.Cases = cases
+
+	// ...current authentications
+	if authns != nil {
+		suite.Authns = maps.Merged(authns, suite.Authns)
+	}
 
 	*conf = suite.Config
 	return suite, nil
