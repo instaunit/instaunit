@@ -105,7 +105,7 @@ func (g *Generator) Close() error {
 			if rsp := e.Rsp; len(rsp.Data) > 0 {
 				ctype := text.Coalesce(firstValue(rsp.Rsp.Header["Content-Type"]), "text/plain")
 				rspcnt = map[string]Reference{
-					ctype: Reference{
+					ctype: {
 						Schema: Schema{
 							Type:    "object",
 							Example: newValue(ctype, []byte(rsp.Data)),

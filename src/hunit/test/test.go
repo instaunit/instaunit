@@ -176,16 +176,46 @@ func (c Case) Frames() []Frame {
 // return a literalized version of the case.
 func (c Case) Interpolate(vars expr.Variables) (Case, error) {
 	d := c
+
 	if v, err := expr.Interpolate(c.Title, vars); err != nil {
 		return d, err
 	} else {
 		d.Title = v
 	}
+
 	if v, err := expr.Interpolate(c.Comments, vars); err != nil {
 		return d, err
 	} else {
 		d.Comments = v
 	}
+
+	if len(c.Security) > 0 {
+		sec := make(map[string]AccessControl)
+		for k, v := range c.Security {
+			k, err := expr.Interpolate(k, vars)
+			if err != nil {
+				return d, err
+			}
+			a := AccessControl{}
+			for _, e := range v.Scopes {
+				e, err := expr.Interpolate(e, vars)
+				if err != nil {
+					return d, err
+				}
+				a.Scopes = append(a.Scopes, e)
+			}
+			for _, e := range v.Roles {
+				e, err := expr.Interpolate(e, vars)
+				if err != nil {
+					return d, err
+				}
+				a.Roles = append(a.Roles, e)
+			}
+			sec[k] = a
+		}
+		d.Security = sec
+	}
+
 	return d, nil
 }
 
