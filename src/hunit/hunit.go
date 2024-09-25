@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -490,7 +491,7 @@ func formatName(c test.Case, method, url string) string {
 	if v := c.Response.Status; v != 0 {
 		sb.WriteString(fmt.Sprintf(" (expect: %d/%s)", v, http.StatusText(v)))
 	}
-	sb.WriteString(fmt.Sprintf(" @ line %d", c.Source.Line))
+	sb.WriteString(fmt.Sprintf(" @ %s:%d", path.Base(c.Source.File), c.Source.Line))
 	sb.WriteString("\n")
 	return sb.String()
 }

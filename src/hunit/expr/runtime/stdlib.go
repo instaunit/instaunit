@@ -40,6 +40,11 @@ func (s stdlib) RandomString(n float64) string {
 	return rand.RandomString(int(n))
 }
 
+// Generate a random string composed of digits
+func (s stdlib) RandomDigits(n float64) string {
+	return rand.RandomStringFromSet(int(n), rand.Digit)
+}
+
 // Generate a random name (Docker style: <adjective>_<noun>)
 func (s stdlib) RandomIdent() string {
 	l, r := DockerName()

@@ -88,20 +88,20 @@ func LoadSuiteFromFile(c *Config, p string) (*Suite, error) {
 		return nil, err
 	}
 	defer file.Close()
-	return LoadSuiteFromReader(c, path.Dir(p), file)
+	return LoadSuiteFromReader(c, p, path.Dir(p), file)
 }
 
 // Load a test suite
-func LoadSuiteFromReader(c *Config, root string, r io.Reader) (*Suite, error) {
+func LoadSuiteFromReader(c *Config, p, b string, r io.Reader) (*Suite, error) {
 	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
-	return LoadSuiteFromData(c, root, data)
+	return LoadSuiteFromData(c, p, b, data)
 }
 
 // Load a test suite
-func LoadSuiteFromData(conf *Config, root string, data []byte) (*Suite, error) {
+func LoadSuiteFromData(conf *Config, p, b string, data []byte) (*Suite, error) {
 	node := &yaml.Node{}
 	err := yaml.Unmarshal(data, node)
 	if err != nil {
@@ -115,9 +115,9 @@ func LoadSuiteFromData(conf *Config, root string, data []byte) (*Suite, error) {
 	suite := &Suite{Config: *conf}
 	switch node.Kind {
 	case yaml.SequenceNode:
-		err = decodeCases(suite, node)
+		err = decodeCases(suite, p, node)
 	case yaml.MappingNode:
-		err = decodeSuite(suite, node)
+		err = decodeSuite(suite, p, node)
 	default:
 		err = errMalformedSuite
 	}
@@ -127,7 +127,7 @@ func LoadSuiteFromData(conf *Config, root string, data []byte) (*Suite, error) {
 	var cases []*caseOrMatrix
 	var authns map[string]Authentication
 	for _, e := range suite.Imports {
-		sub, err := LoadSuiteFromFile(conf, filepath.Join(root, e))
+		sub, err := LoadSuiteFromFile(conf, filepath.Join(b, e))
 		if err != nil {
 			return nil, fmt.Errorf("Could not read imported suite: %w", err)
 		}
@@ -156,7 +156,7 @@ func LoadSuiteFromData(conf *Config, root string, data []byte) (*Suite, error) {
 }
 
 // Decode the full suite document format
-func decodeSuite(suite *Suite, node *yaml.Node) error {
+func decodeSuite(suite *Suite, file string, node *yaml.Node) error {
 	err := node.Decode(suite)
 	if err != nil {
 		return err
@@ -165,7 +165,7 @@ func decodeSuite(suite *Suite, node *yaml.Node) error {
 	for i, e := range node.Content {
 		if e.Kind == yaml.ScalarNode && e.Value == "tests" {
 			if i+1 < l && node.Content[i+1].Kind == yaml.SequenceNode {
-				return annotate(suite.Cases, node.Content[i+1])
+				return annotate(suite.Cases, file, node.Content[i+1])
 			}
 		}
 	}
@@ -173,22 +173,23 @@ func decodeSuite(suite *Suite, node *yaml.Node) error {
 }
 
 // Decode a sequence of cases; this is the simple suite document format
-func decodeCases(suite *Suite, node *yaml.Node) error {
+func decodeCases(suite *Suite, file string, node *yaml.Node) error {
 	err := node.Decode(&suite.Cases)
 	if err != nil {
 		return err
 	}
-	return annotate(suite.Cases, node)
+	return annotate(suite.Cases, file, node)
 }
 
 // Annotate test cases using the provided sequence node
-func annotate[E Annotater](cases []E, node *yaml.Node) error {
+func annotate[E Annotater](cases []E, file string, node *yaml.Node) error {
 	if len(cases) != len(node.Content) {
 		return errMalformedSuite
 	}
 	for i, e := range cases {
 		n := node.Content[i]
 		err := e.Annotate(n, Source{
+			File:   file,
 			Line:   n.Line,
 			Column: n.Column,
 			Comments: Comments{

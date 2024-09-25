@@ -68,7 +68,7 @@ func InterpolateAll(a, v Variables) (Variables, error) {
 func interpolate(s, pre, suf string, context interface{}) (string, error) {
 	defer func() {
 		if err := recover(); err != nil {
-			panic(fmt.Errorf("%w: [%s] with context: %s)", err, s, spew.Sdump(context)))
+			panic(fmt.Errorf("%v: [%s] with context: %s)", err, s, spew.Sdump(context)))
 		}
 	}()
 
