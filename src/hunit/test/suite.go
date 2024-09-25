@@ -124,12 +124,20 @@ func LoadSuiteFromData(conf *Config, p, b string, data []byte) (*Suite, error) {
 
 	// Imported records are appended in declaration order before
 	// those of the current suite...
+	var globals map[string]interface{}
 	var cases []*caseOrMatrix
 	var authns map[string]Authentication
 	for _, e := range suite.Imports {
 		sub, err := LoadSuiteFromFile(conf, filepath.Join(b, e))
 		if err != nil {
 			return nil, fmt.Errorf("Could not read imported suite: %w", err)
+		}
+		// globals
+		if len(sub.Globals) > 0 {
+			if globals == nil {
+				globals = make(map[string]interface{})
+			}
+			maps.Merge(globals, sub.Globals)
 		}
 		// test cases
 		cases = append(cases, sub.Cases...)
@@ -140,6 +148,11 @@ func LoadSuiteFromData(conf *Config, p, b string, data []byte) (*Suite, error) {
 			}
 			maps.Merge(authns, sub.Authns)
 		}
+	}
+
+	// ...globals
+	if globals != nil {
+		suite.Globals = maps.Merged(globals, suite.Globals)
 	}
 
 	// ...current test cases

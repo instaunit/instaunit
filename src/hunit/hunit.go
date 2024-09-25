@@ -30,6 +30,12 @@ func RunSuite(suite *test.Suite, context runtime.Context) ([]*Result, error) {
 	results := make([]*Result, 0)
 	globals := dupVars(suite.Globals)
 
+	// this is weird, but yes, we're evaulating globals in terms of themselves
+	globals, err := expr.InterpolateAll(globals, globals)
+	if err != nil {
+		return nil, fmt.Errorf("Could not evaluate global: %w", err)
+	}
+
 	precond := true
 	for _, f := range suite.Frames() {
 		e := f.Case // just unpack the case for now
