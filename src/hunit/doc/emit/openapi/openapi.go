@@ -61,6 +61,9 @@ func (g *Generator) Finalize(suite *test.Suite) error {
 
 // Finalize and close the writer
 func (g *Generator) Close() error {
+	if g.w == nil {
+		return nil // nothing to do
+	}
 	defer func() {
 		g.w.Close()
 		g.w = nil
@@ -139,7 +142,7 @@ func (g *Generator) Close() error {
 			ctype := text.Coalesce(firstValue(req.Req.Header["Content-Type"]), "text/plain")
 			reqcnt = Payload{
 				Content: map[string]Schema{
-					ctype: Schema{
+					ctype: {
 						Example: newValue(ctype, []byte(req.Data)),
 					},
 				},

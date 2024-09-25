@@ -80,6 +80,7 @@ type Comments struct {
 
 // Source annotation
 type Source struct {
+	File         string
 	Line, Column int
 	Comments     Comments
 }
@@ -112,7 +113,7 @@ func (m *Matrix) Annotate(node *yaml.Node, src Source) error {
 	for i, e := range node.Content {
 		if e.Kind == yaml.ScalarNode && e.Value == "do" {
 			if i+1 < l && node.Content[i+1].Kind == yaml.SequenceNode {
-				return annotate(m.Cases, node.Content[i+1]) // once we find it, nothing else to do
+				return annotate(m.Cases, src.File, node.Content[i+1]) // once we find it, nothing else to do
 			}
 		}
 	}

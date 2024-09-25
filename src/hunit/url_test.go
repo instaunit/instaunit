@@ -2,11 +2,13 @@ package hunit
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/instaunit/instaunit/hunit/runtime"
+	"github.com/stretchr/testify/assert"
 )
 
-var urlContext = Context{}
+var urlContext = runtime.Context{}
 
 // Test URL resemblance
 func TestAbsoluteURL(t *testing.T) {

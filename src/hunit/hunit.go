@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,6 +29,12 @@ func RunSuite(suite *test.Suite, context runtime.Context) ([]*Result, error) {
 	var futures []FutureResult
 	results := make([]*Result, 0)
 	globals := dupVars(suite.Globals)
+
+	// this is weird, but yes, we're evaulating globals in terms of themselves
+	globals, err := expr.InterpolateAll(globals, globals)
+	if err != nil {
+		return nil, fmt.Errorf("Could not evaluate global: %w", err)
+	}
 
 	precond := true
 	for _, f := range suite.Frames() {
@@ -490,7 +497,7 @@ func formatName(c test.Case, method, url string) string {
 	if v := c.Response.Status; v != 0 {
 		sb.WriteString(fmt.Sprintf(" (expect: %d/%s)", v, http.StatusText(v)))
 	}
-	sb.WriteString(fmt.Sprintf(" @ line %d", c.Source.Line))
+	sb.WriteString(fmt.Sprintf(" @ %s:%d", path.Base(c.Source.File), c.Source.Line))
 	sb.WriteString("\n")
 	return sb.String()
 }
