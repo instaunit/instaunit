@@ -59,6 +59,7 @@ type TOC struct {
 type Suite struct {
 	Title    string                    `yaml:"title"`
 	Comments string                    `yaml:"doc"`
+	Link     string                    `yaml:"link"` // link to external documentation
 	Imports  []string                  `yaml:"import"`
 	Authns   map[string]Authentication `yaml:"authentication"`
 	TOC      TOC                       `yaml:"toc"`
@@ -70,6 +71,11 @@ type Suite struct {
 	Exec     *exec.Command             `yaml:"process"`
 	Deps     *Dependencies             `yaml:"depends"`
 	Globals  map[string]interface{}    `yaml:"vars"`
+}
+
+// Determine if this suite is documented or not
+func (s Suite) Documented() bool {
+	return s.Title != "" || s.Comments != ""
 }
 
 // Produce frames for every case in the suite

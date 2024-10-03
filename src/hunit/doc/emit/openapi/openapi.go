@@ -25,6 +25,7 @@ type Generator struct {
 	w       io.WriteCloser
 	routes  map[string]*Route
 	authns  map[string]test.Authentication
+	tags    map[string]Tag
 }
 
 // Produce a new emitter
@@ -33,6 +34,7 @@ func New(docpath string) *Generator {
 		docpath: docpath,
 		w:       nil,
 		routes:  make(map[string]*Route),
+		tags:    make(map[string]Tag),
 	}
 }
 
@@ -50,6 +52,13 @@ func (g *Generator) Init(suite *test.Suite, docs string) error {
 	}
 	for k, v := range suite.Authns {
 		g.authns[k] = v
+	}
+	if suite.Title != "" {
+		g.tags[suite.Title] = Tag{ // the title is the tag literal
+			Name:        suite.Title,
+			Description: suite.Comments,
+			Link:        suite.Link,
+		}
 	}
 	return nil
 }
@@ -194,6 +203,13 @@ func (g *Generator) Close() error {
 		}
 	}
 
+	var tags []Tag
+	if len(g.tags) > 0 {
+		for _, v := range g.tags {
+			tags = append(tags, v)
+		}
+	}
+
 	return enc.Encode(Service{
 		Standard: version,
 		Consumes: []string{"application/json"},
@@ -204,10 +220,11 @@ func (g *Generator) Close() error {
 		},
 		Info: Info{
 			Title: "API",
-			// Description: suite.Comments,
+			// Description: {where does this come from?}
 		},
 		Host:  host,
 		Paths: paths,
+		Tags:  tags,
 	})
 }
 

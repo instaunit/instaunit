@@ -157,6 +157,12 @@ type SecurityScheme struct {
 	Format      string `json:"bearerFormat,omitempty"`
 }
 
+type Tag struct {
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Link        string `json:"externalDocs,omitempty"`
+}
+
 type Service struct {
 	Standard   string          `json:"openapi"`
 	Consumes   []string        `json:"consumes"`
@@ -166,4 +172,5 @@ type Service struct {
 	Info       Info            `json:"info"`
 	Host       string          `json:"host"`
 	Paths      map[string]Path `json:"paths"`
+	Tags       []Tag           `json:"tags"`
 }
