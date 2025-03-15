@@ -17,8 +17,43 @@ var (
 	errContentTypeNotSupported = errors.New("Content type not supported")
 )
 
+type ConditionFailedPolicy string
+
+const (
+	ConditionFailedSkip    = "skip" // skip the operation when a condition fails
+	ConditionFailedFail    = "fail" // fail with an error when a condition fails
+	ConditionFailedDefault = ConditionFailedSkip
+)
+
+func (c ConditionFailedPolicy) Check(err error) error {
+	if err == nil {
+		return nil
+	}
+	switch c {
+	case "": // default case falls through to the default handler
+		fallthrough
+	case ConditionFailedSkip:
+		if errors.Is(err, errContentTypeNotSupported) {
+			return nil // content type not supported is ignored when policy is: skip
+		}
+	}
+	return err
+}
+
+type TransformCollection struct {
+	Request  []Transform `json:"request"`
+	Response []Transform `json:"response"`
+}
+
+type ResponseTransformer interface {
+	// TransformResponse transforms a request in some way and returns
+	// either a shallow copy or the unmodified argument
+	TransformResponse(*http.Response) (*http.Response, error)
+}
+
 type Transform struct {
-	Type string `yaml:"type"`
+	Type        string                `yaml:"type"`
+	Unsupported ConditionFailedPolicy `json:"unsupported"`
 }
 
 func (t Transform) ResponseTransfomer() (ResponseTransformer, error) {
@@ -30,10 +65,19 @@ func (t Transform) ResponseTransfomer() (ResponseTransformer, error) {
 	}
 }
 
-type ResponseTransformer interface {
-	// TransformResponse transforms a request in some way and returns
-	// either a shallow copy or the unmodified argument
-	TransformResponse(*http.Response) (*http.Response, error)
+// TransformResponse implements ResponseTransformer for Transform and is the
+// preferred way to apply a Transform since it correctly handles
+// condition-failed policies
+func (t Transform) TransformResponse(rsp *http.Response) (*http.Response, error) {
+	xform, err := t.ResponseTransfomer()
+	if err != nil {
+		return nil, err
+	}
+	xconv, err := xform.TransformResponse(rsp)
+	if err = t.Unsupported.Check(err); err != nil {
+		return nil, err
+	}
+	return xconv, nil
 }
 
 type PrettyTransformer struct{}

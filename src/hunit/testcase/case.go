@@ -55,7 +55,7 @@ type Response struct {
 	Entity     string            `yaml:"entity"`
 	Comparison Comparison        `yaml:"compare"`
 	Format     string            `yaml:"format"`
-	Transform  *Transform        `yaml:"transform"`
+	Transforms []Transform       `yaml:"transform"`
 	Assert     *script.Script    `yaml:"assert"`
 	Title      string            `yaml:"title"`
 	Comments   string            `yaml:"doc"`

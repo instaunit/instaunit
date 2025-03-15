@@ -385,13 +385,19 @@ func RunTest(suite *testcase.Suite, c testcase.Case, context runtime.Context) (*
 		}
 	}
 
-	// transform the response, if necessary
-	if spec := c.Response.Transform; spec != nil {
-		xform, err := spec.ResponseTransfomer()
-		if err != nil {
-			return result.Error(fmt.Errorf("Could not create response transformer: %w", err)), nil, vars, nil
-		}
-		rsp, err = xform.TransformResponse(rsp)
+	// Transform the response, if necessary, first by applying suite-level
+	// transforms, then request-level transforms. We do not currently make an
+	// attempt to avoid applying the same transform repeatedly, either at
+	// different levels or the same level.
+	var xfspecs []testcase.Transform
+	if specs := suite.Transform.Response; specs != nil {
+		xfspecs = append(xfspecs, specs...)
+	}
+	if specs := c.Response.Transforms; specs != nil {
+		xfspecs = append(xfspecs, specs...)
+	}
+	for _, spec := range xfspecs {
+		rsp, err = spec.TransformResponse(rsp)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not transform response: %w", err)), nil, vars, nil
 		}
