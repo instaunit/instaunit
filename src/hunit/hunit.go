@@ -16,7 +16,7 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/runtime"
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/testcase"
 	"github.com/instaunit/instaunit/hunit/text"
 
 	"github.com/bww/go-util/v1/debug"
@@ -25,7 +25,7 @@ import (
 )
 
 // Run a test suite
-func RunSuite(suite *test.Suite, context runtime.Context) ([]*Result, error) {
+func RunSuite(suite *testcase.Suite, context runtime.Context) ([]*Result, error) {
 	var futures []FutureResult
 	results := make([]*Result, 0)
 	globals := dupVars(suite.Globals)
@@ -138,7 +138,7 @@ func RunSuite(suite *test.Suite, context runtime.Context) ([]*Result, error) {
 }
 
 // Run a test case
-func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, FutureResult, expr.Variables, error) {
+func RunTest(suite *testcase.Suite, c testcase.Case, context runtime.Context) (*Result, FutureResult, expr.Variables, error) {
 	var vdef expr.Variables
 	start := time.Now()
 
@@ -290,13 +290,13 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 
 		// depending on the I/O mode, resolve or return a future
 		switch m := c.Stream.Mode; m {
-		case test.IOModeSync:
+		case testcase.IOModeSync:
 			r, err := monitor.Finish(time.Time{})
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not finish I/O: %w", err)), nil, vars, nil
 			}
 			return r, nil, vars, nil
-		case test.IOModeAsync:
+		case testcase.IOModeAsync:
 			return nil, monitor, vars, nil
 		default:
 			return nil, nil, nil, fmt.Errorf("No such I/O mode: %v", m)
@@ -385,6 +385,24 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 		}
 	}
 
+	// Transform the response, if necessary, first by applying suite-level
+	// transforms, then request-level transforms. We do not currently make an
+	// attempt to avoid applying the same transform repeatedly, either at
+	// different levels or the same level.
+	var xfspecs []testcase.Transform
+	if specs := suite.Transform.Response; specs != nil {
+		xfspecs = append(xfspecs, specs...)
+	}
+	if specs := c.Response.Transforms; specs != nil {
+		xfspecs = append(xfspecs, specs...)
+	}
+	for _, spec := range xfspecs {
+		rsp, err = spec.TransformResponse(rsp)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not transform response: %w", err)), nil, vars, nil
+		}
+	}
+
 	// handle the response entity
 	var rspdata []byte
 	if rsp.Body != nil {
@@ -396,7 +414,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 
 	// parse response entity if necessry
 	var rspvalue interface{} = rspdata
-	if c.Response.Comparison == test.CompareSemantic {
+	if c.Response.Comparison == testcase.CompareSemantic {
 		rspvalue, err = unmarshalEntity(context, contentType, rspdata)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not unmarshal entity: %w", err)), nil, vars, nil
@@ -491,7 +509,7 @@ func RunTest(suite *test.Suite, c test.Case, context runtime.Context) (*Result, 
 	return result, nil, vars, nil
 }
 
-func formatName(c test.Case, method, url string) string {
+func formatName(c testcase.Case, method, url string) string {
 	sb := &strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%v %v", method, url))
 	if v := c.Response.Status; v != 0 {

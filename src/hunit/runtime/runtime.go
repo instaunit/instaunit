@@ -5,14 +5,14 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/doc"
 	"github.com/instaunit/instaunit/hunit/expr"
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
 // A test context
 type Context struct {
 	BaseURL   string
-	Options   test.Options
-	Config    test.Config
+	Options   testcase.Options
+	Config    testcase.Config
 	Headers   map[string]string
 	Debug     bool
 	Gendoc    []doc.Generator
@@ -47,7 +47,7 @@ func (c *Context) AddVars(vars ...expr.Variables) {
 
 // Interpolate, if we're configured to do so
 func (c *Context) Interpolate(s string) (string, error) {
-	if (c.Options & test.OptionInterpolateVariables) == test.OptionInterpolateVariables {
+	if (c.Options & testcase.OptionInterpolateVariables) == testcase.OptionInterpolateVariables {
 		return expr.Interpolate(s, c.Variables)
 	} else {
 		return s, nil

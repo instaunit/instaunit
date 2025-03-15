@@ -21,7 +21,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/service"
 	"github.com/instaunit/instaunit/hunit/service/backend/rest"
 	"github.com/instaunit/instaunit/hunit/syncio"
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/testcase"
 	"github.com/instaunit/instaunit/hunit/text"
 
 	doc_emit "github.com/instaunit/instaunit/hunit/doc/emit"
@@ -100,29 +100,29 @@ func app() int {
 	debug.VERBOSE = debug.VERBOSE || *fVerbose
 	color.NoColor = !*fColor
 
-	var options test.Options
+	var options testcase.Options
 	if *fTrimEntity {
-		options |= test.OptionEntityTrimTrailingWhitespace
+		options |= testcase.OptionEntityTrimTrailingWhitespace
 	}
 	if *fExpandVars {
-		options |= test.OptionInterpolateVariables
+		options |= testcase.OptionInterpolateVariables
 	}
 	if *fDumpRequest {
-		options |= test.OptionDisplayRequests
+		options |= testcase.OptionDisplayRequests
 	}
 	if *fDumpResponse {
-		options |= test.OptionDisplayResponses
+		options |= testcase.OptionDisplayResponses
 	}
 	if *fQuiet {
-		options |= test.OptionQuiet
+		options |= testcase.OptionQuiet
 	} else if debug.VERBOSE {
-		options |= test.OptionDisplayRequests | test.OptionDisplayResponses
+		options |= testcase.OptionDisplayRequests | testcase.OptionDisplayResponses
 	}
 
-	options |= test.OptionDisplayRequestsOnFailure
-	options |= test.OptionDisplayResponsesOnFailure
+	options |= testcase.OptionDisplayRequestsOnFailure
+	options |= testcase.OptionDisplayResponsesOnFailure
 
-	var config test.Config
+	var config testcase.Config
 	if *fDocInclHTTP {
 		config.Doc.IncludeHTTP = true
 	}
@@ -267,7 +267,7 @@ func app() int {
 			color.New(colorErr...).Println("* * *", err)
 			return 1
 		} else if b := c.Binary; b != nil && b.Path == *fExec && b.Checksum == sum.Checksum {
-			if !options.On(test.OptionQuiet) {
+			if !options.On(testcase.OptionQuiet) {
 				fmt.Println("----> Using results cache:", cachePath)
 			}
 			rcache = c
@@ -277,7 +277,7 @@ func app() int {
 	}
 
 	if len(awaitURLs) > 0 {
-		if !options.On(test.OptionQuiet) {
+		if !options.On(testcase.OptionQuiet) {
 			fmt.Println("----> Waiting for resources:", strings.Join(awaitURLs, ", "))
 		}
 		err := await.Await(context.Background(), awaitURLs, 0)
@@ -314,7 +314,7 @@ suites:
 		}
 
 		var (
-			suite      *test.Suite
+			suite      *testcase.Suite
 			base       string
 			file, root string
 			err        error
@@ -341,7 +341,7 @@ suites:
 			reader = f
 		}
 
-		suite, err = test.LoadSuiteFromReader(&cdup, file, root, reader)
+		suite, err = testcase.LoadSuiteFromReader(&cdup, file, root, reader)
 		if err != nil {
 			color.New(colorErr...).Println("\n* * * Could not load test suite:", err)
 			errno++
@@ -451,7 +451,7 @@ suites:
 		}
 		suiteDuration := time.Since(startSuite)
 
-		if (options & (test.OptionDisplayRequests | test.OptionDisplayResponses)) != 0 {
+		if (options & (testcase.OptionDisplayRequests | testcase.OptionDisplayResponses)) != 0 {
 			if len(results) > 0 {
 				fmt.Println()
 			}
@@ -552,7 +552,7 @@ suites:
 	return 0
 }
 
-func reportResults(options test.Options, cached bool, results []*hunit.Result, tests, failures, skipped *int) bool {
+func reportResults(options testcase.Options, cached bool, results []*hunit.Result, tests, failures, skipped *int) bool {
 	var count int
 	var prefix string
 	success := true
@@ -565,7 +565,7 @@ func reportResults(options test.Options, cached bool, results []*hunit.Result, t
 			success = false
 			*failures++
 		}
-		quiet := options.On(test.OptionQuiet) && r.Success
+		quiet := options.On(testcase.OptionQuiet) && r.Success
 		if r.Skipped {
 			if !quiet {
 				color.New(color.FgYellow).Printf("----> %s%v", prefix, r.Name)
@@ -575,7 +575,7 @@ func reportResults(options test.Options, cached bool, results []*hunit.Result, t
 		}
 		if !r.Success {
 			color.New(color.FgRed).Printf("----> %s%v", prefix, r.Name)
-		} else if !options.On(test.OptionQuiet) {
+		} else if !options.On(testcase.OptionQuiet) {
 			color.New(color.FgCyan).Printf("----> %s%v", prefix, r.Name)
 		}
 		if r.Errors != nil {
@@ -586,8 +586,8 @@ func reportResults(options test.Options, cached bool, results []*hunit.Result, t
 			}
 		}
 		if !quiet {
-			preq := len(r.Reqdata) > 0 && ((options&test.OptionDisplayRequests) == test.OptionDisplayRequests || (!r.Success && (options&test.OptionDisplayRequestsOnFailure) == test.OptionDisplayRequestsOnFailure))
-			prsp := len(r.Rspdata) > 0 && ((options&test.OptionDisplayResponses) == test.OptionDisplayResponses || (!r.Success && (options&test.OptionDisplayResponsesOnFailure) == test.OptionDisplayResponsesOnFailure))
+			preq := len(r.Reqdata) > 0 && ((options&testcase.OptionDisplayRequests) == testcase.OptionDisplayRequests || (!r.Success && (options&testcase.OptionDisplayRequestsOnFailure) == testcase.OptionDisplayRequestsOnFailure))
+			prsp := len(r.Rspdata) > 0 && ((options&testcase.OptionDisplayResponses) == testcase.OptionDisplayResponses || (!r.Success && (options&testcase.OptionDisplayResponsesOnFailure) == testcase.OptionDisplayResponsesOnFailure))
 			if preq {
 				fmt.Println(text.Indent(string(r.Reqdata), "      > "))
 			}
@@ -607,7 +607,7 @@ func reportResults(options test.Options, cached bool, results []*hunit.Result, t
 
 // Execute a set of commands in sequence, allowing each to terminate before
 // the next is executed.
-func execCommands(options test.Options, cmds []*exec.Command) error {
+func execCommands(options testcase.Options, cmds []*exec.Command) error {
 	for i, e := range cmds {
 		if i > 0 && debug.VERBOSE {
 			fmt.Println()
@@ -643,7 +643,7 @@ func execCommands(options test.Options, cmds []*exec.Command) error {
 }
 
 // Execute a single command and do not wait for it to terminate
-func execCommandAsync(options test.Options, cmd exec.Command, logs string) (*exec.Process, <-chan struct{}, error) {
+func execCommandAsync(options testcase.Options, cmd exec.Command, logs string) (*exec.Process, <-chan struct{}, error) {
 	if cmd.Command == "" {
 		return nil, nil, fmt.Errorf("Empty command (did you set 'run'?)")
 	}
@@ -656,7 +656,7 @@ func execCommandAsync(options test.Options, cmd exec.Command, logs string) (*exe
 			return nil, nil, fmt.Errorf("Could not open exec log: %v", err)
 		}
 		wout, werr = out, out
-	} else if options.On(test.OptionQuiet) {
+	} else if options.On(testcase.OptionQuiet) {
 		wout = exec.NewDiscardWriter()
 		werr = exec.NewDiscardWriter()
 	} else {

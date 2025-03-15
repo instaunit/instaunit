@@ -6,13 +6,13 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/report/emit"
 	"github.com/instaunit/instaunit/hunit/report/emit/junit"
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
 // Implemented by report generators
 type Generator interface {
 	Init() error
-	Suite(test.Config, *test.Suite, *emit.Results) error
+	Suite(testcase.Config, *testcase.Suite, *emit.Results) error
 	Finalize() error
 }
 

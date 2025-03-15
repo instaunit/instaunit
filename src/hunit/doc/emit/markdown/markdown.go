@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/testcase"
 	"github.com/instaunit/instaunit/hunit/text"
 	"github.com/instaunit/instaunit/hunit/text/slug"
 )
@@ -41,7 +41,7 @@ func New(docpath string) *Generator {
 }
 
 // Init a suite; one doc output per suite
-func (g *Generator) Init(suite *test.Suite, docs string) error {
+func (g *Generator) Init(suite *testcase.Suite, docs string) error {
 	out, err := os.OpenFile(path.Join(g.docpath, docs), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (g *Generator) Init(suite *test.Suite, docs string) error {
 }
 
 // Finish a suite
-func (g *Generator) Finalize(suite *test.Suite) error {
+func (g *Generator) Finalize(suite *testcase.Suite) error {
 	defer func() {
 		g.w.Close()
 		g.w = nil
@@ -82,12 +82,12 @@ func (g *Generator) Close() error {
 }
 
 // Generate documentation
-func (g *Generator) Case(suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+func (g *Generator) Case(suite *testcase.Suite, c testcase.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
 	return g.generate(g.b, suite, c, req, reqdata, rsp, rspdata)
 }
 
 // Generate documentation preamble
-func (g *Generator) prefix(w io.Writer, suite *test.Suite) error {
+func (g *Generator) prefix(w io.Writer, suite *testcase.Suite) error {
 	var err error
 	var doc string
 
@@ -107,7 +107,7 @@ func (g *Generator) prefix(w io.Writer, suite *test.Suite) error {
 }
 
 // Table of contents
-func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
+func (g *Generator) contents(w io.Writer, suite *testcase.Suite) error {
 	var err error
 	var doc string
 
@@ -166,7 +166,7 @@ func (g *Generator) contents(w io.Writer, suite *test.Suite) error {
 }
 
 // Generate documentation
-func (g *Generator) generate(w io.Writer, suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+func (g *Generator) generate(w io.Writer, suite *testcase.Suite, c testcase.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
 	var err error
 	var doc string
 

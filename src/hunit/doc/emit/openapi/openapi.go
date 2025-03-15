@@ -10,7 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/httputil/mimetype"
+	"github.com/instaunit/instaunit/hunit/testcase"
 	"github.com/instaunit/instaunit/hunit/text"
 )
 
@@ -24,7 +25,7 @@ type Generator struct {
 	docpath string
 	w       io.WriteCloser
 	routes  map[string]*Route
-	authns  map[string]test.Authentication
+	authns  map[string]testcase.Authentication
 	tags    map[string]Tag
 }
 
@@ -39,7 +40,7 @@ func New(docpath string) *Generator {
 }
 
 // Init a suite
-func (g *Generator) Init(suite *test.Suite, docs string) error {
+func (g *Generator) Init(suite *testcase.Suite, docs string) error {
 	if g.w == nil {
 		out, err := os.OpenFile(path.Join(g.docpath, "service.json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
@@ -48,7 +49,7 @@ func (g *Generator) Init(suite *test.Suite, docs string) error {
 		g.w = out
 	}
 	if len(suite.Authns) > 0 {
-		g.authns = make(map[string]test.Authentication)
+		g.authns = make(map[string]testcase.Authentication)
 	}
 	for k, v := range suite.Authns {
 		g.authns[k] = v
@@ -64,7 +65,7 @@ func (g *Generator) Init(suite *test.Suite, docs string) error {
 }
 
 // Finish a suite
-func (g *Generator) Finalize(suite *test.Suite) error {
+func (g *Generator) Finalize(suite *testcase.Suite) error {
 	return nil // nothing to do
 }
 
@@ -212,8 +213,8 @@ func (g *Generator) Close() error {
 
 	return enc.Encode(Service{
 		Standard: version,
-		Consumes: []string{"application/json"},
-		Produces: []string{"application/json"},
+		Consumes: []string{mimetype.JSON},
+		Produces: []string{mimetype.JSON},
 		Schemes:  []string{"https"},
 		Components: Components{
 			Security: authns,
@@ -229,7 +230,7 @@ func (g *Generator) Close() error {
 }
 
 // Generate documentation
-func (g *Generator) Case(suite *test.Suite, c test.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
+func (g *Generator) Case(suite *testcase.Suite, c testcase.Case, req *http.Request, reqdata string, rsp *http.Response, rspdata []byte) error {
 	var path string
 	if r := c.Route.Path; r != "" {
 		path = strings.TrimSpace(r)

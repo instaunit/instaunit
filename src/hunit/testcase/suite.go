@@ -1,4 +1,4 @@
-package test
+package testcase
 
 import (
 	"errors"
@@ -57,20 +57,21 @@ type TOC struct {
 
 // A test suite
 type Suite struct {
-	Title    string                    `yaml:"title"`
-	Comments string                    `yaml:"doc"`
-	Link     string                    `yaml:"link"` // link to external documentation
-	Imports  []string                  `yaml:"import"`
-	Authns   map[string]Authentication `yaml:"authentication"`
-	TOC      TOC                       `yaml:"toc"`
-	Route    Route                     `yaml:"route"` // the route description for documentation purposes; this may be dynamic and shared by all routes in the suite
-	Cases    []*caseOrMatrix           `yaml:"tests"`
-	Config   Config                    `yaml:"options"`
-	Setup    []*exec.Command           `yaml:"setup"`
-	Teardown []*exec.Command           `yaml:"teardown"`
-	Exec     *exec.Command             `yaml:"process"`
-	Deps     *Dependencies             `yaml:"depends"`
-	Globals  map[string]interface{}    `yaml:"vars"`
+	Title     string                    `yaml:"title"`
+	Comments  string                    `yaml:"doc"`
+	Link      string                    `yaml:"link"` // link to external documentation
+	Imports   []string                  `yaml:"import"`
+	Authns    map[string]Authentication `yaml:"authentication"`
+	TOC       TOC                       `yaml:"toc"`
+	Route     Route                     `yaml:"route"` // the route description for documentation purposes; this may be dynamic and shared by all routes in the suite
+	Cases     []*caseOrMatrix           `yaml:"tests"`
+	Config    Config                    `yaml:"options"`
+	Setup     []*exec.Command           `yaml:"setup"`
+	Teardown  []*exec.Command           `yaml:"teardown"`
+	Transform TransformCollection       `yaml:"transform"`
+	Exec      *exec.Command             `yaml:"process"`
+	Deps      *Dependencies             `yaml:"depends"`
+	Globals   map[string]interface{}    `yaml:"vars"`
 }
 
 // Determine if this suite is documented or not
