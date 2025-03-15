@@ -389,14 +389,14 @@ func RunTest(suite *testcase.Suite, c testcase.Case, context runtime.Context) (*
 	// transforms, then request-level transforms. We do not currently make an
 	// attempt to avoid applying the same transform repeatedly, either at
 	// different levels or the same level.
-	var xforms []testcase.Transform
+	var xfspecs []testcase.Transform
 	if specs := suite.Transform.Response; specs != nil {
-		xforms = append(xforms, specs...)
+		xfspecs = append(xfspecs, specs...)
 	}
 	if specs := c.Response.Transforms; specs != nil {
-		xforms = append(xforms, specs...)
+		xfspecs = append(xfspecs, specs...)
 	}
-	for _, spec := range xforms {
+	for _, spec := range xfspecs {
 		rsp, err = spec.TransformResponse(rsp)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not transform response: %w", err)), nil, vars, nil
