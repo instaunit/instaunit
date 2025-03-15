@@ -9,13 +9,14 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/instaunit/instaunit/hunit/httputil/mimetype"
 	"github.com/instaunit/instaunit/hunit/runtime"
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
 // Compare entities for equality
-func entitiesEqual(context runtime.Context, comparison test.Comparison, contentType string, expected []byte, actual interface{}) error {
-	if comparison == test.CompareSemantic {
+func entitiesEqual(context runtime.Context, comparison testcase.Comparison, contentType string, expected []byte, actual interface{}) error {
+	if comparison == testcase.CompareSemantic {
 		return semanticEntitiesEqual(context, contentType, expected, actual)
 	} else {
 		return literalEntitiesEqual(context, contentType, expected, actual)
@@ -32,7 +33,7 @@ func literalEntitiesEqual(context runtime.Context, contentType string, expected 
 		return &AssertionError{expected, actual, "Entities are not equal"}
 	}
 
-	if (context.Options & test.OptionEntityTrimTrailingWhitespace) == test.OptionEntityTrimTrailingWhitespace {
+	if (context.Options & testcase.OptionEntityTrimTrailingWhitespace) == testcase.OptionEntityTrimTrailingWhitespace {
 		e = strings.TrimRightFunc(string(expected), unicode.IsSpace)
 		a = strings.TrimRightFunc(string(abytes), unicode.IsSpace)
 	} else {
@@ -71,7 +72,7 @@ func unmarshalEntity(context runtime.Context, contentType string, entity []byte)
 	}
 
 	switch contentType {
-	case "application/json":
+	case mimetype.JSON:
 		return unmarshalJSONEntity(context, entity)
 	case "text/csv":
 		return unmarshalCSVEntity(context, entity)

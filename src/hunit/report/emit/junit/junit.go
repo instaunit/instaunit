@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/report/emit"
-	"github.com/instaunit/instaunit/hunit/test"
+	testcase1 "github.com/instaunit/instaunit/hunit/testcase"
 )
 
 const (
@@ -86,7 +86,7 @@ func (g *Generator) Finalize() error {
 }
 
 // Generate a report for the provided suite
-func (g *Generator) Suite(conf test.Config, suite *test.Suite, results *emit.Results) error {
+func (g *Generator) Suite(conf testcase1.Config, suite *testcase1.Suite, results *emit.Results) error {
 	var success, failure int
 	for _, e := range results.Results {
 		if e.Success {

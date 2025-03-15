@@ -8,14 +8,14 @@ import (
 	"github.com/instaunit/instaunit/hunit/doc/emit/instadoc"
 	"github.com/instaunit/instaunit/hunit/doc/emit/markdown"
 	"github.com/instaunit/instaunit/hunit/doc/emit/openapi"
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
 // Implemented by documentation generators
 type Generator interface {
-	Init(*test.Suite, string) error
-	Case(*test.Suite, test.Case, *http.Request, string, *http.Response, []byte) error
-	Finalize(*test.Suite) error
+	Init(*testcase.Suite, string) error
+	Case(*testcase.Suite, testcase.Case, *http.Request, string, *http.Response, []byte) error
+	Finalize(*testcase.Suite) error
 	Close() error
 }
 

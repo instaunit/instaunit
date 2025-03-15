@@ -3,10 +3,13 @@ package text
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/instaunit/instaunit/hunit/httputil"
+	"github.com/instaunit/instaunit/hunit/httputil/mimetype"
 )
 
 var (
-	ErrUnsupportedContentType = fmt.Errorf("Unsupported content type for entity formatting")
+	ErrUnsupportedContentType = fmt.Errorf("Unsupported content type")
 )
 
 // formats entities
@@ -14,7 +17,7 @@ type entityFormatter func([]byte) ([]byte, error)
 
 // content types to formatters
 var stdEntityFormatters = map[string]entityFormatter{
-	"application/json": jsonEntityFormatter,
+	mimetype.JSON: jsonEntityFormatter,
 }
 
 /**
@@ -22,7 +25,7 @@ var stdEntityFormatters = map[string]entityFormatter{
  */
 func FormatEntity(entity []byte, contentType string) ([]byte, error) {
 	for k, f := range stdEntityFormatters {
-		if MatchesContentType(k, contentType) {
+		if httputil.MatchesContentType(k, contentType) {
 			return f(entity)
 		}
 	}

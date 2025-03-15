@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/httputil/mimetype"
+	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
 const version = "3.0.3"
@@ -22,8 +23,8 @@ type Response struct {
 }
 
 type Specimen struct {
-	Suite *test.Suite
-	Case  test.Case
+	Suite *testcase.Suite
+	Case  testcase.Case
 	Req   Request
 	Rsp   Response
 }
@@ -51,7 +52,7 @@ type Value struct {
 
 func newValue(ctype string, data []byte) interface{} {
 	switch ctype {
-	case "application/json":
+	case mimetype.JSON:
 		return json.RawMessage(data)
 	default:
 		return Value{Value: string(data)}

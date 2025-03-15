@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/runtime"
-	"github.com/instaunit/instaunit/hunit/test"
+	"github.com/instaunit/instaunit/hunit/testcase"
 
 	"github.com/bww/go-util/v1/debug"
 	"github.com/bww/go-util/v1/text"
@@ -25,14 +25,14 @@ type StreamMonitor struct {
 	url      string
 	context  runtime.Context
 	conn     *websocket.Conn
-	messages []test.MessageExchange
+	messages []testcase.MessageExchange
 	finish   chan struct{}
 	valid    bool
 	result   *Result
 }
 
 // Create a stream monitor for the provided stream
-func NewStreamMonitor(url string, context runtime.Context, conn *websocket.Conn, messages []test.MessageExchange) *StreamMonitor {
+func NewStreamMonitor(url string, context runtime.Context, conn *websocket.Conn, messages []testcase.MessageExchange) *StreamMonitor {
 	return &StreamMonitor{sync.Mutex{}, url, context, conn, messages, nil, false, nil}
 }
 
@@ -53,7 +53,7 @@ func (m *StreamMonitor) Run(result *Result) error {
 }
 
 // Actually run the stream monitor
-func (m *StreamMonitor) run(conn *websocket.Conn, messages []test.MessageExchange, finish chan struct{}, result *Result) {
+func (m *StreamMonitor) run(conn *websocket.Conn, messages []testcase.MessageExchange, finish chan struct{}, result *Result) {
 outer:
 	for _, e := range messages {
 		if e.Wait > 0 {
