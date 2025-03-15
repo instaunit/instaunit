@@ -74,7 +74,7 @@ func unmarshalEntity(context runtime.Context, contentType string, entity []byte)
 	switch contentType {
 	case mimetype.JSON:
 		return unmarshalJSONEntity(context, entity)
-	case "text/csv":
+	case mimetype.CSV:
 		return unmarshalCSVEntity(context, entity)
 	default:
 		return nil, fmt.Errorf("Unsupported content type for semantic comparison: %v", contentType)

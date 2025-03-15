@@ -1,6 +1,7 @@
 package mimetype
 
 const (
-	JSON       = "application/json"
 	Javascript = "application/javascript"
+	JSON       = "application/json"
+	CSV        = "text/csv"
 )
