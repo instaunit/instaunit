@@ -10,6 +10,7 @@ import (
 
 	"github.com/instaunit/instaunit/hunit/httputil"
 	"github.com/instaunit/instaunit/hunit/httputil/mimetype"
+	"github.com/instaunit/instaunit/hunit/text"
 )
 
 var (
@@ -61,7 +62,7 @@ func (t Transform) ResponseTransfomer() (ResponseTransformer, error) {
 	case "pretty":
 		return PrettyTransformer{}, nil
 	default:
-		return nil, fmt.Errorf("%w: %q", errTransformerNotSupported, t.Type)
+		return nil, fmt.Errorf("%w: %q", errTransformerNotSupported, text.Coalesce(t.Type, "<undefined>"))
 	}
 }
 
@@ -88,7 +89,7 @@ func (t PrettyTransformer) TransformResponse(rsp *http.Response) (*http.Response
 	case httputil.MatchesContentType(mimetype.JSON, ct):
 		return t.transformJSONResponse(rsp)
 	default:
-		return rsp, fmt.Errorf("%w: %s", errContentTypeNotSupported, ct)
+		return rsp, fmt.Errorf("%w: %s", errContentTypeNotSupported, text.Coalesce(ct, "<undefined>"))
 	}
 }
 
