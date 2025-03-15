@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Determine if the provided request has a particular content type
+// Obtain the content type of a request or response from its header
 func ContentType(hdr http.Header) string {
 	return hdr.Get("Content-Type")
 }
