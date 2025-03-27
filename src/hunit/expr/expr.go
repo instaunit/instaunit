@@ -6,14 +6,45 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/instaunit/instaunit/hunit/env"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 
 	"github.com/bww/epl/v1"
 )
 
-var (
-	ErrEndOfInput = fmt.Errorf("Unexpected end-of-input")
-)
+var ErrEndOfInput = fmt.Errorf("Unexpected end-of-input")
+
+type ExprError struct {
+	err error
+	cxt interface{}
+}
+
+func newExprError(err error, cxt interface{}) ExprError {
+	return ExprError{
+		err: err,
+		cxt: cxt,
+	}
+}
+
+func (e ExprError) Unwrap() error {
+	return e.err
+}
+
+func (e ExprError) Error() string {
+	if env.ExprDebug {
+		return e.Detail()
+	} else {
+		return e.Summary()
+	}
+}
+
+func (e ExprError) Summary() string {
+	return e.err.Error()
+}
+
+func (e ExprError) Detail() string {
+	return fmt.Sprintf("%v\nContext:\n%s", e.err, spew.Sdump(e.cxt))
+}
 
 // Variables
 type Variables map[string]interface{}
@@ -114,7 +145,7 @@ func interpolate(s, pre, suf string, context interface{}) (string, error) {
 
 				res, err := prg.Exec(context)
 				if err != nil {
-					return "", fmt.Errorf("Could not evaluate expression: {%v}: %v", s[start:i], err)
+					return "", newExprError(fmt.Errorf("Could not evaluate expression: {%v}: %v", s[start:i], err), context)
 				}
 
 				switch v := res.(type) {
