@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -12,7 +13,7 @@ import (
 	"github.com/bww/epl/v1"
 )
 
-var ErrEndOfInput = fmt.Errorf("Unexpected end-of-input")
+var ErrEndOfInput = errors.New("Unexpected end-of-input")
 
 type ExprError struct {
 	err error
