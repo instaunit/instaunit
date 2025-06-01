@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/runtime"
+	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
 // A test result
@@ -16,6 +17,7 @@ type Result struct {
 	Rspdata []byte          `json:"response_data,omitempty"`
 	Context runtime.Context `json:"context"`
 	Runtime time.Duration   `json:"duration"`
+	Case    testcase.Case   `json:"case"`
 }
 
 // Assert equality. If the values are not equal an error is added to the result.

@@ -61,59 +61,85 @@ func app() int {
 
 	cmdline := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	var (
-		fBaseURL         = cmdline.String("base-url", coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"), "The base URL for requests. Overrides: $HUNIT_BASE_URL.")
-		fWait            = cmdline.Duration("wait", strToDuration(os.Getenv("HUNIT_WAIT_ON_START")), "Wait an interval before test suites are run to allow services to settle. Overrides: $HUNIT_WAIT_ON_START.")
-		fExpandVars      = cmdline.Bool("expand", strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true), "Expand variables in test cases. Overrides: $HUNIT_EXPAND_VARS.")
-		fTrimEntity      = cmdline.Bool("entity:trim", strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true), "Trim trailing whitespace from entities. Overrides: $HUNIT_TRIM_ENTITY.")
-		fDumpRequest     = cmdline.Bool("dump:request", strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")), "Dump requests to standard output as they are processed. Overrides: $HUNIT_DUMP_REQUESTS.")
-		fDumpResponse    = cmdline.Bool("dump:response", strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")), "Dump responses to standard output as they are processed. Overrides: $HUNIT_DUMP_RESPONSES.")
-		fGendoc          = cmdline.Bool("gendoc", strToBool(os.Getenv("HUNIT_GENDOC")), "Generate documentation. Overrides: $HUNIT_GENDOC.")
-		fDocpath         = cmdline.String("doc:output", coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"), "The directory in which generated documentation should be written. Overrides: $HUNIT_DOC_OUTPUT.")
-		fDoctype         = cmdline.String("doc:type", coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"), "The format to generate documentation in. Overrides: $HUNIT_DOC_TYPE.")
-		fDocInclHTTP     = cmdline.Bool("doc:include-http", strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")), "Include HTTP in request and response examples (as opposed to just routes and entities). Overrides: $HUNIT_DOC_INCLUDE_HTTP.")
-		fDocFormatEntity = cmdline.Bool("doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")), "Pretty-print supported request and response entities in documentation output. Overrides: $HUNIT_DOC_FORMAT_ENTITIES.")
-		fReport          = cmdline.Bool("report", strToBool(os.Getenv("HUNIT_REPORT")), "Generate a report. Overrides: $HUNIT_REPORT.")
-		fReportPath      = cmdline.String("report:output", coalesce(os.Getenv("HUNIT_REPORT_OUTPUT"), "./reports"), "The directory in which generated reports should be written. Overrides: $HUNIT_REPORT_OUTPUT.")
-		fReportType      = cmdline.String("report:type", coalesce(os.Getenv("HUNIT_REPORT_TYPE"), "junit"), "The format to generate reports in. Overrides: $HUNIT_REPORT_TYPE.")
-		fCache           = cmdline.Bool("cache", strToBool(os.Getenv("HUNIT_CACHE_RESULTS")), "Cache results. When enabled, test suites run against a managed service will cache results if neither the service binary nor the test suite has changed. Overrides: $HUNIT_CACHE_RESULTS.")
-		fIOGracePeriod   = cmdline.Duration("net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections. Overrides: $HUNIT_NET_IO_GRACE_PERIOD.")
-		fExec            = cmdline.StringP("exec", "x", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests, usually the program that is being tested. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
-		fExecLog         = cmdline.String("exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output. Overrides: $HUNIT_EXEC_LOG.")
-		fMaxRedirs       = cmdline.Int("http:redirects", strToInt(os.Getenv("HUNIT_HTTP_MAX_REDIRECTS"), -1), "The maximum number of redirects to follow; specify: 0 to disable redirects, -1 for unlimited redirects. Overrides: $HUNIT_HTTP_MAX_REDIRECTS.")
-		fDebug           = cmdline.BoolP("debug", "D", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode. Overrides: $HUNIT_DEBUG.")
-		fColor           = cmdline.Bool("color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal. Overrides: $HUNIT_COLOR_OUTPUT.")
-		fVerbose         = cmdline.BoolP("verbose", "v", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_QUIET and $QUIET.")
-		fQuiet           = cmdline.BoolP("quiet", "q", strToBool(os.Getenv("HUNIT_QUIET")), "Minimal output; generally only errors. Overrides: $HUNIT_VERBOSE and $VERBOSE.")
-		fVersion         = cmdline.Bool("version", false, "Display the version and exit.")
+		baseURL         string
+		wait            time.Duration
+		expandVars      bool
+		trimEntity      bool
+		dumpRequest     bool
+		dumpResponse    bool
+		genDoc          bool
+		docpath         string
+		doctypeSpec     string
+		docInclHTTP     bool
+		docFormatEntity bool
+		genReport       bool
+		reportPath      string
+		reportType      string
+		cacheResults    bool
+		ioGracePeriod   time.Duration
+		execCmd         string
+		execLog         string
+		maxRedirs       int
+		enableDebug     bool
+		enableColor     bool
+		enableVerbose   bool
+		enableQuiet     bool
+		version         bool
 	)
+
+	cmdline.StringVar(&baseURL, "base-url", coalesce(os.Getenv("HUNIT_BASE_URL"), "http://localhost/"), "The base URL for requests. Overrides: $HUNIT_BASE_URL.")
+	cmdline.DurationVar(&wait, "wait", strToDuration(os.Getenv("HUNIT_WAIT_ON_START")), "Wait an interval before test suites are run to allow services to settle. Overrides: $HUNIT_WAIT_ON_START.")
+	cmdline.BoolVar(&expandVars, "expand", strToBool(os.Getenv("HUNIT_EXPAND_VARS"), true), "Expand variables in test cases. Overrides: $HUNIT_EXPAND_VARS.")
+	cmdline.BoolVar(&trimEntity, "entity:trim", strToBool(os.Getenv("HUNIT_TRIM_ENTITY"), true), "Trim trailing whitespace from entities. Overrides: $HUNIT_TRIM_ENTITY.")
+	cmdline.BoolVar(&dumpRequest, "dump:request", strToBool(os.Getenv("HUNIT_DUMP_REQUESTS")), "Dump requests to standard output as they are processed. Overrides: $HUNIT_DUMP_REQUESTS.")
+	cmdline.BoolVar(&dumpResponse, "dump:response", strToBool(os.Getenv("HUNIT_DUMP_RESPONSES")), "Dump responses to standard output as they are processed. Overrides: $HUNIT_DUMP_RESPONSES.")
+	cmdline.BoolVar(&genDoc, "gendoc", strToBool(os.Getenv("HUNIT_GENDOC")), "Generate documentation. Overrides: $HUNIT_GENDOC.")
+	cmdline.StringVar(&docpath, "doc:output", coalesce(os.Getenv("HUNIT_DOC_OUTPUT"), "./docs"), "The directory in which generated documentation should be written. Overrides: $HUNIT_DOC_OUTPUT.")
+	cmdline.StringVar(&doctypeSpec, "doc:type", coalesce(os.Getenv("HUNIT_DOC_TYPE"), "markdown"), "The format to generate documentation in. Overrides: $HUNIT_DOC_TYPE.")
+	cmdline.BoolVar(&docInclHTTP, "doc:include-http", strToBool(os.Getenv("HUNIT_DOC_INCLUDE_HTTP")), "Include HTTP in request and response examples (as opposed to just routes and entities). Overrides: $HUNIT_DOC_INCLUDE_HTTP.")
+	cmdline.BoolVar(&docFormatEntity, "doc:format-entities", strToBool(os.Getenv("HUNIT_DOC_FORMAT_ENTITIES")), "Pretty-print supported request and response entities in documentation output. Overrides: $HUNIT_DOC_FORMAT_ENTITIES.")
+	cmdline.BoolVar(&genReport, "report", strToBool(os.Getenv("HUNIT_REPORT")), "Generate a report. Overrides: $HUNIT_REPORT.")
+	cmdline.StringVar(&reportPath, "report:output", coalesce(os.Getenv("HUNIT_REPORT_OUTPUT"), "./reports"), "The directory in which generated reports should be written. Overrides: $HUNIT_REPORT_OUTPUT.")
+	cmdline.StringVar(&reportType, "report:type", coalesce(os.Getenv("HUNIT_REPORT_TYPE"), "junit"), "The format to generate reports in. Overrides: $HUNIT_REPORT_TYPE.")
+	cmdline.BoolVar(&cacheResults, "cache", strToBool(os.Getenv("HUNIT_CACHE_RESULTS")), "Cache results. When enabled, test suites run against a managed service will cache results if neither the service binary nor the test suite has changed. Overrides: $HUNIT_CACHE_RESULTS.")
+	cmdline.DurationVar(&ioGracePeriod, "net:grace-period", strToDuration(os.Getenv("HUNIT_NET_IO_GRACE_PERIOD")), "The grace period to wait for long-running I/O to complete before shutting down websocket/persistent connections. Overrides: $HUNIT_NET_IO_GRACE_PERIOD.")
+	cmdline.StringVarP(&execCmd, "exec", "x", os.Getenv("HUNIT_EXEC_COMMAND"), "The command to execute before running tests, usually the program that is being tested. This process will be interrupted after tests have completed. Overrides: $HUNIT_EXEC_COMMAND.")
+	cmdline.StringVar(&execLog, "exec:log", os.Getenv("HUNIT_EXEC_LOG"), "The path to log command output to. If omitted, output is redirected to standard output. Overrides: $HUNIT_EXEC_LOG.")
+	cmdline.IntVar(&maxRedirs, "http:redirects", strToInt(os.Getenv("HUNIT_HTTP_MAX_REDIRECTS"), -1), "The maximum number of redirects to follow; specify: 0 to disable redirects, -1 for unlimited redirects. Overrides: $HUNIT_HTTP_MAX_REDIRECTS.")
+	cmdline.BoolVarP(&enableDebug, "debug", "D", strToBool(os.Getenv("HUNIT_DEBUG")), "Enable debugging mode. Overrides: $HUNIT_DEBUG.")
+	cmdline.BoolVar(&enableColor, "color", strToBool(coalesce(os.Getenv("HUNIT_COLOR_OUTPUT"), "true")), "Colorize output when it's to a terminal. Overrides: $HUNIT_COLOR_OUTPUT.")
+	cmdline.BoolVarP(&enableVerbose, "verbose", "v", strToBool(os.Getenv("HUNIT_VERBOSE")), "Be more verbose. Overrides: $HUNIT_QUIET and $QUIET.")
+	cmdline.BoolVarP(&enableQuiet, "quiet", "q", strToBool(os.Getenv("HUNIT_QUIET")), "Minimal output; generally only errors. Overrides: $HUNIT_VERBOSE and $VERBOSE.")
+	cmdline.BoolVar(&version, "version", false, "Display the version and exit.")
+
 	cmdline.StringSliceVar(&headerSpecs, "header", nil, "Define a header to be set for every request, specified as 'Header-Name: <value>'. Provide -header repeatedly to set many headers.")
 	cmdline.StringSliceVar(&serviceSpecs, "service", nil, "Define a mock service, specified as '[host]:<port>=endpoints.yml'. The service is available while tests are running.")
 	cmdline.StringSliceVar(&awaitURLs, "await", nil, "Wait for the resource described by a URL to become available before running tests. The URL will be polled until it becomes available. Provide -await repeatedly to wait for multiple resources.")
 	cmdline.Parse(os.Args[1:])
 
-	if *fVersion {
+	if version {
 		fmt.Println(formatVersion())
 		return 0
 	}
 
-	debug.DEBUG = debug.DEBUG || *fDebug
-	debug.VERBOSE = debug.VERBOSE || *fVerbose
-	color.NoColor = !*fColor
+	debug.DEBUG = debug.DEBUG || enableDebug
+	debug.VERBOSE = debug.VERBOSE || enableVerbose
+	color.NoColor = !enableColor
 
 	var options testcase.Options
-	if *fTrimEntity {
+	if trimEntity {
 		options |= testcase.OptionEntityTrimTrailingWhitespace
 	}
-	if *fExpandVars {
+	if expandVars {
 		options |= testcase.OptionInterpolateVariables
 	}
-	if *fDumpRequest {
+	if dumpRequest {
 		options |= testcase.OptionDisplayRequests
 	}
-	if *fDumpResponse {
+	if dumpResponse {
 		options |= testcase.OptionDisplayResponses
 	}
-	if *fQuiet {
+	if enableQuiet {
 		options |= testcase.OptionQuiet
 	} else if debug.VERBOSE {
 		options |= testcase.OptionDisplayRequests | testcase.OptionDisplayResponses
@@ -123,14 +149,14 @@ func app() int {
 	options |= testcase.OptionDisplayResponsesOnFailure
 
 	var config testcase.Config
-	if *fDocInclHTTP {
+	if docInclHTTP {
 		config.Doc.IncludeHTTP = true
 	}
-	if *fDocFormatEntity {
+	if docFormatEntity {
 		config.Doc.FormatEntities = true
 	}
-	if *fIOGracePeriod > 0 {
-		config.Net.StreamIOGracePeriod = *fIOGracePeriod
+	if ioGracePeriod > 0 {
+		config.Net.StreamIOGracePeriod = ioGracePeriod
 	}
 
 	var globalHeaders map[string]string
@@ -148,14 +174,14 @@ func app() int {
 
 	var doctype doc_emit.Doctype
 	var docname map[string]int
-	if *fGendoc {
+	if genDoc {
 		var err error
-		doctype, err = doc_emit.ParseDoctype(*fDoctype)
+		doctype, err = doc_emit.ParseDoctype(doctypeSpec)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Invalid documentation type: %v\n", err)
 			return 1
 		}
-		err = os.MkdirAll(*fDocpath, 0o755)
+		err = os.MkdirAll(docpath, 0o755)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
 			return 1
@@ -164,18 +190,18 @@ func app() int {
 	}
 
 	var reports []report.Generator
-	if *fReport {
-		err := os.MkdirAll(*fReportPath, 0o755)
+	if genReport {
+		err := os.MkdirAll(reportPath, 0o755)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
 			return 1
 		}
-		rtype, err := report_emit.ParseDoctype(*fReportType)
+		rtype, err := report_emit.ParseDoctype(reportType)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Invalid report type: %v\n", err)
 			return 1
 		}
-		out, err := os.OpenFile(path.Join(*fReportPath, rtype.String()+rtype.Ext()), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
+		out, err := os.OpenFile(path.Join(reportPath, rtype.String()+rtype.Ext()), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not open report output: %v\n", err)
 			return 1
@@ -222,10 +248,10 @@ func app() int {
 	}
 
 	var done <-chan struct{}
-	if *fExec != "" {
+	if execCmd != "" {
 		var proc *exec.Process
 		var err error
-		proc, done, err = execCommandAsync(options, exec.NewCommand(*fExec, *fExec), *fExecLog)
+		proc, done, err = execCommandAsync(options, exec.NewCommand(execCmd, execCmd), execLog)
 		if err != nil {
 			color.New(colorErr...).Printf("* * * %v\n", err)
 			return 1
@@ -237,23 +263,23 @@ func app() int {
 	if services > 0 {
 		<-time.After(time.Second / 4)
 	}
-	if *fWait > 0 {
-		fmt.Println("----> Waiting", *fWait)
-		<-time.After(*fWait)
+	if wait > 0 {
+		fmt.Println("----> Waiting", wait)
+		<-time.After(wait)
 	}
 
 	// setup caching
 	var rcache, wcache *cache.Cache
 	var cachePath string
-	if *fCache && *fExec != "" {
+	if cacheResults && execCmd != "" {
 		var err error
-		sum, err := cache.Checksum(*fExec)
+		sum, err := cache.Checksum(execCmd)
 		if err != nil {
 			color.New(colorErr...).Println("* * *", err)
 			return 1
 		}
 
-		cachePath = path.Join(cacheBase, *fExec+".cache")
+		cachePath = path.Join(cacheBase, execCmd+".cache")
 		wcache = &cache.Cache{
 			Version: formatVersion(),
 			Created: time.Now(),
@@ -266,7 +292,7 @@ func app() int {
 		} else if err != nil {
 			color.New(colorErr...).Println("* * *", err)
 			return 1
-		} else if b := c.Binary; b != nil && b.Path == *fExec && b.Checksum == sum.Checksum {
+		} else if b := c.Binary; b != nil && b.Path == execCmd && b.Checksum == sum.Checksum {
 			if !options.On(testcase.OptionQuiet) {
 				fmt.Println("----> Using results cache:", cachePath)
 			}
@@ -287,14 +313,14 @@ func app() int {
 		}
 	}
 
-	var gendoc []doc.Generator
-	if *fGendoc {
-		gen, err := doc.New(doctype, *fDocpath)
+	var gendocs []doc.Generator
+	if genDoc {
+		gen, err := doc.New(doctype, docpath)
 		if err != nil {
 			color.New(colorErr...).Println("* * * Could create documentation generator:", err)
 			return 1
 		}
-		gendoc = []doc.Generator{gen} // just one for now
+		gendocs = []doc.Generator{gen} // just one for now
 	}
 
 	var proc *exec.Process
@@ -376,7 +402,7 @@ suites:
 			}
 		}
 
-		for _, e := range gendoc {
+		for _, e := range gendocs {
 			base := disambigFile(base, doctype.Ext(), docname)
 			err := e.Init(suite, base)
 			if err != nil {
@@ -394,7 +420,7 @@ suites:
 		if suite.Exec != nil {
 			cmd := suite.Exec
 			cmd.Environment = exec.Environ(cmd.Environment)
-			proc, _, err = execCommandAsync(options, *cmd, *fExecLog) // ignore done on per-suite tests
+			proc, _, err = execCommandAsync(options, *cmd, execLog) // ignore done on per-suite tests
 			if err != nil {
 				color.New(colorErr...).Printf("* * * %v\n", err)
 				continue suites
@@ -423,11 +449,10 @@ suites:
 			}
 		}
 
-		maxredir := *fMaxRedirs
 		client := &http.Client{
 			Timeout: time.Second * 30,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				if maxredir < 0 || len(via) < maxredir {
+				if maxRedirs < 0 || len(via) < maxRedirs {
 					return nil
 				} else {
 					return http.ErrUseLastResponse
@@ -437,11 +462,11 @@ suites:
 
 		startSuite := time.Now()
 		results, err := hunit.RunSuite(suite, runtime.Context{
-			BaseURL: *fBaseURL,
+			BaseURL: baseURL,
 			Options: options,
 			Headers: globalHeaders,
 			Debug:   debug.DEBUG,
-			Gendoc:  gendoc,
+			Gendoc:  gendocs,
 			Config:  cdup,
 			Client:  client,
 		})
@@ -464,7 +489,7 @@ suites:
 			}
 		}
 
-		for _, e := range gendoc {
+		for _, e := range gendocs {
 			err := e.Finalize(suite)
 			if err != nil {
 				color.New(colorErr...).Printf("* * * Could not finalize documentation writer: %v\n", err)
@@ -483,7 +508,7 @@ suites:
 		}
 	}
 
-	for _, e := range gendoc {
+	for _, e := range gendocs {
 		err := e.Close()
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not close documentation writer: %v\n", err)
@@ -586,8 +611,17 @@ func reportResults(options testcase.Options, cached bool, results []*hunit.Resul
 			}
 		}
 		if !quiet {
-			preq := len(r.Reqdata) > 0 && ((options&testcase.OptionDisplayRequests) == testcase.OptionDisplayRequests || (!r.Success && (options&testcase.OptionDisplayRequestsOnFailure) == testcase.OptionDisplayRequestsOnFailure))
-			prsp := len(r.Rspdata) > 0 && ((options&testcase.OptionDisplayResponses) == testcase.OptionDisplayResponses || (!r.Success && (options&testcase.OptionDisplayResponsesOnFailure) == testcase.OptionDisplayResponsesOnFailure))
+			var preq, prsp bool
+			if len(r.Reqdata) > 0 {
+				preq = r.Case.Verbose ||
+					(options&testcase.OptionDisplayRequests) == testcase.OptionDisplayRequests ||
+					(!r.Success && (options&testcase.OptionDisplayRequestsOnFailure) == testcase.OptionDisplayRequestsOnFailure)
+			}
+			if len(r.Rspdata) > 0 {
+				prsp = r.Case.Verbose ||
+					(options&testcase.OptionDisplayResponses) == testcase.OptionDisplayResponses ||
+					(!r.Success && (options&testcase.OptionDisplayResponsesOnFailure) == testcase.OptionDisplayResponsesOnFailure)
+			}
 			if preq {
 				fmt.Println(text.Indent(string(r.Reqdata), "      > "))
 			}

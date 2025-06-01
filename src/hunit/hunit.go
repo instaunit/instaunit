@@ -40,7 +40,7 @@ func RunSuite(suite *testcase.Suite, context runtime.Context) ([]*Result, error)
 	for _, f := range suite.Frames() {
 		e := f.Case // just unpack the case for now
 		if !precond {
-			results = append(results, &Result{Name: fmt.Sprintf("%v %v (dependency failed)\n", e.Request.Method, e.Request.URL), Skipped: true})
+			results = append(results, &Result{Name: fmt.Sprintf("%v %v (dependency failed)\n", e.Request.Method, e.Request.URL), Skipped: true, Case: e})
 			continue
 		}
 
@@ -148,7 +148,7 @@ func RunTest(suite *testcase.Suite, c testcase.Case, context runtime.Context) (*
 	}
 
 	// start with an unevaluated result
-	result := &Result{Name: formatName(c, c.Request.Method, c.Request.URL), Success: true}
+	result := &Result{Name: formatName(c, c.Request.Method, c.Request.URL), Success: true, Case: c}
 	defer func() {
 		result.Runtime = time.Since(start)
 	}()
