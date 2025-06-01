@@ -355,7 +355,11 @@ func RunTest(suite *testcase.Suite, c testcase.Case, context runtime.Context) (*
 	}
 
 	// check the response status
-	result.AssertEqual(c.Response.Status, rsp.StatusCode, "Unexpected status code")
+	if c.Response.Status == 0 { // if the status is not explicitly defined we assume 200/OK is expected
+		result.AssertEqual(http.StatusOK, rsp.StatusCode, "Unexpected status code (default)")
+	} else {
+		result.AssertEqual(c.Response.Status, rsp.StatusCode, "Unexpected status code")
+	}
 
 	// note the content type; we prefer the explicit format over the content type
 	var contentType string
