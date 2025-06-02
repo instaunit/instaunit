@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,13 +15,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/instaunit/instaunit/hunit/entity"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 	"github.com/instaunit/instaunit/hunit/net/await"
 	"github.com/instaunit/instaunit/hunit/service"
 
-	"github.com/bww/go-router/v1"
-	"github.com/bww/go-router/v1/entity"
+	"github.com/bww/go-router/v2"
+	routerentity "github.com/bww/go-router/v2/entity"
 	"github.com/bww/go-util/v1/debug"
 	"github.com/bww/go-util/v1/maps"
 	"github.com/bww/go-util/v1/text"
@@ -73,7 +74,7 @@ func New(conf service.Config) (service.Service, error) {
 			endpoint := e
 			b := r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
 			if endpoint.Request.Entity != "" {
-				b.Match(func(req *router.Request, route router.Route) bool {
+				b.Match(func(req *router.Request, route *router.Route) bool {
 					bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
 					if err != nil {
 						fmt.Printf("%s * * * Error checking if request body matches expected endpoint entity: %v: %v\n", prefix, req.URL, err)
@@ -95,13 +96,13 @@ func New(conf service.Config) (service.Service, error) {
 // bodyMatches compares the request entity object with the request body for a match.
 // Since it has to read the body from the router.Request it replaces it for future processing
 func bodyMatches(entityBody string, req *router.Request) (bool, error) {
-	reqBody, err := ioutil.ReadAll(req.Body)
+	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		return false, err
 	}
 
 	// replace request body in case it's needed later
-	req.Body = ioutil.NopCloser(bytes.NewReader(reqBody))
+	req.Body = io.NopCloser(bytes.NewReader(reqBody))
 
 	// check if request body is not empty, check if matches this endpoint's entity
 	if len(reqBody) != 0 {
@@ -183,12 +184,12 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 		}
 		fmt.Printf("%s -> %s %s (%s)\n", prefix, req.Method, req.URL.Path, dlen)
 		if req.ContentLength > 0 {
-			data, err := ioutil.ReadAll(req.Body)
+			data, err := io.ReadAll(req.Body)
 			if err != nil {
 				fmt.Printf("%s * * * Could not handle request: %v: %v\n", prefix, req.URL, err)
 				return
 			}
-			req.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+			req.Body = io.NopCloser(bytes.NewBuffer(data))
 			fmt.Println(text.Indent(string(data), strings.Repeat(" ", len(prefix))+" > "))
 		}
 	}
@@ -196,7 +197,7 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 	// match our internal status endpoint; we don't allow this to be shadowed
 	// by defined endpoints so that we can monitor the service.
 	if req.Method == statusMethod && req.URL.Path == statusPath {
-		rsp.Header().Set("Server", "HUnit/1")
+		rsp.Header().Set("Server", "Instaunit/1")
 		rsp.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		rsp.WriteHeader(http.StatusOK)
 		return
@@ -237,6 +238,18 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 		}()
 	}
 
+	var reqent interface{}
+	if req.Body != nil {
+		data, err := io.ReadAll(req.Body)
+		if err != nil {
+			return nil, fmt.Errorf("Could not read request body: %w", err)
+		}
+		reqent, err = entity.Unmarshal(req.Header.Get("Content-Type"), data)
+		if err != nil && errors.Is(err, entity.ErrUnsupported) {
+			return nil, fmt.Errorf("Could not read request body: %w", err)
+		}
+	}
+
 	cvars := make(map[string]interface{})
 	for k, v := range cxt.Vars {
 		cvars[k] = v
@@ -264,6 +277,7 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 		"vars":   cvars,
 		"params": cparams,
 		"form":   cform,
+		"value":  reqent, // if available
 	}
 	e, err = expr.Interpolate(r.Entity, vars)
 	if err != nil {
@@ -272,7 +286,7 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 
 	x := router.NewResponse(r.Status)
 	if l := len(e); l > 0 {
-		ent, err := entity.NewString("binary/octet-stream", e)
+		ent, err := routerentity.NewString("binary/octet-stream", e)
 		if err != nil {
 			return nil, err
 		}

@@ -3,6 +3,7 @@ package hunit
 import (
 	"time"
 
+	"github.com/instaunit/instaunit/hunit/assert"
 	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/testcase"
 )
@@ -22,7 +23,7 @@ type Result struct {
 
 // Assert equality. If the values are not equal an error is added to the result.
 func (r *Result) AssertEqual(e, a interface{}, m string, x ...interface{}) bool {
-	err := assertEqual(e, a, m, x...)
+	err := assert.Equal(e, a, m, x...)
 	if err != nil {
 		r.Error(err)
 		return false

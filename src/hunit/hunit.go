@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"path"
@@ -14,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/instaunit/instaunit/hunit/entity"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/testcase"
@@ -304,20 +304,20 @@ func RunTest(suite *testcase.Suite, c testcase.Case, context runtime.Context) (*
 	}
 
 	var reqdata string
-	var entity io.Reader
+	var ereader io.Reader
 	if c.Request.Entity != "" {
 		reqdata, err = context.Interpolate(c.Request.Entity)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		} else {
-			entity = bytes.NewBuffer([]byte(reqdata))
+			ereader = bytes.NewBuffer([]byte(reqdata))
 		}
 	}
 	if reqdata != "" {
 		header.Add("Content-Length", strconv.FormatInt(int64(len(reqdata)), 10))
 	}
 
-	req, err := http.NewRequest(method, url, entity)
+	req, err := http.NewRequest(method, url, ereader)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -410,7 +410,7 @@ func RunTest(suite *testcase.Suite, c testcase.Case, context runtime.Context) (*
 	// handle the response entity
 	var rspdata []byte
 	if rsp.Body != nil {
-		rspdata, err = ioutil.ReadAll(rsp.Body)
+		rspdata, err = io.ReadAll(rsp.Body)
 		if err != nil {
 			result.Error(fmt.Errorf("Could not read response body: %w", err))
 		}
@@ -419,12 +419,12 @@ func RunTest(suite *testcase.Suite, c testcase.Case, context runtime.Context) (*
 	// parse response entity if necessry
 	var rspvalue interface{} = rspdata
 	if c.Response.Comparison == testcase.CompareSemantic {
-		rspvalue, err = unmarshalEntity(context, contentType, rspdata)
+		rspvalue, err = entity.Unmarshal(contentType, rspdata)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not unmarshal entity: %w", err)), nil, vars, nil
 		}
 	} else if c.Id != "" { // attempt it but don't produce an error if we fail
-		val, err := unmarshalEntity(context, contentType, rspdata)
+		val, err := entity.Unmarshal(contentType, rspdata)
 		if err == nil {
 			rspvalue = val
 		}

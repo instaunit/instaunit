@@ -6,7 +6,7 @@ toolchain go1.23.1
 
 require (
 	github.com/bww/epl v1.1.5
-	github.com/bww/go-router v1.9.0
+	github.com/bww/go-router/v2 v2.5.0
 	github.com/bww/go-util v1.42.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dustin/go-humanize v1.0.0
