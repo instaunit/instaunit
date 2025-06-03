@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"strings"
 
 	"github.com/instaunit/instaunit/hunit/assert"
@@ -17,9 +18,9 @@ var ErrUnsupported = errors.New("Entity type is not supported")
 
 // Unmarshal an entity
 func Unmarshal(contentType string, entity []byte) (interface{}, error) {
-	// trim off the parameters following ';' if we have any
-	if i := strings.Index(contentType, ";"); i > 0 {
-		contentType = contentType[:i]
+	contentType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid content type: %w", err)
 	}
 
 	switch contentType {
@@ -27,8 +28,8 @@ func Unmarshal(contentType string, entity []byte) (interface{}, error) {
 		return unmarshalJSON(entity)
 	case mimetype.CSV:
 		return unmarshalCSV(entity)
-	default:
-		return nil, fmt.Errorf("%w: %v", ErrUnsupported, contentType)
+	default: // if all else fails, we just return the literal bytes
+		return entity, nil
 	}
 }
 

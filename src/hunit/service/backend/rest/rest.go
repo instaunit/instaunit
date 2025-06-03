@@ -277,7 +277,7 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 		"vars":   cvars,
 		"params": cparams,
 		"form":   cform,
-		"value":  reqent, // if available
+		"value":  reqent, // if available; this may be nil
 	}
 	e, err = expr.Interpolate(r.Entity, vars)
 	if err != nil {
