@@ -1,4 +1,4 @@
-# Instaunit tests your Web APIs
+# Instaunit tests your HTTP APIs
 
 Instaunit is a tool that lets you write integration tests for REST and Websocket services declaratively and run them automatically. You can use Instaunit locally for development and on your CI infrastructure as part of your integration tests.
 
@@ -12,24 +12,20 @@ Get up and running quickly with our [**Getting Started Tutorial**](https://githu
 
 ## Installing Instaunit
 
-### Installing via Homebrew on macOS
-
 MacOS users can install the latest version of Instaunit via Homebrew by running the following command.
 
 ```
 brew install bww/stable/instaunit
 ```
 
-### Other Installation Options
-
-You can install Instaunit by:
+Alternativelly, you can install Instaunit by:
 
 * [Downloading a binary release](https://github.com/instaunit/instaunit/releases),
-* Cloning this repo and building from source via: `make install`.
+* Cloning this repo and building from source via: `make` or `make install`.
 
 # Writing Tests
 
-Tests are described by a YAML-based document format. Just describe your request, the response you expect, and that's basically it. Here's a very simple test suite containing a single test case:
+Tests are described by a YAML-based document format. Describe your request, the response you expect, and it's that simple. When you need it, reach for Instaunit's many advanced features. Here's a very simple test suite containing a single test case:
 
 ```yaml
 tests:
@@ -46,6 +42,7 @@ Instaunit supports a lot of other request properties – from headers to author
 
 * **Compare entities semantically** to ignore insignificant differences like whitespace and map key order,
 * Reference the output of previously-run tests to **chain related tests together**,
+* **Run matrixes of related tests** to simplify maintaining tests for repeating endpoint patterns,
 * **Wait for dependency services** to become available before a test suite starts running,
 * Declare [**mock services**](https://github.com/instaunit/instaunit/wiki/Mock-Services) so your tests avoid external dependencies without making code-level changes,
 * Evaluate **expressions and built-in functions** to generate input and randomize your tests.
@@ -53,7 +50,7 @@ Instaunit supports a lot of other request properties – from headers to author
 
 # Running Tests
 
-Tests can be run by pointing `instaunit` to a test suite document (or many of them). 
+Tests can be run by pointing `instaunit` to a test suite document (or many of them).
 
 Try running `instaunit -h` to view the options it supports.
 
