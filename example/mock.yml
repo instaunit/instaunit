@@ -1,22 +1,30 @@
+# This file defines mock service endpoints. Refer to client.yml for an example
+# of requests that are made to this mock service. You can run this example with
+# from the root of this rep like so:
+#
+# $ instaunit --service :9090=example/mock.yml --base-url 'http://localhost:9090' example/client.yml
+#
+# (You may need to adjust the port used if you happen to already have a service
+# bound to it.)
 
-# A mock endpoint that will respond for: `GET /projects/*/detail`
-- 
-  # This is the endpoint we will respond for
+# This endpoint matches a wildcard.
+-
+  # This is the endpoint we will match requests to
   endpoint:
-    # The HTTP methods to accept. You can specify as many as you like.
+    # The HTTP methods to accept; specify as many as you like.
     methods:
       - GET
-    # The path to match for this endpoint. You can use the  wildcards
-    # '*' to match a whole path component and '?' to match a single
-    # non-slash character. The full details of path matching are
-    # described here: https://golang.org/pkg/path/#Match
+    # The path to match for this endpoint. You can use the wildcards '*' to
+    # match a whole path component and '?' to match a single non-slash
+    # character. The full details of path matching are described here:
+    # https://golang.org/pkg/path/#Match
     path: /projects/*/detail
-    # We can require that arbitrary headers are set in order for the
-    # request to match this endpoint.
+    # We can require that arbitrary headers are set in the request in order for
+    # the request to match this endpoint.
     headers:
       Origin: localhost
-  
-  # This is the response we send back
+
+  # This is the response we will send back for matching requests
   response:
     # The status code sent in our response.
     status: 200
@@ -33,16 +41,26 @@
         "in_stock": true
       }
 
-# This one will respond for: `GET /users/*?pretty=true`
-- 
+# This endpoint uses variables found in the request in its response. The following
+# variables are provided to mock endpoint responses in the variable ${request}:
+#
+#   ${request.vars.*}    A map of aptured path component values
+#   ${request.params.*}  A map of query parameter values
+#   ${request.value.*}   The parsed body of the request, if it is a supported
+#                        semantic type
+-
   endpoint:
     methods:
-      - GET
-    # The path to match for this endpoint. We can require that certain
-    # parameters are matched in order to match this path. If the patch
-    # matches but the query string does not, we'll get a 404.
-    path: /users/*?pretty=true
-  
+      - POST
+    # We can use path component variables to match any value and to capture the
+    # value from the request so that we can use it in our response.
+    path: /users/{user_id}
+    # We can require that certain parameters are matched in order to match this
+    # path. If the path matches but the query parameters defined here do not,
+    # this route will not match.
+    params:
+      pretty: true
+
   # This is the response we send back
   response:
     status: 200
@@ -50,5 +68,9 @@
       Content-Type: application/json; charset=utf-8
     entity: |
       {
-        "name": "Joe Blow"
+        "id": "${request.vars.user_id}",
+        "admin": ${request.params.admin},
+        "name": "Joe Blow",
+        "locale": "${request.value.locale}",
+        "height": "${request.value.height}"
       }

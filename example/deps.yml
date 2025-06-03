@@ -1,30 +1,33 @@
 
 -
-  # This test can fail because it is not required
+  # This test is not required. It will fail and we will simply continue
+  # on to the next test case.
   request:
     method: GET
     url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
-  
+
   response:
     status: 200
 
-
 -
-  # This test must not fail or subsequent tests will be skipped
+  # This test is a required dependency. It will fail and, as a result,
+  # all subsequent cases will be skipped because a dependency has not
+  # been met.
   require: true
-   
+
   request:
     method: GET
     url: https://raw.githubusercontent.com/instaunit/instaunit/NOT_FOUND
-  
+
   response:
     status: 200
 
 -
-  # This test will fail implicitly due to dependency failure
+  # This test will always fail implicitly because a prior required case
+  # has failed.
   request:
     method: GET
     url: https://raw.githubusercontent.com/instaunit/instaunit/master/example/entity.json
-  
+
   response:
     status: 200

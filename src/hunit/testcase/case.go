@@ -147,6 +147,7 @@ type Case struct {
 	Section    string                   `yaml:"section"`
 	Comments   string                   `yaml:"doc"`
 	Require    bool                     `yaml:"require"`
+	Verbose    bool                     `yaml:"verbose"` // enable verbose mode for this test case specifically
 	Params     map[string]Parameter     `yaml:"params"`
 	Security   map[string]AccessControl `yaml:"security"`
 	Request    Request                  `yaml:"request"`

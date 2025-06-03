@@ -3,7 +3,9 @@ package hunit
 import (
 	"time"
 
+	"github.com/instaunit/instaunit/hunit/assert"
 	"github.com/instaunit/instaunit/hunit/runtime"
+	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
 // A test result
@@ -16,11 +18,12 @@ type Result struct {
 	Rspdata []byte          `json:"response_data,omitempty"`
 	Context runtime.Context `json:"context"`
 	Runtime time.Duration   `json:"duration"`
+	Case    testcase.Case   `json:"case"`
 }
 
 // Assert equality. If the values are not equal an error is added to the result.
 func (r *Result) AssertEqual(e, a interface{}, m string, x ...interface{}) bool {
-	err := assertEqual(e, a, m, x...)
+	err := assert.Equal(e, a, m, x...)
 	if err != nil {
 		r.Error(err)
 		return false
