@@ -75,7 +75,7 @@ tests:
       url: localhost:8800
       entity: |
         {
-          "user_id": ${user1.response.value.id}
+          "user_id": ${user1.response.value.user.id}
         }
 
     response:

@@ -146,7 +146,7 @@ func interpolate(s, pre, suf string, context interface{}) (string, error) {
 
 				res, err := prg.Exec(context)
 				if err != nil {
-					return "", newExprError(fmt.Errorf("Could not evaluate expression: {%v}: %v", s[start:i], err), context)
+					return "", newExprError(fmt.Errorf("Could not evaluate expression: %s%v%s: %v", pre, s[start:i], suf, err), context)
 				}
 
 				switch v := res.(type) {

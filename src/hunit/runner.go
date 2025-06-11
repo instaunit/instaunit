@@ -439,10 +439,9 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
+		// update the request data in the result
+		result.Reqdata = []byte(reqdata)
 	}
-
-	// update the request data in the result
-	result.Reqdata = []byte(reqdata)
 
 	// perform the gRPC request
 	rspmsg, err := client.Call(stdcontext.Background(), tcase.RPC.Service, tcase.RPC.Method, []byte(reqdata), &dynrpc.CallOptions{})
