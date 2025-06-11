@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package grpcservice;
+
+option go_package = "github.com/instaunit/grpcservice/proto";
+
+// User message with various field types
+message User {
+  int32 id = 1;
+  string name = 2;
+  string email = 3;
+  int32 age = 4;
+  bool is_active = 5;
+  repeated string tags = 6;
+  map<string, string> metadata = 7;
+  Address address = 8;
+  UserType type = 9;
+
+  // Oneof field to test validation
+  oneof contact_method {
+    string phone = 10;
+    string slack_handle = 11;
+  }
+}
+
+// Nested message
+message Address {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string zip_code = 4;
+  string country = 5;
+}
+
+// Enum to test enum handling
+enum UserType {
+  USER_TYPE_UNSPECIFIED = 0;
+  USER_TYPE_ADMIN = 1;
+  USER_TYPE_REGULAR = 2;
+  USER_TYPE_GUEST = 3;
+}
+
+// Request messages
+message GetUserRequest {
+  int32 user_id = 1;
+}
+
+message CreateUserRequest {
+  User user = 1;
+}
+
+message UpdateUserRequest {
+  int32 user_id = 1;
+  User user = 2;
+}
+
+message DeleteUserRequest {
+  int32 user_id = 1;
+}
+
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  repeated UserType types = 3; // Test repeated enums
+}
+
+// Response messages
+message GetUserResponse {
+  User user = 1;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// Test message with various numeric types
+message NumericTypesTest {
+  int32 int32_field = 1;
+  int64 int64_field = 2;
+  uint32 uint32_field = 3;
+  uint64 uint64_field = 4;
+  sint32 sint32_field = 5;
+  sint64 sint64_field = 6;
+  fixed32 fixed32_field = 7;
+  fixed64 fixed64_field = 8;
+  sfixed32 sfixed32_field = 9;
+  sfixed64 sfixed64_field = 10;
+  float float_field = 11;
+  double double_field = 12;
+  bool bool_field = 13;
+  string string_field = 14;
+  bytes bytes_field = 15;
+}
+
+message NumericTestRequest {
+  NumericTypesTest data = 1;
+}
+
+message NumericTestResponse {
+  NumericTypesTest data = 1;
+  string message = 2;
+}

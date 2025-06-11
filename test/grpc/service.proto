@@ -1,0 +1,14 @@
+
+service Meterologist {
+  rpc Forecast (ForecastRequest) returns (ForecastResponse) {}
+}
+
+message ForecastRequest {
+  int32 id = 1;
+  string location = 2;
+}
+
+message ForecastResponse {
+  int32 request_id = 1;
+  string forecast = 2;
+}

@@ -4,12 +4,14 @@ import (
 	"net/http"
 
 	"github.com/instaunit/instaunit/hunit/doc"
+	"github.com/instaunit/instaunit/hunit/dynrpc"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
 // A test context
 type Context struct {
+	Root      string // test context root (where is the suite run from); this is the directory containing the test suite or '.' if run from STDIN
 	BaseURL   string
 	Options   testcase.Options
 	Config    testcase.Config
@@ -17,7 +19,15 @@ type Context struct {
 	Debug     bool
 	Gendoc    []doc.Generator
 	Variables expr.Variables
+	Service   *dynrpc.ServiceRegistry
 	Client    *http.Client
+}
+
+// Derive a context from the receiver with the provided service registry
+func (c Context) WithService(svcreg *dynrpc.ServiceRegistry) Context {
+	d := c
+	d.Service = svcreg
+	return d
 }
 
 // Derive a context from the receiver with the provided variables
@@ -28,16 +38,9 @@ func (c Context) WithVars(vars ...expr.Variables) Context {
 	} else {
 		v = mergeVars(vars...)
 	}
-	return Context{
-		BaseURL:   c.BaseURL,
-		Options:   c.Options,
-		Config:    c.Config,
-		Headers:   c.Headers,
-		Debug:     c.Debug,
-		Gendoc:    c.Gendoc,
-		Client:    c.Client,
-		Variables: v,
-	}
+	d := c
+	d.Variables = v
+	return d
 }
 
 // Merge vars into this context's variables, preferring the parameters

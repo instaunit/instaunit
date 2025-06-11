@@ -1,6 +1,8 @@
 package testcase
 
 import (
+	"fmt"
+	"path"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/expr"
@@ -86,6 +88,10 @@ type Source struct {
 	Comments     Comments
 }
 
+func (s Source) String() string {
+	return fmt.Sprintf("%s:%d", path.Base(s.File), s.Line)
+}
+
 // Route descrition for documentation
 type Route struct {
 	Id   string `yaml:"id"`   // dynamic
@@ -135,6 +141,11 @@ func (m Matrix) Frames() []Frame {
 	return r
 }
 
+type RemoteProcedure struct {
+	Service string `yaml:"service"`
+	Method  string `yaml:"method"`
+}
+
 // A test case
 type Case struct {
 	Id         string                   `yaml:"id"`
@@ -150,6 +161,7 @@ type Case struct {
 	Verbose    bool                     `yaml:"verbose"` // enable verbose mode for this test case specifically
 	Params     map[string]Parameter     `yaml:"params"`
 	Security   map[string]AccessControl `yaml:"security"`
+	RPC        *RemoteProcedure         `yaml:"grpc"`
 	Request    Request                  `yaml:"request"`
 	Response   Response                 `yaml:"response"`
 	Stream     *Stream                  `yaml:"websocket"`

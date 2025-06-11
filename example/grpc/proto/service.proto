@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package grpcservice;
+
+import "proto/model.proto";
+
+option go_package = "github.com/instaunit/grpcservice/proto";
+
+// UserService - Main service for testing
+service UserService {
+  // Get a user by ID
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+
+  // Create a new user
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+
+  // Update an existing user
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+
+  // Delete a user
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+
+  // List users with pagination
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+}
+
+// TestService - Service for testing various data types
+service TestService {
+  // Test various numeric types
+  rpc TestNumericTypes(NumericTestRequest) returns (NumericTestResponse);
+}

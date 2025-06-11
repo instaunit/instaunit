@@ -469,6 +469,7 @@ suites:
 			Gendoc:  gendocs,
 			Config:  cdup,
 			Client:  client,
+			Root:    root,
 		})
 		if err != nil {
 			color.New(colorErr...).Printf("* * * Could not run test suite: %v\n", err)
