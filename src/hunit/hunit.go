@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/instaunit/instaunit/hunit/dynrpc"
 	"github.com/instaunit/instaunit/hunit/expr"
+	"github.com/instaunit/instaunit/hunit/protodyn"
 	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/testcase"
 )
@@ -28,7 +28,7 @@ func RunSuite(suite *testcase.Suite, context runtime.Context) ([]*Result, error)
 	}
 
 	// load protos for the test suite
-	svcreg := dynrpc.NewServiceRegistry()
+	svcreg := protodyn.NewServiceRegistry()
 	if len(suite.Protos) > 0 {
 		for _, e := range suite.Protos {
 			err := svcreg.LoadFileDescriptorSetFromPath(path.Join(context.Root, e))

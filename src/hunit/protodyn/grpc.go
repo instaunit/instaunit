@@ -136,6 +136,31 @@ func (r *ServiceRegistry) ListServices() []string {
 	return names
 }
 
+// Invocation encapsulates a gRPC call
+type Invocation struct {
+	Service protoreflect.ServiceDescriptor
+	Method  protoreflect.MethodDescriptor
+	path    string
+	opts    []grpc.CallOption
+}
+
+func (v Invocation) RequestFromJSON(jsondata []byte) (*dynamicpb.Message, error) {
+	return v.MessageFromJSON(v.Method.Input(), jsondata)
+}
+
+func (v Invocation) ResponseFromJSON(jsondata []byte) (*dynamicpb.Message, error) {
+	return v.MessageFromJSON(v.Method.Output(), jsondata)
+}
+
+func (v Invocation) MessageFromJSON(md protoreflect.MessageDescriptor, jsondata []byte) (*dynamicpb.Message, error) {
+	reqmsg := dynamicpb.NewMessage(md)
+	err := UnmarshalJSON(jsondata, reqmsg)
+	if err != nil {
+		return nil, fmt.Errorf("could not encode request: %w", err)
+	}
+	return reqmsg, nil
+}
+
 // Client represents a dynamic gRPC client
 type Client struct {
 	conn     *grpc.ClientConn
@@ -156,39 +181,29 @@ type CallOptions struct {
 	GrpcOptions []grpc.CallOption
 }
 
-func (c *Client) Method(ctx context.Context, serviceName, methodName string) (protoreflect.MethodDescriptor, error) {
-	svc, err := c.registry.GetService(serviceName)
+func (c *Client) Method(ctx context.Context, serviceName, methodName string) (protoreflect.ServiceDescriptor, protoreflect.MethodDescriptor, error) {
+	service, err := c.registry.GetService(serviceName)
 	if err != nil {
-		return nil, fmt.Errorf("Service is not registered: %w", err)
+		return nil, nil, fmt.Errorf("Service is not registered: %w", err)
 	}
 
-	method := svc.Methods().ByName(protoreflect.Name(methodName))
+	method := service.Methods().ByName(protoreflect.Name(methodName))
 	if method == nil {
-		return nil, fmt.Errorf("Method %s not found in service %s", methodName, serviceName)
+		return nil, nil, fmt.Errorf("Method %s not found in service %s", methodName, serviceName)
 	}
 
-	return method, nil
+	return service, method, nil
 }
 
-// Call performs a unary RPC call
-func (c *Client) Call(cxt context.Context, serviceName, methodName string, requestJSON []byte, opts *CallOptions) (*dynamicpb.Message, error) {
-	method, err := c.Method(cxt, serviceName, methodName)
+// Invocation produces an invocation that may be called using this service
+func (c *Client) Invocation(cxt context.Context, serviceName, methodName string, opts *CallOptions) (Invocation, error) {
+	service, method, err := c.Method(cxt, serviceName, methodName)
 	if err != nil {
-		return nil, err
+		return Invocation{}, err
 	}
 
-	// Create request message
-	reqmsg := dynamicpb.NewMessage(method.Input())
-	// unmarshal request payload from JSON
-	err = UnmarshalJSON(requestJSON, reqmsg)
-	if err != nil {
-		return nil, fmt.Errorf("could not encode request: %w", err)
-	}
-
-	// Create response message
-	rspmsg := dynamicpb.NewMessage(method.Output())
 	// Build method path
-	methodPath := fmt.Sprintf("/%s/%s", serviceName, methodName)
+	path := fmt.Sprintf("/%s/%s", serviceName, methodName)
 
 	// Prepare gRPC options
 	grpcOpts := []grpc.CallOption{}
@@ -196,8 +211,49 @@ func (c *Client) Call(cxt context.Context, serviceName, methodName string, reque
 		grpcOpts = append(grpcOpts, opts.GrpcOptions...)
 	}
 
+	return Invocation{
+		Service: service,
+		Method:  method,
+		path:    path,
+		opts:    grpcOpts,
+	}, nil
+}
+
+// Call performs a unary RPC call with a JSON payload
+func (c *Client) CallJSON(cxt context.Context, serviceName, methodName string, requestJSON []byte, opts *CallOptions) (*dynamicpb.Message, error) {
+	inv, err := c.Invocation(cxt, serviceName, methodName, opts)
+	if err != nil {
+		return nil, fmt.Errorf("could not resolve endpoint: %w", err)
+	}
+
+	// Create request message
+	reqmsg := dynamicpb.NewMessage(inv.Method.Input())
+	// unmarshal request payload from JSON
+	err = UnmarshalJSON(requestJSON, reqmsg)
+	if err != nil {
+		return nil, fmt.Errorf("could not encode request: %w", err)
+	}
+
+	return c.Invoke(cxt, inv, reqmsg)
+}
+
+// Call performs a unary RPC call with a protobuf payload
+func (c *Client) CallProto(cxt context.Context, serviceName, methodName string, reqmsg *dynamicpb.Message, opts *CallOptions) (*dynamicpb.Message, error) {
+	inv, err := c.Invocation(cxt, serviceName, methodName, opts)
+	if err != nil {
+		return nil, fmt.Errorf("could not resolve endpoint: %w", err)
+	}
+
+	return c.Invoke(cxt, inv, reqmsg)
+}
+
+// Invoke an invation with the provided request message, returning the result message
+func (c *Client) Invoke(cxt context.Context, inv Invocation, reqmsg *dynamicpb.Message) (*dynamicpb.Message, error) {
+	// Create response message
+	rspmsg := dynamicpb.NewMessage(inv.Method.Output())
+
 	// Make the call
-	err = c.conn.Invoke(cxt, methodPath, reqmsg, rspmsg, grpcOpts...)
+	err := c.conn.Invoke(cxt, inv.path, reqmsg, rspmsg, inv.opts...)
 	if err != nil {
 		return nil, c.formatGrpcError(err)
 	}

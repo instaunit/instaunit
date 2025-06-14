@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/instaunit/instaunit/hunit/doc"
-	"github.com/instaunit/instaunit/hunit/dynrpc"
 	"github.com/instaunit/instaunit/hunit/expr"
+	"github.com/instaunit/instaunit/hunit/protodyn"
 	"github.com/instaunit/instaunit/hunit/testcase"
 )
 
@@ -19,12 +19,12 @@ type Context struct {
 	Debug     bool
 	Gendoc    []doc.Generator
 	Variables expr.Variables
-	Service   *dynrpc.ServiceRegistry
+	Service   *protodyn.ServiceRegistry
 	Client    *http.Client
 }
 
 // Derive a context from the receiver with the provided service registry
-func (c Context) WithService(svcreg *dynrpc.ServiceRegistry) Context {
+func (c Context) WithService(svcreg *protodyn.ServiceRegistry) Context {
 	d := c
 	d.Service = svcreg
 	return d

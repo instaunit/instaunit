@@ -14,15 +14,19 @@ import (
 
 	"github.com/bww/go-util/v1/debug"
 	textutil "github.com/bww/go-util/v1/text"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"github.com/instaunit/instaunit/hunit/dynrpc"
+	"github.com/instaunit/instaunit/hunit/assert"
 	"github.com/instaunit/instaunit/hunit/entity"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/httputil/mimetype"
+	"github.com/instaunit/instaunit/hunit/protodyn"
 	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/testcase"
 	"github.com/instaunit/instaunit/hunit/text"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 // Run a test case
@@ -263,14 +267,10 @@ func runREST(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	}
 
 	// note the content type; we prefer the explicit format over the content type
-	var contentType string
-	if tcase.Response.Format != "" {
-		contentType = tcase.Response.Format
-	} else {
-		contentType = strings.ToLower(rsp.Header.Get("Content-Type"))
-	}
-
-	contentType, err = context.Interpolate(contentType)
+	contentType, err := context.Interpolate(textutil.Coalesce(
+		tcase.Response.Format,
+		strings.ToLower(rsp.Header.Get("Content-Type")),
+	))
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 	}
@@ -427,51 +427,72 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	// performant, but is more suitable for our needs here).
 	conn, err := grpc.Dial(tcase.Request.URL, grpc.WithInsecure())
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not connect to service: %w", tcase.Request.URL)
+		return nil, nil, nil, fmt.Errorf("Could not connect to service: %s", tcase.Request.URL)
 	}
 	defer conn.Close()
 
-	client := dynrpc.NewClient(conn, context.Service)
+	// create a client for the specified gRPC service
+	client := protodyn.NewClient(conn, context.Service)
+	cxt := stdcontext.Background()
 
-	var reqdata string
-	if tcase.Request.Entity != "" {
-		reqdata, err = context.Interpolate(tcase.Request.Entity)
-		if err != nil {
-			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
-		}
-		// update the request data in the result
-		result.Reqdata = []byte(reqdata)
+	// create an invocation for the RPC call
+	inv, err := client.Invocation(cxt, tcase.RPC.Service, tcase.RPC.Method, &protodyn.CallOptions{})
+	if err != nil {
+		return result.Error(fmt.Errorf("Could not find gRPC method: %w", err)), nil, vars, nil
 	}
 
+	// setup the request entity
+	reqctype, err := context.Interpolate(tcase.Request.Format)
+	if err != nil {
+		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+	}
+	var ent string
+	if ent = tcase.Request.Entity; ent == "" {
+		return result.Error(fmt.Errorf("Empty request entity is not permitted for gRPC endpoints")), nil, vars, nil
+	}
+	reqmsg, reqdata, err := unmarshalGRPCRequest(context, inv, reqctype, ent)
+	if err != nil {
+		return result.Error(err), nil, vars, nil
+	}
+
+	// update the request data in the result
+	result.Reqdata = reqdata
+
 	// perform the gRPC request
-	rspmsg, err := client.Call(stdcontext.Background(), tcase.RPC.Service, tcase.RPC.Method, []byte(reqdata), &dynrpc.CallOptions{})
+	rspmsg, err := client.Invoke(cxt, inv, reqmsg)
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not call gRPC method: %w", err)), nil, vars, nil
 	}
 
 	// decode the response entity to JSON
-	rspdata, err := client.ProtoToJSON(rspmsg)
+	rspdata, err := protodyn.MarshalJSON(rspmsg)
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not convert gRPC response: %w", err)), nil, vars, nil
 	}
 	// update the request data in the result
-	result.Rspdata = []byte(rspdata)
+	result.Rspdata = rspdata
 	// unmarshal it to the intermediate format
 	rspvalue, err := entity.Unmarshal(mimetype.JSON, rspdata)
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not decode gRPC response: %w", err)), nil, vars, nil
 	}
 
-	// check response entity, if necessary
-	if entity := tcase.Response.Entity; entity != "" {
-		entity, err = context.Interpolate(entity)
+	rspctype, err := context.Interpolate(tcase.Response.Format)
+	if err != nil {
+		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+	}
+	// check response ent, if necessary
+	if ent := tcase.Response.Entity; ent != "" {
+		expect, _, err := unmarshalGRPCResponse(context, inv, rspctype, ent)
 		if err != nil {
-			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+			return result.Error(err), nil, vars, nil
 		}
-		if len(rspdata) == 0 {
-			result.AssertEqual(entity, "", "Entities do not match")
-		} else if err = entitiesEqual(context, testcase.CompareSemantic, mimetype.JSON, []byte(entity), rspvalue); err != nil {
-			result.Error(fmt.Errorf("Could not compare entities: %w", err))
+		if !proto.Equal(expect, rspmsg) {
+			result.Error(&assert.AssertionError{
+				Expect:  expect,
+				Actual:  rspmsg,
+				Message: "Entities are not equal",
+			})
 		}
 	}
 
@@ -486,4 +507,49 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	result.Context = context
 
 	return result, nil, vars, nil
+}
+
+func unmarshalGRPCRequest(context runtime.Context, inv protodyn.Invocation, ctype, edata string) (*dynamicpb.Message, []byte, error) {
+	return unmarshalGRPC(context, inv, inv.Method.Input(), ctype, edata)
+}
+
+func unmarshalGRPCResponse(context runtime.Context, inv protodyn.Invocation, ctype, edata string) (*dynamicpb.Message, []byte, error) {
+	return unmarshalGRPC(context, inv, inv.Method.Output(), ctype, edata)
+}
+
+func unmarshalGRPC(context runtime.Context, inv protodyn.Invocation, md protoreflect.MessageDescriptor, ctype, edata string) (*dynamicpb.Message, []byte, error) {
+	var (
+		entdata []byte
+		entmsg  *dynamicpb.Message
+		err     error
+	)
+	switch ctype {
+	// if the entity is explicitly a protobuf message, we decode it as base64
+	// and use it directly...
+	case mimetype.Protobuf:
+		entdata, err = base64.StdEncoding.DecodeString(edata)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Could not decode payload: %w", err)
+		}
+		err = proto.Unmarshal(entdata, entmsg)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Could not unmarshal protobuf message: %w", err)
+		}
+
+	// ...otherwise, it is assumed to be JSON data which we will marshal to the
+	// corresponding protobuf message.
+	case mimetype.JSON:
+		fallthrough
+	default:
+		reqstr, err := context.Interpolate(string(edata))
+		if err != nil {
+			return nil, nil, fmt.Errorf("Could not interpolate: %w", err)
+		}
+		entdata = []byte(reqstr)
+		entmsg, err = inv.MessageFromJSON(md, entdata)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Could not unmarshal message from JSON: %w", err)
+		}
+	}
+	return entmsg, entdata, nil
 }
