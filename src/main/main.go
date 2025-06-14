@@ -624,13 +624,21 @@ func reportResults(options testcase.Options, cached bool, results []*hunit.Resul
 					(!r.Success && (options&testcase.OptionDisplayResponsesOnFailure) == testcase.OptionDisplayResponsesOnFailure)
 			}
 			if preq {
-				fmt.Println(text.Indent(string(r.Reqdata), "      > "))
+				if len(r.FormatReqdata) > 0 {
+					println(text.Indent(string(r.FormatReqdata), "      > "))
+				} else {
+					println(text.Indent(string(r.Reqdata), "      > "))
+				}
 			}
 			if preq && prsp {
-				fmt.Println("      * ")
+				println("      * ")
 			}
 			if prsp {
-				fmt.Println(text.Indent(string(r.Rspdata), "      < "))
+				if len(r.FormatRspdata) > 0 {
+					println(text.Indent(string(r.FormatRspdata), "      < "))
+				} else {
+					println(text.Indent(string(r.Rspdata), "      < "))
+				}
 			}
 			if preq || prsp {
 				fmt.Println()
