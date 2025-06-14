@@ -423,9 +423,15 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	// incrementally update the name as we evaluate it
 	result.Name = formatGRPCName(tcase)
 
+	// canonicalize our URL
+	url := tcase.Request.URL
+	if !isAbsoluteURL(url) {
+		url = joinPath(context.BaseURL, url)
+	}
+
 	// attempt to connect to the service (we connect for each request, which isn't
 	// performant, but is more suitable for our needs here).
-	conn, err := grpc.Dial(tcase.Request.URL, grpc.WithInsecure())
+	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("Could not connect to service: %s", tcase.Request.URL)
 	}
