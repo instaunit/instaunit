@@ -442,17 +442,19 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	}
 
 	// setup the request entity
-	reqctype, err := context.Interpolate(tcase.Request.Format)
-	if err != nil {
-		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
-	}
-	var ent string
-	if ent = tcase.Request.Entity; ent == "" {
-		return result.Error(fmt.Errorf("Empty request entity is not permitted for gRPC endpoints")), nil, vars, nil
-	}
-	reqmsg, reqdata, err := unmarshalGRPCRequest(context, inv, reqctype, ent)
-	if err != nil {
-		return result.Error(err), nil, vars, nil
+	var (
+		reqmsg  *dynamicpb.Message
+		reqdata []byte
+	)
+	if ent := tcase.Request.Entity; ent != "" {
+		reqtype, err := context.Interpolate(tcase.Request.Format)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+		}
+		reqmsg, reqdata, err = unmarshalGRPCRequest(context, inv, reqtype, ent)
+		if err != nil {
+			return result.Error(err), nil, vars, nil
+		}
 	}
 
 	// update the request data in the result
@@ -477,22 +479,44 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		return result.Error(fmt.Errorf("Could not decode gRPC response: %w", err)), nil, vars, nil
 	}
 
-	rspctype, err := context.Interpolate(tcase.Response.Format)
-	if err != nil {
-		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
-	}
-	// check response ent, if necessary
+	// check response entity, if necessary
 	if ent := tcase.Response.Entity; ent != "" {
-		expect, _, err := unmarshalGRPCResponse(context, inv, rspctype, ent)
+		rsptype, err := context.Interpolate(tcase.Response.Format)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+		}
+		expect, expectdata, err := unmarshalGRPCResponse(context, inv, rsptype, ent)
 		if err != nil {
 			return result.Error(err), nil, vars, nil
 		}
-		if !proto.Equal(expect, rspmsg) {
-			result.Error(&assert.AssertionError{
-				Expect:  expect,
-				Actual:  rspmsg,
-				Message: "Entities are not equal",
-			})
+		// If the expected response type is defined in JSON, this is the lowest
+		// common denominator, so we use it to compare messages. Only when both
+		// messages are defined as protos do we compare them directly.
+		switch rsptype {
+		case mimetype.Protobuf:
+			if !proto.Equal(expect, rspmsg) {
+				result.Error(&assert.AssertionError{
+					Expect:  expect,
+					Actual:  rspmsg,
+					Message: "Entities are not equal (protobuf)",
+				})
+			}
+		case mimetype.JSON:
+			fallthrough
+		default:
+			expect, err := entity.Unmarshal(mimetype.JSON, expectdata)
+			if err != nil {
+				return result.Error(fmt.Errorf("Could not unmarshal expected response: %w", err)), nil, vars, nil
+			}
+			if len(rspdata) == 0 {
+				result.AssertEqual(expect, "", "Entities do not match")
+			} else if !entity.SemanticEqual(expect, rspvalue) {
+				result.Error(&assert.AssertionError{
+					Expect:  expect,
+					Actual:  rspvalue,
+					Message: "Entities are not equal",
+				})
+			}
 		}
 	}
 
