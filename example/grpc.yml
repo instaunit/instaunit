@@ -10,6 +10,7 @@ tests:
       method: CreateUser
 
     request:
+      format: application/protobuf
       entity: |
         {
           "user": {
