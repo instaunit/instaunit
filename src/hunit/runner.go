@@ -480,19 +480,19 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	}
 
 	// check response entity, if necessary
-	if ent := tcase.Response.Entity; ent != "" {
-		rsptype, err := context.Interpolate(tcase.Response.Format)
+	if expectent := tcase.Response.Entity; expectent != "" {
+		expecttype, err := context.Interpolate(tcase.Response.Format)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
-		expect, expectdata, err := unmarshalGRPCResponse(context, inv, rsptype, ent)
+		expect, expectdata, err := unmarshalGRPCResponse(context, inv, expecttype, expectent)
 		if err != nil {
 			return result.Error(err), nil, vars, nil
 		}
 		// If the expected response type is defined in JSON, this is the lowest
 		// common denominator, so we use it to compare messages. Only when both
 		// messages are defined as protos do we compare them directly.
-		switch rsptype {
+		switch expecttype {
 		case mimetype.Protobuf:
 			if !proto.Equal(expect, rspmsg) {
 				result.Error(&assert.AssertionError{
