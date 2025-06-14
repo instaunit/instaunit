@@ -424,28 +424,31 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 
 	// incrementally update the name as we evaluate it
 	result.Name = formatGRPCName(tcase)
+	cxt := stdcontext.Background()
 
 	// canonicalize our request URL
 	curl, err := context.ResolveURL(tcase.Request.URL)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not resolve request URL: %s", tcase.Request.URL)
+		return result.Error(fmt.Errorf("Could not resolve request URL: %s", tcase.Request.URL)), nil, vars, nil
 	}
 	var requrl string
 	if curl.Scheme == schemeGRPC {
 		requrl = curl.Host
+	}
+	if requrl == "" {
+		return result.Error(fmt.Errorf("Request defines no URL")), nil, vars, nil
 	}
 
 	// attempt to connect to the service (we connect for each request, which isn't
 	// performant, but is more suitable for our needs here).
 	conn, err := grpc.Dial(requrl, grpc.WithInsecure())
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not connect to service <%s>", requrl)
+		return result.Error(fmt.Errorf("Could not connect to service <%s>", requrl)), nil, vars, nil
 	}
 	defer conn.Close()
 
 	// create a client for the specified gRPC service
 	client := protodyn.NewClient(conn, context.Service)
-	cxt := stdcontext.Background()
 
 	// create an invocation for the RPC call
 	inv, err := client.Invocation(cxt, tcase.RPC.Service, tcase.RPC.Method, &protodyn.CallOptions{})
