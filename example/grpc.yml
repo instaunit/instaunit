@@ -71,7 +71,7 @@ tests:
       method: GetUser
 
     request:
-      url: localhost:8800
+      url: grpc://localhost:8800
       entity: |
         {
           "user_id": ${user1.response.value.user.id}
@@ -82,6 +82,46 @@ tests:
         {
           "user": {
             "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+            "is_active": true,
+            "tags": [
+              "developer",
+              "golang"
+            ],
+            "metadata": {
+              "department": "Engineering",
+              "level": "Senior"
+            },
+            "address": {
+              "street": "123 Main St",
+              "city": "San Francisco",
+              "state": "CA",
+              "zip_code": "94102",
+              "country": "USA"
+            },
+            "type": "USER_TYPE_REGULAR",
+            "phone": "+1-555-0123"
+          }
+        }
+
+  -
+    grpc:
+      service: grpcservice.UserService
+      method: GetUser
+
+    request:
+      url: grpc://localhost:8800
+      entity: |
+        {
+          "user_id": ${user1.response.value.user.id}
+        }
+
+    response:
+      entity: |
+        {
+          "user": {
+            "name": "THIS TEST INTENTIONALLY FAILS",
             "email": "john@example.com",
             "age": 30,
             "is_active": true,

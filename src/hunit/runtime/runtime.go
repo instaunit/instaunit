@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/instaunit/instaunit/hunit/doc"
 	"github.com/instaunit/instaunit/hunit/expr"
@@ -12,7 +13,7 @@ import (
 // A test context
 type Context struct {
 	Root      string // test context root (where is the suite run from); this is the directory containing the test suite or '.' if run from STDIN
-	BaseURL   string
+	BaseURL   *url.URL
 	Options   testcase.Options
 	Config    testcase.Config
 	Headers   map[string]string
@@ -46,6 +47,22 @@ func (c Context) WithVars(vars ...expr.Variables) Context {
 // Merge vars into this context's variables, preferring the parameters
 func (c *Context) AddVars(vars ...expr.Variables) {
 	c.Variables = mergeVars(append([]expr.Variables{c.Variables}, vars...)...)
+}
+
+// ResolveURL resolves a url against this context's base
+func (c *Context) ResolveURL(u string) (*url.URL, error) {
+	u, err := c.Interpolate(u)
+	if err != nil {
+		return nil, err
+	}
+	ref, err := url.Parse(u)
+	if err != nil {
+		return nil, err
+	}
+	if c.BaseURL == nil {
+		return ref, nil
+	}
+	return c.BaseURL.ResolveReference(ref), nil
 }
 
 // Interpolate, if we're configured to do so

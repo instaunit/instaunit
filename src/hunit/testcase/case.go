@@ -2,6 +2,7 @@ package testcase
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 	"time"
 
@@ -47,6 +48,19 @@ type Request struct {
 	BasicAuth *BasicCredentials `yaml:"basic-auth"`
 	Title     string            `yaml:"title"`
 	Comments  string            `yaml:"doc"`
+}
+
+func (r Request) ResolveURL(base *url.URL) (string, error) {
+	if base == nil {
+		return r.URL, nil
+	}
+	// there's no point in caching this since every request is run exactly once
+	// or repeatedly in a tight loop where the URL should be cached externally
+	ref, err := url.Parse(r.URL)
+	if err != nil {
+		return "", err
+	}
+	return base.ResolveReference(ref).String(), nil
 }
 
 // A test response

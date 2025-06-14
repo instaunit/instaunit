@@ -29,6 +29,9 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
+// this scheme is used to canonicallly identify gRPC URLs
+const schemeGRPC = "grpc"
+
 // Run a test case
 func RunTest(suite *testcase.Suite, tcase testcase.Case, context runtime.Context) (*Result, FutureResult, expr.Variables, error) {
 	start := time.Now()
@@ -84,37 +87,36 @@ func runREST(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		return nil, nil, nil, fmt.Errorf("Request requires a method (set 'method')")
 	}
 
-	// update the url
-	url, err := context.Interpolate(tcase.Request.URL)
+	// canonicalize our request URL
+	curl, err := context.ResolveURL(tcase.Request.URL)
 	if err != nil {
-		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
+		return nil, nil, nil, fmt.Errorf("Could not resolve request URL: %s", tcase.Request.URL)
 	}
-	if !isAbsoluteURL(url) {
-		url = joinPath(context.BaseURL, url)
-	}
+	requrl := curl.String()
+	fmt.Println("EFFECTIVE:", requrl)
 
 	// incrementally update the name as we evaluate it
-	result.Name = formatRESTName(tcase, method, url)
+	result.Name = formatRESTName(tcase, method, requrl)
 
 	if len(tcase.Request.Params) > 0 {
-		url, err = mergeQueryParams(url, tcase.Request.Params, context)
+		requrl, err = mergeQueryParams(requrl, tcase.Request.Params, context)
 		if err != nil {
 			return nil, nil, vars, fmt.Errorf("Test case declared on line %d: %v", tcase.Source.Line, err)
 		}
 	}
 
 	// incrementally update the name as we evaluate it
-	result.Name = formatRESTName(tcase, method, url)
+	result.Name = formatRESTName(tcase, method, requrl)
 
-	url, err = context.Interpolate(url)
+	requrl, err = context.Interpolate(requrl)
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
-	} else if url == "" {
+	} else if requrl == "" {
 		return nil, nil, nil, fmt.Errorf("Request requires a URL (set 'url')")
 	}
 
 	// incrementally update the name as we evaluate it
-	result.Name = formatRESTName(tcase, method, url)
+	result.Name = formatRESTName(tcase, method, requrl)
 
 	header := make(http.Header)
 	if context.Headers != nil {
@@ -169,7 +171,7 @@ func runREST(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 				return net.DialTimeout(n, a, time.Second*3)
 			},
 		}
-		url, err := urlWithScheme("ws", url)
+		url, err := urlWithScheme("ws", requrl)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not upgrade URL scheme: %w", err)), nil, vars, nil
 		}
@@ -222,7 +224,7 @@ func runREST(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		header.Add("Content-Length", strconv.FormatInt(int64(len(reqdata)), 10))
 	}
 
-	req, err := http.NewRequest(method, url, ereader)
+	req, err := http.NewRequest(method, requrl, ereader)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -423,17 +425,21 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	// incrementally update the name as we evaluate it
 	result.Name = formatGRPCName(tcase)
 
-	// canonicalize our URL
-	url := tcase.Request.URL
-	if !isAbsoluteURL(url) {
-		url = joinPath(context.BaseURL, url)
+	// canonicalize our request URL
+	curl, err := context.ResolveURL(tcase.Request.URL)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("Could not resolve request URL: %s", tcase.Request.URL)
+	}
+	var requrl string
+	if curl.Scheme == schemeGRPC {
+		requrl = curl.Host
 	}
 
 	// attempt to connect to the service (we connect for each request, which isn't
 	// performant, but is more suitable for our needs here).
-	conn, err := grpc.Dial(url, grpc.WithInsecure())
+	conn, err := grpc.Dial(requrl, grpc.WithInsecure())
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not connect to service: %s", tcase.Request.URL)
+		return nil, nil, nil, fmt.Errorf("Could not connect to service <%s>", requrl)
 	}
 	defer conn.Close()
 

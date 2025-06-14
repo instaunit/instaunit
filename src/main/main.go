@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -49,13 +50,20 @@ var (
 
 var syncStdout = syncio.NewWriter(os.Stdout)
 
-// You know what it does
-func main() {
-	os.Exit(app())
-}
+var errTestFailures = errors.New("Test failures")
 
 // You know what it does
-func app() int {
+func main() {
+	err := app()
+	if err != nil {
+		if !errors.Is(err, errTestFailures) {
+			color.New(colorErr...).Println("* * *", err)
+		}
+		os.Exit(1)
+	}
+}
+
+func app() error {
 	var tests, skipped, failures, errno int
 	var headerSpecs, serviceSpecs, awaitURLs []string
 
@@ -119,7 +127,7 @@ func app() int {
 
 	if version {
 		fmt.Println(formatVersion())
-		return 0
+		return nil
 	}
 
 	debug.DEBUG = debug.DEBUG || enableDebug
@@ -165,8 +173,7 @@ func app() int {
 		for _, e := range headerSpecs {
 			x := strings.Index(e, ":")
 			if x < 1 {
-				color.New(colorErr...).Printf("* * * Invalid header: %v\n", e)
-				return 1
+				return fmt.Errorf("Invalid header: %v", e)
 			}
 			globalHeaders[strings.TrimSpace(e[:x])] = strings.TrimSpace(e[x+1:])
 		}
@@ -178,13 +185,11 @@ func app() int {
 		var err error
 		doctype, err = doc_emit.ParseDoctype(doctypeSpec)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Invalid documentation type: %v\n", err)
-			return 1
+			return fmt.Errorf("Invalid documentation type: %v", err)
 		}
 		err = os.MkdirAll(docpath, 0o755)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
-			return 1
+			return fmt.Errorf("Could not create documentation base: %v", err)
 		}
 		docname = make(map[string]int)
 	}
@@ -193,28 +198,23 @@ func app() int {
 	if genReport {
 		err := os.MkdirAll(reportPath, 0o755)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not create documentation base: %v\n", err)
-			return 1
+			return fmt.Errorf("Could not create documentation base: %v", err)
 		}
 		rtype, err := report_emit.ParseDoctype(reportType)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Invalid report type: %v\n", err)
-			return 1
+			return fmt.Errorf("Invalid report type: %v", err)
 		}
 		out, err := os.OpenFile(path.Join(reportPath, rtype.String()+rtype.Ext()), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not open report output: %v\n", err)
-			return 1
+			return fmt.Errorf("Could not open report output: %v", err)
 		}
 		gen, err := report.New(rtype, out, fmt.Sprint(time.Now().Unix()))
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could create report generator: %v\n", err)
-			return 1
+			return fmt.Errorf("Could create report generator: %v", err)
 		}
 		err = gen.Init()
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could initialize report generator: %v\n", err)
-			return 1
+			return fmt.Errorf("Could initialize report generator: %v", err)
 		}
 		reports = []report.Generator{gen} // just one for now
 	}
@@ -223,18 +223,15 @@ func app() int {
 	for _, e := range serviceSpecs {
 		conf, err := service.ParseConfig(e)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not create mock service: %v\n", err)
-			return 1
+			return fmt.Errorf("Could not create mock service: %v", err)
 		}
 		svc, err := rest.New(conf) // only REST is supported for now...
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not create mock service: %v\n", err)
-			return 1
+			return fmt.Errorf("Could not create mock service: %v", err)
 		}
 		err = svc.Start()
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Could not start mock service: %v\n", err)
-			return 1
+			return fmt.Errorf("Could not start mock service: %v", err)
 		}
 		if debug.VERBOSE {
 			fmt.Println()
@@ -253,8 +250,7 @@ func app() int {
 		var err error
 		proc, done, err = execCommandAsync(options, exec.NewCommand(execCmd, execCmd), execLog)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * %v\n", err)
-			return 1
+			return err
 		}
 		defer proc.Kill()
 	}
@@ -275,8 +271,7 @@ func app() int {
 		var err error
 		sum, err := cache.Checksum(execCmd)
 		if err != nil {
-			color.New(colorErr...).Println("* * *", err)
-			return 1
+			return err
 		}
 
 		cachePath = path.Join(cacheBase, execCmd+".cache")
@@ -290,8 +285,7 @@ func app() int {
 		if errors.Is(err, os.ErrNotExist) {
 			fmt.Println("----> No results cache available:", cachePath)
 		} else if err != nil {
-			color.New(colorErr...).Println("* * *", err)
-			return 1
+			return err
 		} else if b := c.Binary; b != nil && b.Path == execCmd && b.Checksum == sum.Checksum {
 			if !options.On(testcase.OptionQuiet) {
 				fmt.Println("----> Using results cache:", cachePath)
@@ -308,8 +302,7 @@ func app() int {
 		}
 		err := await.Await(context.Background(), awaitURLs, 0)
 		if err != nil {
-			color.New(colorErr...).Printf("* * * Error waiting for resources: %v\n", err)
-			return 1
+			return fmt.Errorf("Error waiting for resources: %v", err)
 		}
 	}
 
@@ -317,8 +310,7 @@ func app() int {
 	if genDoc {
 		gen, err := doc.New(doctype, docpath)
 		if err != nil {
-			color.New(colorErr...).Println("* * * Could create documentation generator:", err)
-			return 1
+			return fmt.Errorf("Could create documentation generator: %w", err)
 		}
 		gendocs = []doc.Generator{gen} // just one for now
 	}
@@ -406,8 +398,7 @@ suites:
 			base := disambigFile(base, doctype.Ext(), docname)
 			err := e.Init(suite, base)
 			if err != nil {
-				color.New(colorErr...).Println("* * * Could not initialize documentation suite:", err)
-				return 1
+				return fmt.Errorf("Could not initialize documentation suite: %w", err)
 			}
 		}
 
@@ -460,9 +451,17 @@ suites:
 			},
 		}
 
+		var burl *url.URL
+		if baseURL != "" {
+			burl, err = url.Parse(baseURL)
+			if err != nil {
+				return fmt.Errorf("Could not parse base URL: %w", err)
+			}
+		}
+
 		startSuite := time.Now()
 		results, err := hunit.RunSuite(suite, runtime.Context{
-			BaseURL: baseURL,
+			BaseURL: burl,
 			Options: options,
 			Headers: globalHeaders,
 			Debug:   debug.DEBUG,
@@ -556,7 +555,7 @@ suites:
 	if errno > 0 {
 		color.New(color.BgHiRed, color.Bold, color.FgBlack).Printf(" ERRORS! ")
 		fmt.Printf(" %d %s could not be run due to errors.\n\n", errno, plural(errno, "test", "tests"))
-		return 1
+		return errTestFailures
 	}
 
 	fmt.Printf("Finished in %v.\n\n", duration)
@@ -564,7 +563,7 @@ suites:
 	if !success {
 		color.New(color.FgHiRed, color.Bold, color.ReverseVideo).Printf(" FAIL! ")
 		fmt.Printf(" %d of %d tests failed (%d implicit).\n", failures, tests, skipped)
-		return 1
+		return errTestFailures
 	}
 
 	color.New(color.FgHiGreen, color.Bold, color.ReverseVideo).Printf(" PASS! ")
@@ -575,7 +574,7 @@ suites:
 	} else {
 		fmt.Printf(" All %d tests passed.\n", tests)
 	}
-	return 0
+	return nil
 }
 
 func reportResults(options testcase.Options, cached bool, results []*hunit.Result, tests, failures, skipped *int) bool {
