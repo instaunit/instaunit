@@ -124,6 +124,7 @@ tests:
         }
 
     response:
+      status: 900
       entity: |
         {
           "user": {

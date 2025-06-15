@@ -604,9 +604,9 @@ func reportResults(options testcase.Options, cached bool, results []*hunit.Resul
 			color.New(color.FgCyan).Printf("----> %s%v", prefix, r.Name)
 		}
 		if r.Errors != nil {
-			for _, e := range r.Errors {
+			for i, e := range r.Errors {
 				count++
-				fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %s", count, e), "             ", 0))
+				fmt.Println(text.IndentWithOptions(fmt.Sprintf("        #%d %s", i+1, e), "             ", 0))
 				fmt.Println()
 			}
 		}

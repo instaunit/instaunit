@@ -15,7 +15,6 @@ import (
 
 	"github.com/bww/go-util/v1/debug"
 	textutil "github.com/bww/go-util/v1/text"
-	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"github.com/instaunit/instaunit/hunit/assert"
 	"github.com/instaunit/instaunit/hunit/entity"
@@ -27,6 +26,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/text"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
@@ -493,6 +493,8 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		} else {
 			return result.Error(fmt.Errorf("gRPC method failed: %w", err)), nil, vars, nil
 		}
+	} else {
+		result.AssertEqual(tcase.Response.Status, 0, "Unexpected status code")
 	}
 
 	// decode the response entity to JSON
