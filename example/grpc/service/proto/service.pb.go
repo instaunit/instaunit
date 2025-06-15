@@ -24,8 +24,9 @@ var File_proto_service_proto protoreflect.FileDescriptor
 
 const file_proto_service_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/service.proto\x12\vgrpcservice\x1a\x11proto/model.proto2\xe4\x03\n" +
-	"\vUserService\x12D\n" +
+	"\x13proto/service.proto\x12\vgrpcservice\x1a\x11proto/model.proto2\xa3\x04\n" +
+	"\vUserService\x12=\n" +
+	"\x04Noop\x12\x19.grpcservice.EmptyRequest\x1a\x1a.grpcservice.EmptyResponse\x12D\n" +
 	"\aGetUser\x12\x1b.grpcservice.GetUserRequest\x1a\x1c.grpcservice.GetUserResponse\x12M\n" +
 	"\n" +
 	"CreateUser\x12\x1e.grpcservice.CreateUserRequest\x1a\x1f.grpcservice.CreateUserResponse\x12M\n" +
@@ -39,38 +40,42 @@ const file_proto_service_proto_rawDesc = "" +
 	"\x10TestNumericTypes\x12\x1f.grpcservice.NumericTestRequest\x1a .grpcservice.NumericTestResponseB(Z&github.com/instaunit/grpcservice/protob\x06proto3"
 
 var file_proto_service_proto_goTypes = []any{
-	(*GetUserRequest)(nil),        // 0: grpcservice.GetUserRequest
-	(*CreateUserRequest)(nil),     // 1: grpcservice.CreateUserRequest
-	(*UpdateUserRequest)(nil),     // 2: grpcservice.UpdateUserRequest
-	(*DeleteUserRequest)(nil),     // 3: grpcservice.DeleteUserRequest
-	(*ListUsersRequest)(nil),      // 4: grpcservice.ListUsersRequest
-	(*ListUserTypesRequest)(nil),  // 5: grpcservice.ListUserTypesRequest
-	(*NumericTestRequest)(nil),    // 6: grpcservice.NumericTestRequest
-	(*GetUserResponse)(nil),       // 7: grpcservice.GetUserResponse
-	(*CreateUserResponse)(nil),    // 8: grpcservice.CreateUserResponse
-	(*UpdateUserResponse)(nil),    // 9: grpcservice.UpdateUserResponse
-	(*DeleteUserResponse)(nil),    // 10: grpcservice.DeleteUserResponse
-	(*ListUsersResponse)(nil),     // 11: grpcservice.ListUsersResponse
-	(*ListUserTypesResponse)(nil), // 12: grpcservice.ListUserTypesResponse
-	(*NumericTestResponse)(nil),   // 13: grpcservice.NumericTestResponse
+	(*EmptyRequest)(nil),          // 0: grpcservice.EmptyRequest
+	(*GetUserRequest)(nil),        // 1: grpcservice.GetUserRequest
+	(*CreateUserRequest)(nil),     // 2: grpcservice.CreateUserRequest
+	(*UpdateUserRequest)(nil),     // 3: grpcservice.UpdateUserRequest
+	(*DeleteUserRequest)(nil),     // 4: grpcservice.DeleteUserRequest
+	(*ListUsersRequest)(nil),      // 5: grpcservice.ListUsersRequest
+	(*ListUserTypesRequest)(nil),  // 6: grpcservice.ListUserTypesRequest
+	(*NumericTestRequest)(nil),    // 7: grpcservice.NumericTestRequest
+	(*EmptyResponse)(nil),         // 8: grpcservice.EmptyResponse
+	(*GetUserResponse)(nil),       // 9: grpcservice.GetUserResponse
+	(*CreateUserResponse)(nil),    // 10: grpcservice.CreateUserResponse
+	(*UpdateUserResponse)(nil),    // 11: grpcservice.UpdateUserResponse
+	(*DeleteUserResponse)(nil),    // 12: grpcservice.DeleteUserResponse
+	(*ListUsersResponse)(nil),     // 13: grpcservice.ListUsersResponse
+	(*ListUserTypesResponse)(nil), // 14: grpcservice.ListUserTypesResponse
+	(*NumericTestResponse)(nil),   // 15: grpcservice.NumericTestResponse
 }
 var file_proto_service_proto_depIdxs = []int32{
-	0,  // 0: grpcservice.UserService.GetUser:input_type -> grpcservice.GetUserRequest
-	1,  // 1: grpcservice.UserService.CreateUser:input_type -> grpcservice.CreateUserRequest
-	2,  // 2: grpcservice.UserService.UpdateUser:input_type -> grpcservice.UpdateUserRequest
-	3,  // 3: grpcservice.UserService.DeleteUser:input_type -> grpcservice.DeleteUserRequest
-	4,  // 4: grpcservice.UserService.ListUsers:input_type -> grpcservice.ListUsersRequest
-	5,  // 5: grpcservice.UserService.ListUserTypes:input_type -> grpcservice.ListUserTypesRequest
-	6,  // 6: grpcservice.TestService.TestNumericTypes:input_type -> grpcservice.NumericTestRequest
-	7,  // 7: grpcservice.UserService.GetUser:output_type -> grpcservice.GetUserResponse
-	8,  // 8: grpcservice.UserService.CreateUser:output_type -> grpcservice.CreateUserResponse
-	9,  // 9: grpcservice.UserService.UpdateUser:output_type -> grpcservice.UpdateUserResponse
-	10, // 10: grpcservice.UserService.DeleteUser:output_type -> grpcservice.DeleteUserResponse
-	11, // 11: grpcservice.UserService.ListUsers:output_type -> grpcservice.ListUsersResponse
-	12, // 12: grpcservice.UserService.ListUserTypes:output_type -> grpcservice.ListUserTypesResponse
-	13, // 13: grpcservice.TestService.TestNumericTypes:output_type -> grpcservice.NumericTestResponse
-	7,  // [7:14] is the sub-list for method output_type
-	0,  // [0:7] is the sub-list for method input_type
+	0,  // 0: grpcservice.UserService.Noop:input_type -> grpcservice.EmptyRequest
+	1,  // 1: grpcservice.UserService.GetUser:input_type -> grpcservice.GetUserRequest
+	2,  // 2: grpcservice.UserService.CreateUser:input_type -> grpcservice.CreateUserRequest
+	3,  // 3: grpcservice.UserService.UpdateUser:input_type -> grpcservice.UpdateUserRequest
+	4,  // 4: grpcservice.UserService.DeleteUser:input_type -> grpcservice.DeleteUserRequest
+	5,  // 5: grpcservice.UserService.ListUsers:input_type -> grpcservice.ListUsersRequest
+	6,  // 6: grpcservice.UserService.ListUserTypes:input_type -> grpcservice.ListUserTypesRequest
+	7,  // 7: grpcservice.TestService.TestNumericTypes:input_type -> grpcservice.NumericTestRequest
+	8,  // 8: grpcservice.UserService.Noop:output_type -> grpcservice.EmptyResponse
+	9,  // 9: grpcservice.UserService.GetUser:output_type -> grpcservice.GetUserResponse
+	10, // 10: grpcservice.UserService.CreateUser:output_type -> grpcservice.CreateUserResponse
+	11, // 11: grpcservice.UserService.UpdateUser:output_type -> grpcservice.UpdateUserResponse
+	12, // 12: grpcservice.UserService.DeleteUser:output_type -> grpcservice.DeleteUserResponse
+	13, // 13: grpcservice.UserService.ListUsers:output_type -> grpcservice.ListUsersResponse
+	14, // 14: grpcservice.UserService.ListUserTypes:output_type -> grpcservice.ListUserTypesResponse
+	15, // 15: grpcservice.TestService.TestNumericTypes:output_type -> grpcservice.NumericTestResponse
+	8,  // [8:16] is the sub-list for method output_type
+	0,  // [0:8] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

@@ -2,6 +2,11 @@ protos:
   - grpc/service.binpb
 
 tests:
+  - # test an endpoint that has no explicit request or response
+    grpc:
+      service: grpcservice.UserService
+      method: Noop
+
   -
     id: user1
 
@@ -122,7 +127,7 @@ tests:
       entity: |
         {
           "user": {
-            "name": "THIS TEST INTENTIONALLY FAILS",
+            "name": "This Test Intentionally Fails",
             "email": "john@example.com",
             "age": 30,
             "is_active": true,
@@ -196,3 +201,11 @@ tests:
       format: application/protobuf
       entity: |
         CgQAAQID
+
+  -
+    grpc:
+      service: grpcservice.UserService
+      method: This_Method_Intentionally_Doesnt_Exist
+
+    request:
+      url: grpc://localhost:8800

@@ -8,6 +8,9 @@ option go_package = "github.com/instaunit/grpcservice/proto";
 
 // UserService - Main service for testing
 service UserService {
+  // Noop
+  rpc Noop(EmptyRequest) returns (EmptyResponse);
+
   // Get a user by ID
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
 

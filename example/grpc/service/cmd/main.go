@@ -103,6 +103,10 @@ func (s *userServer) ListUserTypes(ctx context.Context, req *proto.ListUserTypes
 	}, nil
 }
 
+func (s *userServer) Noop(ctx context.Context, req *proto.EmptyRequest) (*proto.EmptyResponse, error) {
+	return &proto.EmptyResponse{}, nil
+}
+
 type testServer struct {
 	proto.UnimplementedTestServiceServer
 }

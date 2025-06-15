@@ -1,5 +1,5 @@
 
-run:
+run: source protos
 	go run ./service/cmd
 
 source:

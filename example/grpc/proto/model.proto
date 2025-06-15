@@ -66,6 +66,8 @@ message ListUsersRequest {
 
 message ListUserTypesRequest {}
 
+message EmptyRequest {}
+
 // Response messages
 message GetUserResponse {
   User user = 1;
@@ -92,6 +94,8 @@ message ListUsersResponse {
 message ListUserTypesResponse {
   repeated UserType types = 1;
 }
+
+message EmptyResponse { }
 
 // Test message with various numeric types
 message NumericTypesTest {
