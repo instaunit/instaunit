@@ -3,12 +3,7 @@ run: source protos
 	go run ./service/cmd
 
 source:
-	protoc \
-		--go_out=service \
-		--go_opt=paths=source_relative \
-		--go-grpc_out=service \
-		--go-grpc_opt=paths=source_relative \
-		./proto/*.proto
+	protoc --go_out=service --go_opt=paths=source_relative --go-grpc_out=service --go-grpc_opt=paths=source_relative ./proto/*.proto
 
 protos:
 	protoc --descriptor_set_out=service.binpb --include_imports ./proto/*.proto
