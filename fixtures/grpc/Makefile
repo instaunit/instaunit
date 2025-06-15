@@ -1,4 +1,7 @@
 
+build: source protos
+	go build -o ./bin/service ./service/cmd
+
 run: source protos
 	go run ./service/cmd
 

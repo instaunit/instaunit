@@ -1,0 +1,14 @@
+version: 1
+tasks:
+  -
+    name: tests
+    run: $INSTAUNIT --base-url grpc://localhost:8800 $TEST_SUITE/grpc.yml
+    deps:
+      - service
+
+  -
+    name: service
+    run: $GRPC/bin/service
+    wait: 60s
+    checks:
+      - shell:nc -z localhost 8800

@@ -20,35 +20,49 @@ TARGET_DIR := $(BUILD_DIR)/$(PRODUCT)
 ARCHIVE    := $(PRODUCT).tgz
 PACKAGE    := $(BUILD_DIR)/$(ARCHIVE)
 ARTIFACTS  := s3://instaunit/releases
+BINARY     := $(TARGET_DIR)/bin/$(NAME)
 
 # build and install
 PREFIX ?= /usr/local
 
-# sources
-SRC = $(shell find src -name \*.go -print)
-# tests
-TEST_PKGS = $(MODULE)/hunit/...
+SRC       := $(shell find src -name \*.go -print)
+TEST_PKGS := $(MODULE)/hunit/...
+FIXTURES  := $(PWD)/fixtures
+GRPC      := $(FIXTURES)/grpc
 
-.PHONY: all test clean install build package
+# utils
+PSCTL ?= psctl
 
+.PHONY: all
 all: build
 
 $(TARGET_DIR)/bin/$(NAME): $(SRC)
 	(cd src && go build -ldflags="-X main.version=$(VERSION) -X main.githash=$(GITHASH)" -o $@ $(MAIN))
 
+.PHONY: build
 build: $(TARGET_DIR)/bin/$(NAME) ## Build the product
 
 $(PACKAGE): $(TARGET_DIR)/bin/$(NAME)
 	(cd $(BUILD_DIR) && tar -zcf $(ARCHIVE) $(PRODUCT))
 
+.PHONY: package
 package: $(PACKAGE)
 
 install: build ## Build and install
 	@echo "Using sudo to install; you may be prompted for a password..."
 	sudo install -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/
 
+.PHONY: ci
+ci: export INSTAUNIT = $(BINARY)
+ci: export TEST_SUITE := $(PWD)/test/grpc
+ci: export GRPC := $(GRPC)
+ci: build ## Run integration tests
+	(cd $(GRPC) && make build) && $(PSCTL) --file test/grpc/test.yml
+
+.PHONY: test
 test: ## Run tests
 	(cd src && go test $(FLAGS) $(TEST_PKGS))
 
+.PHONY: clean
 clean: ## Delete the built product and any generated files
 	rm -rf $(BUILD_DIR)
