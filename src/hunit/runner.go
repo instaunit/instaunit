@@ -4,6 +4,7 @@ import (
 	"bytes"
 	stdcontext "context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -25,6 +26,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/testcase"
 	"github.com/instaunit/instaunit/hunit/text"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
@@ -453,7 +455,12 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	// create an invocation for the RPC call
 	inv, err := client.Endpoint(cxt, tcase.RPC.Service, tcase.RPC.Method, &protodyn.CallOptions{})
 	if err != nil {
-		return result.Error(fmt.Errorf("Could not find gRPC method: %w", err)), nil, vars, nil
+		fmt.Println(">>>>>>>>>>>>>>>>>>>", tcase.Response.Status)
+		if tcase.Response.Status == int(codes.NotFound) { // if we're expeting not found, this is a success
+			return result, nil, vars, nil
+		} else {
+			return result.Error(fmt.Errorf("No such gRPC method: %w", err)), nil, vars, nil
+		}
 	}
 
 	// setup the request entity
@@ -481,7 +488,12 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	// perform the gRPC request
 	rspmsg, err := client.Invoke(cxt, inv, reqmsg)
 	if err != nil {
-		return result.Error(fmt.Errorf("Could not call gRPC method: %w", err)), nil, vars, nil
+		var gerr protodyn.GRPCError
+		if errors.As(err, &gerr) {
+			result.AssertEqual(tcase.Response.Status, int(gerr.Status), "Unexpected status code")
+		} else {
+			return result.Error(fmt.Errorf("gRPC method failed: %w", err)), nil, vars, nil
+		}
 	}
 
 	// decode the response entity to JSON

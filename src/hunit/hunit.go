@@ -160,7 +160,7 @@ func formatRESTName(c testcase.Case, method, url string) string {
 func formatGRPCName(c testcase.Case) string {
 	sb := &strings.Builder{}
 	sb.WriteString(c.RPC.Service)
-	sb.WriteString(" ")
+	sb.WriteString(": ")
 	sb.WriteString(c.RPC.Method)
 	return formatCaseName(c, sb)
 }

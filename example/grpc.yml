@@ -209,3 +209,6 @@ tests:
 
     request:
       url: grpc://localhost:8800
+
+    response:
+      status: 5

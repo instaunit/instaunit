@@ -49,8 +49,6 @@ import (
 	"io/ioutil"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -227,31 +225,8 @@ func (c *Client) Invoke(cxt context.Context, inv Invocation, reqmsg *dynamicpb.M
 	// Make the call
 	err := c.conn.Invoke(cxt, inv.path, reqmsg, rspmsg, inv.opts...)
 	if err != nil {
-		return nil, c.formatGrpcError(err)
+		return nil, grpcErr(err)
 	}
 
 	return rspmsg, nil
-}
-
-// formatGrpcError formats gRPC errors with human-readable descriptions
-func (c *Client) formatGrpcError(err error) error {
-	if st, ok := status.FromError(err); ok {
-		switch st.Code() {
-		case codes.NotFound:
-			return fmt.Errorf("service or method not found: %s", st.Message())
-		case codes.InvalidArgument:
-			return fmt.Errorf("invalid request: %s", st.Message())
-		case codes.Unauthenticated:
-			return fmt.Errorf("authentication required: %s", st.Message())
-		case codes.PermissionDenied:
-			return fmt.Errorf("permission denied: %s", st.Message())
-		case codes.Unavailable:
-			return fmt.Errorf("service unavailable: %s", st.Message())
-		case codes.DeadlineExceeded:
-			return fmt.Errorf("request timeout: %s", st.Message())
-		default:
-			return fmt.Errorf("gRPC error (%s): %s", st.Code().String(), st.Message())
-		}
-	}
-	return err
 }

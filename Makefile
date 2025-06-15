@@ -23,25 +23,24 @@ ARTIFACTS  := s3://instaunit/releases
 BINARY     := $(TARGET_DIR)/bin/$(NAME)
 
 # build and install
-PREFIX ?= /usr/local
-
+PREFIX    ?= /usr/local
 SRC       := $(shell find src -name \*.go -print)
 TEST_PKGS := $(MODULE)/hunit/...
 FIXTURES  := $(PWD)/fixtures
 GRPC      := $(FIXTURES)/grpc
 
-# utils
+# tools
 PSCTL ?= psctl
 
 # platform-specific config
 ifeq ($(shell uname),Linux)
-	BASE64    ?= base64 -w 0
-	ECHO      ?= echo -e
-	INSTALL   ?= install -D
+	BASE64  ?= base64 -w 0
+	ECHO    ?= echo -e
+	INSTALL ?= install -D
 else
-	BASE64    ?= base64
-	ECHO      ?= echo
-	INSTALL   ?= install
+	BASE64  ?= base64
+	ECHO    ?= echo
+	INSTALL ?= install
 endif
 
 .PHONY: all
