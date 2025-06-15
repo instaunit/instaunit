@@ -33,8 +33,24 @@ GRPC      := $(FIXTURES)/grpc
 # utils
 PSCTL ?= psctl
 
+# platform-specific config
+ifeq ($(shell uname),Linux)
+	BASE64    ?= base64 -w 0
+	ECHO      ?= echo -e
+	INSTALL   ?= install -D
+else
+	BASE64    ?= base64
+	ECHO      ?= echo
+	INSTALL   ?= install
+endif
+
 .PHONY: all
 all: build
+
+.PHONY: tools
+tools:
+	@test -n "$$VILLAINS_SKIP_DEVEL_TOOL_CHECKS" || $(ECHO) "✔ Checking development tools; to disable checks, set: VILLAINS_SKIP_DEVEL_TOOL_CHECKS=true"
+	@test -n "$$VILLAINS_SKIP_DEVEL_TOOL_CHECKS" || which $(PSCTL) &> /dev/null || ($(ECHO) "You must install Process Control; try something like:\n\t$$ brew install bww/stable/psctl\nor download it from:\n\t➡ https://github.com/bww/psctl/releases" && exit 1)
 
 $(TARGET_DIR)/bin/$(NAME): $(SRC)
 	(cd src && go build -ldflags="-X main.version=$(VERSION) -X main.githash=$(GITHASH)" -o $@ $(MAIN))
@@ -50,13 +66,13 @@ package: $(PACKAGE)
 
 install: build ## Build and install
 	@echo "Using sudo to install; you may be prompted for a password..."
-	sudo install -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/
+	sudo $(INSTALL) -m 0755 $(TARGET_DIR)/bin/$(NAME) $(PREFIX)/bin/
 
 .PHONY: ci
 ci: export INSTAUNIT = $(BINARY)
 ci: export TEST_SUITE := $(PWD)/test/grpc
 ci: export GRPC := $(GRPC)
-ci: build ## Run integration tests
+ci: tools build ## Run integration tests
 	(cd $(GRPC) && make build) && $(PSCTL) --file test/grpc/test.yml
 
 .PHONY: test

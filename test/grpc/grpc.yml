@@ -1,5 +1,5 @@
 protos:
-  - ../fixtures/grpc/service.binpb
+  - ../../fixtures/grpc/service.binpb
 
 tests:
   - # test an endpoint that has no explicit request or response
