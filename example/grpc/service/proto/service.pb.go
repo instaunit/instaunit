@@ -24,7 +24,7 @@ var File_proto_service_proto protoreflect.FileDescriptor
 
 const file_proto_service_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/service.proto\x12\vgrpcservice\x1a\x11proto/model.proto2\x8c\x03\n" +
+	"\x13proto/service.proto\x12\vgrpcservice\x1a\x11proto/model.proto2\xe4\x03\n" +
 	"\vUserService\x12D\n" +
 	"\aGetUser\x12\x1b.grpcservice.GetUserRequest\x1a\x1c.grpcservice.GetUserResponse\x12M\n" +
 	"\n" +
@@ -33,23 +33,26 @@ const file_proto_service_proto_rawDesc = "" +
 	"UpdateUser\x12\x1e.grpcservice.UpdateUserRequest\x1a\x1f.grpcservice.UpdateUserResponse\x12M\n" +
 	"\n" +
 	"DeleteUser\x12\x1e.grpcservice.DeleteUserRequest\x1a\x1f.grpcservice.DeleteUserResponse\x12J\n" +
-	"\tListUsers\x12\x1d.grpcservice.ListUsersRequest\x1a\x1e.grpcservice.ListUsersResponse2d\n" +
+	"\tListUsers\x12\x1d.grpcservice.ListUsersRequest\x1a\x1e.grpcservice.ListUsersResponse\x12V\n" +
+	"\rListUserTypes\x12!.grpcservice.ListUserTypesRequest\x1a\".grpcservice.ListUserTypesResponse2d\n" +
 	"\vTestService\x12U\n" +
 	"\x10TestNumericTypes\x12\x1f.grpcservice.NumericTestRequest\x1a .grpcservice.NumericTestResponseB(Z&github.com/instaunit/grpcservice/protob\x06proto3"
 
 var file_proto_service_proto_goTypes = []any{
-	(*GetUserRequest)(nil),      // 0: grpcservice.GetUserRequest
-	(*CreateUserRequest)(nil),   // 1: grpcservice.CreateUserRequest
-	(*UpdateUserRequest)(nil),   // 2: grpcservice.UpdateUserRequest
-	(*DeleteUserRequest)(nil),   // 3: grpcservice.DeleteUserRequest
-	(*ListUsersRequest)(nil),    // 4: grpcservice.ListUsersRequest
-	(*NumericTestRequest)(nil),  // 5: grpcservice.NumericTestRequest
-	(*GetUserResponse)(nil),     // 6: grpcservice.GetUserResponse
-	(*CreateUserResponse)(nil),  // 7: grpcservice.CreateUserResponse
-	(*UpdateUserResponse)(nil),  // 8: grpcservice.UpdateUserResponse
-	(*DeleteUserResponse)(nil),  // 9: grpcservice.DeleteUserResponse
-	(*ListUsersResponse)(nil),   // 10: grpcservice.ListUsersResponse
-	(*NumericTestResponse)(nil), // 11: grpcservice.NumericTestResponse
+	(*GetUserRequest)(nil),        // 0: grpcservice.GetUserRequest
+	(*CreateUserRequest)(nil),     // 1: grpcservice.CreateUserRequest
+	(*UpdateUserRequest)(nil),     // 2: grpcservice.UpdateUserRequest
+	(*DeleteUserRequest)(nil),     // 3: grpcservice.DeleteUserRequest
+	(*ListUsersRequest)(nil),      // 4: grpcservice.ListUsersRequest
+	(*ListUserTypesRequest)(nil),  // 5: grpcservice.ListUserTypesRequest
+	(*NumericTestRequest)(nil),    // 6: grpcservice.NumericTestRequest
+	(*GetUserResponse)(nil),       // 7: grpcservice.GetUserResponse
+	(*CreateUserResponse)(nil),    // 8: grpcservice.CreateUserResponse
+	(*UpdateUserResponse)(nil),    // 9: grpcservice.UpdateUserResponse
+	(*DeleteUserResponse)(nil),    // 10: grpcservice.DeleteUserResponse
+	(*ListUsersResponse)(nil),     // 11: grpcservice.ListUsersResponse
+	(*ListUserTypesResponse)(nil), // 12: grpcservice.ListUserTypesResponse
+	(*NumericTestResponse)(nil),   // 13: grpcservice.NumericTestResponse
 }
 var file_proto_service_proto_depIdxs = []int32{
 	0,  // 0: grpcservice.UserService.GetUser:input_type -> grpcservice.GetUserRequest
@@ -57,15 +60,17 @@ var file_proto_service_proto_depIdxs = []int32{
 	2,  // 2: grpcservice.UserService.UpdateUser:input_type -> grpcservice.UpdateUserRequest
 	3,  // 3: grpcservice.UserService.DeleteUser:input_type -> grpcservice.DeleteUserRequest
 	4,  // 4: grpcservice.UserService.ListUsers:input_type -> grpcservice.ListUsersRequest
-	5,  // 5: grpcservice.TestService.TestNumericTypes:input_type -> grpcservice.NumericTestRequest
-	6,  // 6: grpcservice.UserService.GetUser:output_type -> grpcservice.GetUserResponse
-	7,  // 7: grpcservice.UserService.CreateUser:output_type -> grpcservice.CreateUserResponse
-	8,  // 8: grpcservice.UserService.UpdateUser:output_type -> grpcservice.UpdateUserResponse
-	9,  // 9: grpcservice.UserService.DeleteUser:output_type -> grpcservice.DeleteUserResponse
-	10, // 10: grpcservice.UserService.ListUsers:output_type -> grpcservice.ListUsersResponse
-	11, // 11: grpcservice.TestService.TestNumericTypes:output_type -> grpcservice.NumericTestResponse
-	6,  // [6:12] is the sub-list for method output_type
-	0,  // [0:6] is the sub-list for method input_type
+	5,  // 5: grpcservice.UserService.ListUserTypes:input_type -> grpcservice.ListUserTypesRequest
+	6,  // 6: grpcservice.TestService.TestNumericTypes:input_type -> grpcservice.NumericTestRequest
+	7,  // 7: grpcservice.UserService.GetUser:output_type -> grpcservice.GetUserResponse
+	8,  // 8: grpcservice.UserService.CreateUser:output_type -> grpcservice.CreateUserResponse
+	9,  // 9: grpcservice.UserService.UpdateUser:output_type -> grpcservice.UpdateUserResponse
+	10, // 10: grpcservice.UserService.DeleteUser:output_type -> grpcservice.DeleteUserResponse
+	11, // 11: grpcservice.UserService.ListUsers:output_type -> grpcservice.ListUsersResponse
+	12, // 12: grpcservice.UserService.ListUserTypes:output_type -> grpcservice.ListUserTypesResponse
+	13, // 13: grpcservice.TestService.TestNumericTypes:output_type -> grpcservice.NumericTestResponse
+	7,  // [7:14] is the sub-list for method output_type
+	0,  // [0:7] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

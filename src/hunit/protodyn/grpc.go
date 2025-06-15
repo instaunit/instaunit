@@ -195,8 +195,8 @@ func (c *Client) Method(ctx context.Context, serviceName, methodName string) (pr
 	return service, method, nil
 }
 
-// Invocation produces an invocation that may be called using this service
-func (c *Client) Invocation(cxt context.Context, serviceName, methodName string, opts *CallOptions) (Invocation, error) {
+// Endpoint produces an invocation that may be called using this service
+func (c *Client) Endpoint(cxt context.Context, serviceName, methodName string, opts *CallOptions) (Invocation, error) {
 	service, method, err := c.Method(cxt, serviceName, methodName)
 	if err != nil {
 		return Invocation{}, err
@@ -217,34 +217,6 @@ func (c *Client) Invocation(cxt context.Context, serviceName, methodName string,
 		path:    path,
 		opts:    grpcOpts,
 	}, nil
-}
-
-// Call performs a unary RPC call with a JSON payload
-func (c *Client) CallJSON(cxt context.Context, serviceName, methodName string, requestJSON []byte, opts *CallOptions) (*dynamicpb.Message, error) {
-	inv, err := c.Invocation(cxt, serviceName, methodName, opts)
-	if err != nil {
-		return nil, fmt.Errorf("could not resolve endpoint: %w", err)
-	}
-
-	// Create request message
-	reqmsg := dynamicpb.NewMessage(inv.Method.Input())
-	// unmarshal request payload from JSON
-	err = UnmarshalJSON(requestJSON, reqmsg)
-	if err != nil {
-		return nil, fmt.Errorf("could not encode request: %w", err)
-	}
-
-	return c.Invoke(cxt, inv, reqmsg)
-}
-
-// Call performs a unary RPC call with a protobuf payload
-func (c *Client) CallProto(cxt context.Context, serviceName, methodName string, reqmsg *dynamicpb.Message, opts *CallOptions) (*dynamicpb.Message, error) {
-	inv, err := c.Invocation(cxt, serviceName, methodName, opts)
-	if err != nil {
-		return nil, fmt.Errorf("could not resolve endpoint: %w", err)
-	}
-
-	return c.Invoke(cxt, inv, reqmsg)
 }
 
 // Invoke an invation with the provided request message, returning the result message

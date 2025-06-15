@@ -22,6 +22,9 @@ service UserService {
 
   // List users with pagination
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+
+  // List user types
+  rpc ListUserTypes(ListUserTypesRequest) returns (ListUserTypesResponse);
 }
 
 // TestService - Service for testing various data types

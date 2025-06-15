@@ -553,6 +553,42 @@ func (x *ListUsersRequest) GetTypes() []UserType {
 	return nil
 }
 
+type ListUserTypesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserTypesRequest) Reset() {
+	*x = ListUserTypesRequest{}
+	mi := &file_proto_model_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserTypesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserTypesRequest) ProtoMessage() {}
+
+func (x *ListUserTypesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_model_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserTypesRequest.ProtoReflect.Descriptor instead.
+func (*ListUserTypesRequest) Descriptor() ([]byte, []int) {
+	return file_proto_model_proto_rawDescGZIP(), []int{7}
+}
+
 // Response messages
 type GetUserResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -563,7 +599,7 @@ type GetUserResponse struct {
 
 func (x *GetUserResponse) Reset() {
 	*x = GetUserResponse{}
-	mi := &file_proto_model_proto_msgTypes[7]
+	mi := &file_proto_model_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -575,7 +611,7 @@ func (x *GetUserResponse) String() string {
 func (*GetUserResponse) ProtoMessage() {}
 
 func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_model_proto_msgTypes[7]
+	mi := &file_proto_model_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -588,7 +624,7 @@ func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserResponse.ProtoReflect.Descriptor instead.
 func (*GetUserResponse) Descriptor() ([]byte, []int) {
-	return file_proto_model_proto_rawDescGZIP(), []int{7}
+	return file_proto_model_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetUserResponse) GetUser() *User {
@@ -607,7 +643,7 @@ type CreateUserResponse struct {
 
 func (x *CreateUserResponse) Reset() {
 	*x = CreateUserResponse{}
-	mi := &file_proto_model_proto_msgTypes[8]
+	mi := &file_proto_model_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -619,7 +655,7 @@ func (x *CreateUserResponse) String() string {
 func (*CreateUserResponse) ProtoMessage() {}
 
 func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_model_proto_msgTypes[8]
+	mi := &file_proto_model_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -632,7 +668,7 @@ func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserResponse.ProtoReflect.Descriptor instead.
 func (*CreateUserResponse) Descriptor() ([]byte, []int) {
-	return file_proto_model_proto_rawDescGZIP(), []int{8}
+	return file_proto_model_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreateUserResponse) GetUser() *User {
@@ -651,7 +687,7 @@ type UpdateUserResponse struct {
 
 func (x *UpdateUserResponse) Reset() {
 	*x = UpdateUserResponse{}
-	mi := &file_proto_model_proto_msgTypes[9]
+	mi := &file_proto_model_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -663,7 +699,7 @@ func (x *UpdateUserResponse) String() string {
 func (*UpdateUserResponse) ProtoMessage() {}
 
 func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_model_proto_msgTypes[9]
+	mi := &file_proto_model_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -676,7 +712,7 @@ func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserResponse) Descriptor() ([]byte, []int) {
-	return file_proto_model_proto_rawDescGZIP(), []int{9}
+	return file_proto_model_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateUserResponse) GetUser() *User {
@@ -695,7 +731,7 @@ type DeleteUserResponse struct {
 
 func (x *DeleteUserResponse) Reset() {
 	*x = DeleteUserResponse{}
-	mi := &file_proto_model_proto_msgTypes[10]
+	mi := &file_proto_model_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -707,7 +743,7 @@ func (x *DeleteUserResponse) String() string {
 func (*DeleteUserResponse) ProtoMessage() {}
 
 func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_model_proto_msgTypes[10]
+	mi := &file_proto_model_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -720,7 +756,7 @@ func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserResponse.ProtoReflect.Descriptor instead.
 func (*DeleteUserResponse) Descriptor() ([]byte, []int) {
-	return file_proto_model_proto_rawDescGZIP(), []int{10}
+	return file_proto_model_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteUserResponse) GetSuccess() bool {
@@ -741,7 +777,7 @@ type ListUsersResponse struct {
 
 func (x *ListUsersResponse) Reset() {
 	*x = ListUsersResponse{}
-	mi := &file_proto_model_proto_msgTypes[11]
+	mi := &file_proto_model_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -753,7 +789,7 @@ func (x *ListUsersResponse) String() string {
 func (*ListUsersResponse) ProtoMessage() {}
 
 func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_model_proto_msgTypes[11]
+	mi := &file_proto_model_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -766,7 +802,7 @@ func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
 func (*ListUsersResponse) Descriptor() ([]byte, []int) {
-	return file_proto_model_proto_rawDescGZIP(), []int{11}
+	return file_proto_model_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListUsersResponse) GetUsers() []*User {
@@ -788,6 +824,50 @@ func (x *ListUsersResponse) GetTotalCount() int32 {
 		return x.TotalCount
 	}
 	return 0
+}
+
+type ListUserTypesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Types         []UserType             `protobuf:"varint,1,rep,packed,name=types,proto3,enum=grpcservice.UserType" json:"types,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserTypesResponse) Reset() {
+	*x = ListUserTypesResponse{}
+	mi := &file_proto_model_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserTypesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserTypesResponse) ProtoMessage() {}
+
+func (x *ListUserTypesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_model_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserTypesResponse.ProtoReflect.Descriptor instead.
+func (*ListUserTypesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_model_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListUserTypesResponse) GetTypes() []UserType {
+	if x != nil {
+		return x.Types
+	}
+	return nil
 }
 
 // Test message with various numeric types
@@ -814,7 +894,7 @@ type NumericTypesTest struct {
 
 func (x *NumericTypesTest) Reset() {
 	*x = NumericTypesTest{}
-	mi := &file_proto_model_proto_msgTypes[12]
+	mi := &file_proto_model_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -826,7 +906,7 @@ func (x *NumericTypesTest) String() string {
 func (*NumericTypesTest) ProtoMessage() {}
 
 func (x *NumericTypesTest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_model_proto_msgTypes[12]
+	mi := &file_proto_model_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -839,7 +919,7 @@ func (x *NumericTypesTest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NumericTypesTest.ProtoReflect.Descriptor instead.
 func (*NumericTypesTest) Descriptor() ([]byte, []int) {
-	return file_proto_model_proto_rawDescGZIP(), []int{12}
+	return file_proto_model_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *NumericTypesTest) GetInt32Field() int32 {
@@ -956,7 +1036,7 @@ type NumericTestRequest struct {
 
 func (x *NumericTestRequest) Reset() {
 	*x = NumericTestRequest{}
-	mi := &file_proto_model_proto_msgTypes[13]
+	mi := &file_proto_model_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -968,7 +1048,7 @@ func (x *NumericTestRequest) String() string {
 func (*NumericTestRequest) ProtoMessage() {}
 
 func (x *NumericTestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_model_proto_msgTypes[13]
+	mi := &file_proto_model_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -981,7 +1061,7 @@ func (x *NumericTestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NumericTestRequest.ProtoReflect.Descriptor instead.
 func (*NumericTestRequest) Descriptor() ([]byte, []int) {
-	return file_proto_model_proto_rawDescGZIP(), []int{13}
+	return file_proto_model_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *NumericTestRequest) GetData() *NumericTypesTest {
@@ -1001,7 +1081,7 @@ type NumericTestResponse struct {
 
 func (x *NumericTestResponse) Reset() {
 	*x = NumericTestResponse{}
-	mi := &file_proto_model_proto_msgTypes[14]
+	mi := &file_proto_model_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1013,7 +1093,7 @@ func (x *NumericTestResponse) String() string {
 func (*NumericTestResponse) ProtoMessage() {}
 
 func (x *NumericTestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_model_proto_msgTypes[14]
+	mi := &file_proto_model_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1026,7 +1106,7 @@ func (x *NumericTestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NumericTestResponse.ProtoReflect.Descriptor instead.
 func (*NumericTestResponse) Descriptor() ([]byte, []int) {
-	return file_proto_model_proto_rawDescGZIP(), []int{14}
+	return file_proto_model_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *NumericTestResponse) GetData() *NumericTypesTest {
@@ -1084,7 +1164,8 @@ const file_proto_model_proto_rawDesc = "" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12+\n" +
-	"\x05types\x18\x03 \x03(\x0e2\x15.grpcservice.UserTypeR\x05types\"8\n" +
+	"\x05types\x18\x03 \x03(\x0e2\x15.grpcservice.UserTypeR\x05types\"\x16\n" +
+	"\x14ListUserTypesRequest\"8\n" +
 	"\x0fGetUserResponse\x12%\n" +
 	"\x04user\x18\x01 \x01(\v2\x11.grpcservice.UserR\x04user\";\n" +
 	"\x12CreateUserResponse\x12%\n" +
@@ -1097,7 +1178,9 @@ const file_proto_model_proto_rawDesc = "" +
 	"\x05users\x18\x01 \x03(\v2\x11.grpcservice.UserR\x05users\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\x9f\x04\n" +
+	"totalCount\"D\n" +
+	"\x15ListUserTypesResponse\x12+\n" +
+	"\x05types\x18\x01 \x03(\x0e2\x15.grpcservice.UserTypeR\x05types\"\x9f\x04\n" +
 	"\x10NumericTypesTest\x12\x1f\n" +
 	"\vint32_field\x18\x01 \x01(\x05R\n" +
 	"int32Field\x12\x1f\n" +
@@ -1144,28 +1227,30 @@ func file_proto_model_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_model_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_model_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_proto_model_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_proto_model_proto_goTypes = []any{
-	(UserType)(0),               // 0: grpcservice.UserType
-	(*User)(nil),                // 1: grpcservice.User
-	(*Address)(nil),             // 2: grpcservice.Address
-	(*GetUserRequest)(nil),      // 3: grpcservice.GetUserRequest
-	(*CreateUserRequest)(nil),   // 4: grpcservice.CreateUserRequest
-	(*UpdateUserRequest)(nil),   // 5: grpcservice.UpdateUserRequest
-	(*DeleteUserRequest)(nil),   // 6: grpcservice.DeleteUserRequest
-	(*ListUsersRequest)(nil),    // 7: grpcservice.ListUsersRequest
-	(*GetUserResponse)(nil),     // 8: grpcservice.GetUserResponse
-	(*CreateUserResponse)(nil),  // 9: grpcservice.CreateUserResponse
-	(*UpdateUserResponse)(nil),  // 10: grpcservice.UpdateUserResponse
-	(*DeleteUserResponse)(nil),  // 11: grpcservice.DeleteUserResponse
-	(*ListUsersResponse)(nil),   // 12: grpcservice.ListUsersResponse
-	(*NumericTypesTest)(nil),    // 13: grpcservice.NumericTypesTest
-	(*NumericTestRequest)(nil),  // 14: grpcservice.NumericTestRequest
-	(*NumericTestResponse)(nil), // 15: grpcservice.NumericTestResponse
-	nil,                         // 16: grpcservice.User.MetadataEntry
+	(UserType)(0),                 // 0: grpcservice.UserType
+	(*User)(nil),                  // 1: grpcservice.User
+	(*Address)(nil),               // 2: grpcservice.Address
+	(*GetUserRequest)(nil),        // 3: grpcservice.GetUserRequest
+	(*CreateUserRequest)(nil),     // 4: grpcservice.CreateUserRequest
+	(*UpdateUserRequest)(nil),     // 5: grpcservice.UpdateUserRequest
+	(*DeleteUserRequest)(nil),     // 6: grpcservice.DeleteUserRequest
+	(*ListUsersRequest)(nil),      // 7: grpcservice.ListUsersRequest
+	(*ListUserTypesRequest)(nil),  // 8: grpcservice.ListUserTypesRequest
+	(*GetUserResponse)(nil),       // 9: grpcservice.GetUserResponse
+	(*CreateUserResponse)(nil),    // 10: grpcservice.CreateUserResponse
+	(*UpdateUserResponse)(nil),    // 11: grpcservice.UpdateUserResponse
+	(*DeleteUserResponse)(nil),    // 12: grpcservice.DeleteUserResponse
+	(*ListUsersResponse)(nil),     // 13: grpcservice.ListUsersResponse
+	(*ListUserTypesResponse)(nil), // 14: grpcservice.ListUserTypesResponse
+	(*NumericTypesTest)(nil),      // 15: grpcservice.NumericTypesTest
+	(*NumericTestRequest)(nil),    // 16: grpcservice.NumericTestRequest
+	(*NumericTestResponse)(nil),   // 17: grpcservice.NumericTestResponse
+	nil,                           // 18: grpcservice.User.MetadataEntry
 }
 var file_proto_model_proto_depIdxs = []int32{
-	16, // 0: grpcservice.User.metadata:type_name -> grpcservice.User.MetadataEntry
+	18, // 0: grpcservice.User.metadata:type_name -> grpcservice.User.MetadataEntry
 	2,  // 1: grpcservice.User.address:type_name -> grpcservice.Address
 	0,  // 2: grpcservice.User.type:type_name -> grpcservice.UserType
 	1,  // 3: grpcservice.CreateUserRequest.user:type_name -> grpcservice.User
@@ -1175,13 +1260,14 @@ var file_proto_model_proto_depIdxs = []int32{
 	1,  // 7: grpcservice.CreateUserResponse.user:type_name -> grpcservice.User
 	1,  // 8: grpcservice.UpdateUserResponse.user:type_name -> grpcservice.User
 	1,  // 9: grpcservice.ListUsersResponse.users:type_name -> grpcservice.User
-	13, // 10: grpcservice.NumericTestRequest.data:type_name -> grpcservice.NumericTypesTest
-	13, // 11: grpcservice.NumericTestResponse.data:type_name -> grpcservice.NumericTypesTest
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	0,  // 10: grpcservice.ListUserTypesResponse.types:type_name -> grpcservice.UserType
+	15, // 11: grpcservice.NumericTestRequest.data:type_name -> grpcservice.NumericTypesTest
+	15, // 12: grpcservice.NumericTestResponse.data:type_name -> grpcservice.NumericTypesTest
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_proto_model_proto_init() }
@@ -1199,7 +1285,7 @@ func file_proto_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_model_proto_rawDesc), len(file_proto_model_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

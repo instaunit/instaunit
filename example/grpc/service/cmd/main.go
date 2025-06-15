@@ -91,6 +91,18 @@ func (s *userServer) ListUsers(ctx context.Context, req *proto.ListUsersRequest)
 	}, nil
 }
 
+func (s *userServer) ListUserTypes(ctx context.Context, req *proto.ListUserTypesRequest) (*proto.ListUserTypesResponse, error) {
+	types := []proto.UserType{
+		proto.UserType_USER_TYPE_UNSPECIFIED,
+		proto.UserType_USER_TYPE_ADMIN,
+		proto.UserType_USER_TYPE_REGULAR,
+		proto.UserType_USER_TYPE_GUEST,
+	}
+	return &proto.ListUserTypesResponse{
+		Types: types,
+	}, nil
+}
+
 type testServer struct {
 	proto.UnimplementedTestServiceServer
 }

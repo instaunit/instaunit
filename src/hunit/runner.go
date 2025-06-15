@@ -451,7 +451,7 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	client := protodyn.NewClient(conn, context.Service)
 
 	// create an invocation for the RPC call
-	inv, err := client.Invocation(cxt, tcase.RPC.Service, tcase.RPC.Method, &protodyn.CallOptions{})
+	inv, err := client.Endpoint(cxt, tcase.RPC.Service, tcase.RPC.Method, &protodyn.CallOptions{})
 	if err != nil {
 		return result.Error(fmt.Errorf("Could not find gRPC method: %w", err)), nil, vars, nil
 	}
@@ -470,6 +470,9 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		if err != nil {
 			return result.Error(err), nil, vars, nil
 		}
+	} else {
+		// if no request is defined, we create an empty input message and use that
+		reqmsg = dynamicpb.NewMessage(inv.Method.Input())
 	}
 
 	// update the request data in the result
@@ -570,6 +573,7 @@ func unmarshalGRPC(context runtime.Context, inv protodyn.Invocation, md protoref
 		if err != nil {
 			return nil, nil, fmt.Errorf("Could not decode payload: %w", err)
 		}
+		entmsg = dynamicpb.NewMessage(md)
 		err = proto.Unmarshal(entdata, entmsg)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Could not unmarshal protobuf message: %w", err)

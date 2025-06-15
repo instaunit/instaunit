@@ -64,6 +64,8 @@ message ListUsersRequest {
   repeated UserType types = 3; // Test repeated enums
 }
 
+message ListUserTypesRequest {}
+
 // Response messages
 message GetUserResponse {
   User user = 1;
@@ -85,6 +87,10 @@ message ListUsersResponse {
   repeated User users = 1;
   string next_page_token = 2;
   int32 total_count = 3;
+}
+
+message ListUserTypesResponse {
+  repeated UserType types = 1;
 }
 
 // Test message with various numeric types

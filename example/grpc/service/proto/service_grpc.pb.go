@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_GetUser_FullMethodName    = "/grpcservice.UserService/GetUser"
-	UserService_CreateUser_FullMethodName = "/grpcservice.UserService/CreateUser"
-	UserService_UpdateUser_FullMethodName = "/grpcservice.UserService/UpdateUser"
-	UserService_DeleteUser_FullMethodName = "/grpcservice.UserService/DeleteUser"
-	UserService_ListUsers_FullMethodName  = "/grpcservice.UserService/ListUsers"
+	UserService_GetUser_FullMethodName       = "/grpcservice.UserService/GetUser"
+	UserService_CreateUser_FullMethodName    = "/grpcservice.UserService/CreateUser"
+	UserService_UpdateUser_FullMethodName    = "/grpcservice.UserService/UpdateUser"
+	UserService_DeleteUser_FullMethodName    = "/grpcservice.UserService/DeleteUser"
+	UserService_ListUsers_FullMethodName     = "/grpcservice.UserService/ListUsers"
+	UserService_ListUserTypes_FullMethodName = "/grpcservice.UserService/ListUserTypes"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -42,6 +43,8 @@ type UserServiceClient interface {
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	// List users with pagination
 	ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error)
+	// List user types
+	ListUserTypes(ctx context.Context, in *ListUserTypesRequest, opts ...grpc.CallOption) (*ListUserTypesResponse, error)
 }
 
 type userServiceClient struct {
@@ -102,6 +105,16 @@ func (c *userServiceClient) ListUsers(ctx context.Context, in *ListUsersRequest,
 	return out, nil
 }
 
+func (c *userServiceClient) ListUserTypes(ctx context.Context, in *ListUserTypesRequest, opts ...grpc.CallOption) (*ListUserTypesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUserTypesResponse)
+	err := c.cc.Invoke(ctx, UserService_ListUserTypes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -118,6 +131,8 @@ type UserServiceServer interface {
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	// List users with pagination
 	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
+	// List user types
+	ListUserTypes(context.Context, *ListUserTypesRequest) (*ListUserTypesResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -142,6 +157,9 @@ func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserReq
 }
 func (UnimplementedUserServiceServer) ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUsers not implemented")
+}
+func (UnimplementedUserServiceServer) ListUserTypes(context.Context, *ListUserTypesRequest) (*ListUserTypesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserTypes not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -254,6 +272,24 @@ func _UserService_ListUsers_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_ListUserTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserTypesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListUserTypes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListUserTypes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListUserTypes(ctx, req.(*ListUserTypesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -280,6 +316,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListUsers",
 			Handler:    _UserService_ListUsers_Handler,
+		},
+		{
+			MethodName: "ListUserTypes",
+			Handler:    _UserService_ListUserTypes_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
