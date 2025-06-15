@@ -1,5 +1,5 @@
 protos:
-  - ../../fixtures/grpc/service.binpb
+  - ../../fixtures/grpc/service.pb
 
 tests:
   - # test an endpoint that has no explicit request or response
@@ -209,3 +209,6 @@ tests:
 
     request:
       url: grpc://localhost:8800
+
+    response:
+      status: 5 # not found

@@ -455,7 +455,6 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	// create an invocation for the RPC call
 	inv, err := client.Endpoint(cxt, tcase.RPC.Service, tcase.RPC.Method, &protodyn.CallOptions{})
 	if err != nil {
-		fmt.Println(">>>>>>>>>>>>>>>>>>>", tcase.Response.Status)
 		if tcase.Response.Status == int(codes.NotFound) { // if we're expeting not found, this is a success
 			return result, nil, vars, nil
 		} else {
