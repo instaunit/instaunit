@@ -1,5 +1,5 @@
 protos:
-  - grpc/service.binpb
+  - grpc/service.pb
 
 tests:
   - # test an endpoint that has no explicit request or response
