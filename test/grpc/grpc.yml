@@ -111,7 +111,10 @@ tests:
           }
         }
 
-  -
+  - # This test intentionally fails so we can see the entity diff.
+    # Unfortunately, there's not a way to fail and expect a failure,
+    # so this is a complicated case to deal with. We're still trying
+    # to decide how to do that...
     grpc:
       service: grpcservice.UserService
       method: GetUser
