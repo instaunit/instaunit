@@ -1,9 +1,15 @@
 package protodyn
 
 import (
+	"errors"
+	"fmt"
+
+	"github.com/instaunit/instaunit/hunit/reflect"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
+
+var errInvalidMessage = errors.New("Invalid input message")
 
 // default JSON marshaler
 var jsonMarshaler = protojson.MarshalOptions{
@@ -14,6 +20,9 @@ var jsonMarshaler = protojson.MarshalOptions{
 }
 
 func MarshalJSON(msg proto.Message) ([]byte, error) {
+	if reflect.IsNil(msg) {
+		return []byte("null"), nil
+	}
 	return jsonMarshaler.Marshal(msg)
 }
 
@@ -21,5 +30,8 @@ func MarshalJSON(msg proto.Message) ([]byte, error) {
 var jsonUnmarshaler = protojson.UnmarshalOptions{}
 
 func UnmarshalJSON(data []byte, msg proto.Message) error {
+	if reflect.IsNil(msg) {
+		return fmt.Errorf("%w: message is nil", errInvalidMessage)
+	}
 	return jsonUnmarshaler.Unmarshal(data, msg)
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	stdcontext "context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -485,23 +486,29 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	result.Reqdata = reqdata
 
 	// perform the gRPC request
+	var rspdata []byte
 	rspmsg, err := client.Invoke(cxt, inv, reqmsg)
 	if err != nil {
 		var gerr protodyn.GRPCError
 		if errors.As(err, &gerr) {
-			result.AssertEqual(tcase.Response.Status, int(gerr.Status), "Unexpected status code")
+			result.AssertEqual(tcase.Response.Status, int(gerr.Status), "Unexpected status code: %v", err)
 		} else {
 			return result.Error(fmt.Errorf("gRPC method failed: %w", err)), nil, vars, nil
 		}
+		// decode the response entity to JSON
+		rspdata, err = json.Marshal(gerr)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not convert gRPC response: %w", err)), nil, vars, nil
+		}
 	} else {
 		result.AssertEqual(tcase.Response.Status, 0, "Unexpected status code")
+		// decode the response entity to JSON
+		rspdata, err = protodyn.MarshalJSON(rspmsg)
+		if err != nil {
+			return result.Error(fmt.Errorf("Could not convert gRPC response: %w", err)), nil, vars, nil
+		}
 	}
 
-	// decode the response entity to JSON
-	rspdata, err := protodyn.MarshalJSON(rspmsg)
-	if err != nil {
-		return result.Error(fmt.Errorf("Could not convert gRPC response: %w", err)), nil, vars, nil
-	}
 	// update the request data in the result
 	result.Rspdata = rspdata
 	// unmarshal it to the intermediate format

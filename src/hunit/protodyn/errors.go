@@ -9,8 +9,8 @@ import (
 )
 
 type GRPCError struct {
-	Status  codes.Code
-	Message string
+	Status  codes.Code `json:"status"`
+	Message string     `json:"message"`
 	Cause   error
 }
 
