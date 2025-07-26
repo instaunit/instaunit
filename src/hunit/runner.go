@@ -438,7 +438,7 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		requrl = curl.Host
 	}
 	if requrl == "" {
-		return result.Error(fmt.Errorf("Test case defines no request URL; ensure you have provided a base URL with a gRPC endpoint")), nil, vars, nil
+		return result.Error(fmt.Errorf("Test case defines no request URL; provide a request URL or a base URL with a gRPC endpoint")), nil, vars, nil
 	}
 
 	// attempt to connect to the service (we connect for each request, which isn't
