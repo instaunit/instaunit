@@ -9,9 +9,9 @@ import (
 )
 
 type GRPCError struct {
-	Status  codes.Code `json:"status"`
-	Message string     `json:"message"`
-	Cause   error
+	Status  codes.Code `json:"status,omitempty"`
+	Message string     `json:"message,omitempty"`
+	Cause   error      `json:"cause,omitempty"`
 }
 
 func newGRPCError(status codes.Code, err error, msg string) GRPCError {
