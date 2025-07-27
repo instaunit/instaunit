@@ -14,15 +14,15 @@ type GRPCError struct {
 	Cause   error      `json:"cause,omitempty"`
 }
 
-func newGRPCError(status codes.Code, err error, msg string) GRPCError {
-	return GRPCError{
+func newGRPCError(status codes.Code, err error, msg string) *GRPCError {
+	return &GRPCError{
 		Status:  status,
 		Message: msg,
 		Cause:   err,
 	}
 }
 
-func (e GRPCError) Error() string {
+func (e *GRPCError) Error() string {
 	return e.Message
 }
 

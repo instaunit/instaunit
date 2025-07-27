@@ -486,17 +486,19 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 	result.Reqdata = reqdata
 
 	// perform the gRPC request
-	var rspdata []byte
+	var (
+		rspdata []byte
+		rpcerr  *protodyn.GRPCError
+	)
 	rspmsg, err := client.Invoke(cxt, inv, reqmsg)
 	if err != nil {
-		var gerr protodyn.GRPCError
-		if errors.As(err, &gerr) {
-			result.AssertEqual(tcase.Response.Status, int(gerr.Status), "Unexpected status code: %v", err)
+		if errors.As(err, &rpcerr) {
+			result.AssertEqual(tcase.Response.Status, int(rpcerr.Status), "Unexpected status code: %v", err)
 		} else {
 			return result.Error(fmt.Errorf("gRPC method failed: %w", err)), nil, vars, nil
 		}
 		// decode the response entity to JSON
-		rspdata, err = json.Marshal(gerr)
+		rspdata, err = json.Marshal(rpcerr)
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not convert gRPC response: %w", err)), nil, vars, nil
 		}
@@ -523,37 +525,50 @@ func runGRPC(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		if err != nil {
 			return result.Error(fmt.Errorf("Could not interpolate: %w", err)), nil, vars, nil
 		}
-		expect, expectdata, err := unmarshalGRPCResponse(context, inv, expecttype, expectent)
-		if err != nil {
-			return result.Error(err), nil, vars, nil
-		}
-		// If the expected response type is defined in JSON, this is the lowest
-		// common denominator, so we use it to compare messages. Only when both
-		// messages are defined as protos do we compare them directly.
-		switch expecttype {
-		case mimetype.Protobuf:
-			if !proto.Equal(expect, rspmsg) {
-				result.Error(&assert.AssertionError{
-					Expect:  expect,
-					Actual:  rspmsg,
-					Message: "Entities are not equal (protobuf)",
-				})
+		if rpcerr != nil {
+			// errors are always interpreted as JSON because they are not technically
+			// protobuf messages, at least of the user-defined sort
+			if expecttype == mimetype.Protobuf { // anything but protobuf is handled as JSON
+				return result.Error(fmt.Errorf("gRPC errors must be specified as JSON", err)), nil, vars, nil
 			}
-		case mimetype.JSON:
-			fallthrough
-		default:
-			expect, err := entity.Unmarshal(mimetype.JSON, expectdata)
+			expect, err := entity.Unmarshal(mimetype.JSON, []byte(expectent))
 			if err != nil {
 				return result.Error(fmt.Errorf("Could not unmarshal expected response: %w", err)), nil, vars, nil
 			}
 			if len(rspdata) == 0 {
 				result.AssertEqual(expect, "", "Entities do not match")
-			} else if !entity.SemanticEqual(expect, rspvalue) {
-				result.Error(&assert.AssertionError{
-					Expect:  expect,
-					Actual:  rspvalue,
-					Message: "Entities are not equal",
-				})
+			} else {
+				result.AssertSemanticEqual(expect, rspvalue)
+			}
+		} else {
+			expect, expectdata, err := unmarshalGRPCResponse(context, inv, expecttype, expectent)
+			if err != nil {
+				return result.Error(err), nil, vars, nil
+			}
+			// If the expected response type is defined in JSON, this is the lowest
+			// common denominator, so we use it to compare messages. Only when both
+			// messages are defined as protos do we compare them directly.
+			switch expecttype {
+			case mimetype.Protobuf:
+				if !proto.Equal(expect, rspmsg) {
+					result.Error(&assert.AssertionError{
+						Expect:  expect,
+						Actual:  rspmsg,
+						Message: "Entities are not equal (protobuf)",
+					})
+				}
+			case mimetype.JSON:
+				fallthrough
+			default:
+				expect, err := entity.Unmarshal(mimetype.JSON, expectdata)
+				if err != nil {
+					return result.Error(fmt.Errorf("Could not unmarshal expected response: %w", err)), nil, vars, nil
+				}
+				if len(rspdata) == 0 {
+					result.AssertEqual(expect, "", "Entities do not match")
+				} else {
+					result.AssertSemanticEqual(expect, rspvalue)
+				}
 			}
 		}
 	}

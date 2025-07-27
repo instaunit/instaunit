@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/assert"
+	"github.com/instaunit/instaunit/hunit/entity"
 	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/testcase"
 )
@@ -29,6 +30,18 @@ func (r *Result) AssertEqual(e, a interface{}, m string, x ...interface{}) bool 
 	if err != nil {
 		r.Error(err)
 		return false
+	}
+	return true
+}
+
+// Assert the equality of two encoded data of the same type
+func (r *Result) AssertSemanticEqual(expect, actual interface{}) bool {
+	if !entity.SemanticEqual(expect, actual) {
+		r.Error(&assert.AssertionError{
+			Expect:  expect,
+			Actual:  actual,
+			Message: "Entities are not equal",
+		})
 	}
 	return true
 }

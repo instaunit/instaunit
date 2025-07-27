@@ -154,7 +154,7 @@ func (v Invocation) MessageFromJSON(md protoreflect.MessageDescriptor, jsondata 
 	reqmsg := dynamicpb.NewMessage(md)
 	err := UnmarshalJSON(jsondata, reqmsg)
 	if err != nil {
-		return nil, fmt.Errorf("could not encode request: %w", err)
+		return nil, fmt.Errorf("could not encode message: %w", err)
 	}
 	return reqmsg, nil
 }
