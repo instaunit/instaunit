@@ -168,7 +168,7 @@ func app() error {
 	}
 
 	var globalHeaders map[string]string
-	if headerSpecs != nil && len(headerSpecs) > 0 {
+	if len(headerSpecs) > 0 {
 		globalHeaders = make(map[string]string)
 		for _, e := range headerSpecs {
 			x := strings.Index(e, ":")
@@ -483,7 +483,7 @@ suites:
 		}
 
 		for _, e := range reports {
-			err := e.Suite(cdup, suite, &report_emit.Results{results, suiteDuration})
+			err := e.Suite(cdup, suite, &report_emit.Results{Results: results, Runtime: suiteDuration})
 			if err != nil {
 				color.New(colorErr...).Printf("* * * Could not emit report: %v\n", err)
 			}

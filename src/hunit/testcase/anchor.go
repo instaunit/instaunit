@@ -33,7 +33,7 @@ func ParseAnchorStyle(s string) AnchorStyle {
 
 // Stringer
 func (c AnchorStyle) String() string {
-	if c < 0 || c >= AnchorInvalid {
+	if c >= AnchorInvalid {
 		return "<invalid>"
 	} else {
 		return anchorStyleNames[int(c)]

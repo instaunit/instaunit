@@ -26,7 +26,7 @@ func literalEntitiesEqual(context runtime.Context, contentType string, expected 
 
 	var abytes []byte
 	if abytes, ok = actual.([]byte); !ok {
-		return &assert.AssertionError{expected, actual, "Entities are not equal"}
+		return &assert.AssertionError{Expect: expected, Actual: actual, Message: "Entities are not equal"}
 	}
 
 	if (context.Options & testcase.OptionEntityTrimTrailingWhitespace) == testcase.OptionEntityTrimTrailingWhitespace {
