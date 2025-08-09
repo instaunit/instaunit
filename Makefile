@@ -74,6 +74,10 @@ ci: export GRPC := $(GRPC)
 ci: tools build ## Run integration tests
 	(cd $(GRPC) && make build) && $(PSCTL) --file test/grpc/test.yml
 
+.PHONY: tidy
+tidy: ## Run go mod tidy from the right location
+	(cd src && go mod tidy)
+
 .PHONY: test
 test: ## Run tests
 	(cd src && go test $(FLAGS) $(TEST_PKGS))

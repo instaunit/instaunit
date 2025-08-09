@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/bww/go-util/v1/text"
 	"github.com/instaunit/instaunit/hunit/reflect"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -33,5 +34,9 @@ func UnmarshalJSON(data []byte, msg proto.Message) error {
 	if reflect.IsNil(msg) {
 		return fmt.Errorf("%w: message is nil", errInvalidMessage)
 	}
-	return jsonUnmarshaler.Unmarshal(data, msg)
+	err := jsonUnmarshaler.Unmarshal(data, msg)
+	if err != nil {
+		return fmt.Errorf("%w: in data:\n%s", err, text.Indent(string(data), "> "))
+	}
+	return nil
 }
