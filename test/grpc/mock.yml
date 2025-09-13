@@ -7,35 +7,6 @@ service:
       service: grpcservice.UserService
       method: CreateUser
 
-    request:
-      format: application/json
-      entity: |
-        {
-          "user": {
-            "name": "John Doe",
-            "email": "john@example.com",
-            "age": 30,
-            "is_active": true,
-            "tags": [
-              "developer",
-              "golang"
-            ],
-            "metadata": {
-              "department": "Engineering",
-              "level": "Senior"
-            },
-            "address": {
-              "street": "123 Main St",
-              "city": "San Francisco",
-              "state": "CA",
-              "zip_code": "94102",
-              "country": "USA"
-            },
-            "type": "USER_TYPE_REGULAR",
-            "phone": "+1-917-555-0123"
-          }
-        }
-
     response:
       entity: |
         {
