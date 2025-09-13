@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 func logln(v ...any) {
@@ -105,14 +107,39 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 	if !ok {
 		return status.Error(codes.Unimplemented, fmt.Sprintf("Not implemented: %s", mname))
 	}
+	rsp := epoint.Response
+	if rsp == nil {
+		return fmt.Errorf("Endpoint has no response defined")
+	}
+
 	method, err := s.svcreg.MethodForName(mname)
 	if err != nil {
-		return status.Error(codes.Internal, fmt.Sprintf("Method is not defined in any known service: %w", mname))
+		return status.Error(codes.Internal, fmt.Sprintf("Method is not defined in any known service: %v", mname))
 	}
 
 	fmt.Println(">>>>>>>>>>>>>>>>>>", epoint, method)
 
-	// log.Printf("Successfully handled call to %s", fullMethodName)
+	// Create request message to receive the incoming data
+	reqmsg := dynamicpb.NewMessage(method.Input())
+	// Receive the request (this reads the request but we don't need to use it for static responses)
+	err = stream.RecvMsg(reqmsg)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, fmt.Sprintf("Could not receive request message: %v", err))
+	}
+
+	// Create request message to receive the incoming data
+	rspmsg := dynamicpb.NewMessage(method.Output())
+	// Use protojson to unmarshal into the dynamic message
+	err = protojson.Unmarshal([]byte(epoint.Response.Entity), rspmsg)
+	if err != nil {
+		return fmt.Errorf("Could not unmarshal JSON response to protobuf: %v", err)
+	}
+	// Send our response
+	err = stream.SendMsg(rspmsg)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Could not send response message: %v", err))
+	}
+
 	return nil
 }
 
