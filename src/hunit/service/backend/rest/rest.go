@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -52,7 +53,12 @@ type restService struct {
 
 // Create a new service
 func New(conf service.Config) (service.Service, error) {
-	suite, err := LoadSuite(conf.Resource)
+	src, err := os.Open(conf.Path)
+	if err != nil {
+		return nil, err
+	}
+	defer src.Close()
+	suite, err := LoadSuite(src)
 	if err != nil {
 		return nil, err
 	}

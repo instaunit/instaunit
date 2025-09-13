@@ -2,9 +2,14 @@ package service
 
 import (
 	"fmt"
-	"io"
-	"os"
 	"strings"
+)
+
+type Backend string
+
+const (
+	REST Backend = "http"
+	GRPC Backend = "grpc"
 )
 
 // A service
@@ -15,9 +20,9 @@ type Service interface {
 
 // Service config
 type Config struct {
-	Addr     string
-	Path     string
-	Resource io.ReadCloser
+	Impl Backend
+	Addr string
+	Path string
 }
 
 // Parse configuration
@@ -36,14 +41,20 @@ func ParseConfig(s string) (Config, error) {
 		return conf, fmt.Errorf("Invalid service resource: %v", s)
 	}
 
-	f, err := os.Open(p[1])
-	if err != nil {
-		return conf, err
+	var (
+		backend Backend
+		addr    string
+		sep     = "://"
+	)
+	if n := strings.Index(p[0], sep); n > 0 {
+		backend, addr = Backend(strings.TrimSpace(p[0][:n])), strings.TrimSpace(p[0][n+len(sep):])
+	} else {
+		backend, addr = REST, p[0]
 	}
 
-	conf.Addr = p[0]
+	conf.Impl = backend
+	conf.Addr = addr
 	conf.Path = p[1]
-	conf.Resource = f
 
 	return conf, nil
 }

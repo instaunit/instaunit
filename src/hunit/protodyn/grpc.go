@@ -47,6 +47,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"maps"
+	"slices"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -116,22 +118,18 @@ func (r *ServiceRegistry) LoadFileDescriptorSet(fds *descriptorpb.FileDescriptor
 	return nil
 }
 
-// GetService retrieves a service descriptor by full name
-func (r *ServiceRegistry) GetService(fullName string) (protoreflect.ServiceDescriptor, error) {
+// Services returns a slice of all registered services
+func (r *ServiceRegistry) Services() []protoreflect.ServiceDescriptor {
+	return slices.Collect(maps.Values(r.services))
+}
+
+// ServiceForName retrieves a service descriptor by full name
+func (r *ServiceRegistry) ServiceForName(fullName string) (protoreflect.ServiceDescriptor, error) {
 	svc, exists := r.services[fullName]
 	if !exists {
 		return nil, fmt.Errorf("service %s not found", fullName)
 	}
 	return svc, nil
-}
-
-// ListServices returns all registered service names
-func (r *ServiceRegistry) ListServices() []string {
-	names := make([]string, 0, len(r.services))
-	for name := range r.services {
-		names = append(names, name)
-	}
-	return names
 }
 
 // Invocation encapsulates a gRPC call
@@ -180,7 +178,7 @@ type CallOptions struct {
 }
 
 func (c *Client) Method(ctx context.Context, serviceName, methodName string) (protoreflect.ServiceDescriptor, protoreflect.MethodDescriptor, error) {
-	service, err := c.registry.GetService(serviceName)
+	service, err := c.registry.ServiceForName(serviceName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Service is not registered: %w", err)
 	}

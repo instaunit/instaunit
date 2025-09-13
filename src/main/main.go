@@ -20,6 +20,7 @@ import (
 	"github.com/instaunit/instaunit/hunit/report"
 	"github.com/instaunit/instaunit/hunit/runtime"
 	"github.com/instaunit/instaunit/hunit/service"
+	"github.com/instaunit/instaunit/hunit/service/backend/grpc"
 	"github.com/instaunit/instaunit/hunit/service/backend/rest"
 	"github.com/instaunit/instaunit/hunit/syncio"
 	"github.com/instaunit/instaunit/hunit/testcase"
@@ -225,7 +226,15 @@ func app() error {
 		if err != nil {
 			return fmt.Errorf("Could not create mock service: %v", err)
 		}
-		svc, err := rest.New(conf) // only REST is supported for now...
+		var svc service.Service
+		switch conf.Impl {
+		case service.GRPC:
+			svc, err = grpc.New(conf)
+		case service.REST:
+			svc, err = rest.New(conf)
+		default:
+			return fmt.Errorf("Unsupported mock service backend: %s", conf.Impl)
+		}
 		if err != nil {
 			return fmt.Errorf("Could not create mock service: %v", err)
 		}
@@ -237,7 +246,6 @@ func app() error {
 			fmt.Println()
 		}
 		defer func(s service.Service, c service.Config) {
-			c.Resource.Close()
 			s.Stop()
 		}(svc, conf)
 		fmt.Printf("----> Service %v (%v)\n", conf.Addr, conf.Path)

@@ -1,4 +1,4 @@
-package rest
+package grpc
 
 import (
 	"bytes"
@@ -15,8 +15,8 @@ import (
 // A request
 type Request struct {
 	sync.Mutex
-	Methods []string          `yaml:"methods"`
-	Path    string            `yaml:"path"`
+	Service string            `yaml:"service"`
+	Method  string            `yaml:"method"`
 	Params  map[string]string `yaml:"params"`
 	Headers map[string]string `yaml:"headers"`
 	Cookies map[string]string `yaml:"cookies"`
@@ -40,6 +40,7 @@ type Endpoint struct {
 
 // A test suite
 type Suite struct {
+	Protos    []string   `yaml:"protos"`
 	Endpoints []Endpoint `yaml:"service"`
 }
 
