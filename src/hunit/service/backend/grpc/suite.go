@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"sync"
@@ -42,6 +43,9 @@ type Endpoint struct {
 type Suite struct {
 	Protos    []string   `yaml:"protos"`
 	Endpoints []Endpoint `yaml:"service"`
+
+	epByMethodOnce sync.Once
+	epByMethod     map[string]Endpoint
 }
 
 // Load a test suite
@@ -74,6 +78,24 @@ func LoadSuite(src io.ReadCloser) (*Suite, error) {
 	} else {
 		return suite, nil
 	}
+}
+
+func (s *Suite) FindEndpoint(mname string) (Endpoint, bool) {
+	s.epByMethodOnce.Do(func() {
+		m := make(map[string]Endpoint)
+		for _, e := range s.Endpoints {
+			if req := e.Request; req != nil {
+				m[methodName(e.Request.Service, e.Request.Method)] = e
+			}
+		}
+		s.epByMethod = m
+	})
+	e, ok := s.epByMethod[mname]
+	return e, ok
+}
+
+func methodName(s, m string) string {
+	return fmt.Sprintf("%s.%s", s, m)
 }
 
 func unmarshal(data []byte, dest interface{}) error {

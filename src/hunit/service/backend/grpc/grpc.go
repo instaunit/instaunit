@@ -3,14 +3,18 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 	"github.com/instaunit/instaunit/hunit/service"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 func logln(v ...any) {
@@ -78,35 +82,30 @@ func (s *grpcService) unaryInterceptor(ctx context.Context, req any, info *grpc.
 
 // handleUnknownService handles all incoming gRPC calls
 func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerStream) error {
-	fmt.Println(">>>>>>>>>>>>>>>>> ZZ", srv)
+	var (
+		sinfo = grpc.ServerTransportStreamFromContext(stream.Context())
+		mname = strings.TrimPrefix(sinfo.Method(), "/")
+	)
 
-	// Get the method name from the context
-	// fullMethodName, ok := grpc.MethodFromContext(stream.Context())
-	// if !ok {
-	// 	return status.Error(codes.Internal, "failed to get method name from context")
-	// }
+	epoint, ok := s.suite.FindEndpoint(mname)
+	if !ok {
+		return status.Error(codes.Unimplemented, fmt.Sprintf("Not implemented: %s", mname))
+	}
 
-	// // Remove leading slash from method name (e.g., "/package.Service/Method" -> "package.Service/Method")
-	// if strings.HasPrefix(fullMethodName, "/") {
-	// 	fullMethodName = fullMethodName[1:]
-	// }
-
-	// log.Printf("Handling call to method: %s", fullMethodName)
+	log.Printf("Handling call to method: %s: %v", mname, epoint)
 
 	// log.Printf("Successfully handled call to %s", fullMethodName)
 	return nil
 }
 
 func (s *grpcService) Start() error {
-	port := 31222
-
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	lnr, err := net.Listen("tcp", s.conf.Addr)
 	if err != nil {
-		return fmt.Errorf("failed to listen on port %d: %v", port, err)
+		return fmt.Errorf("failed to listen on %s: %v", s.conf.Addr, err)
 	}
 
 	go func() {
-		err = s.server.Serve(listener)
+		err = s.server.Serve(lnr)
 		if err != nil {
 			logf("gRPC server error: %v", err)
 		}
