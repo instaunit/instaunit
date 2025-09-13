@@ -13,11 +13,13 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+type RemoteProcedure struct {
+	Service string `yaml:"service"`
+	Method  string `yaml:"method"`
+}
+
 // A request
 type Request struct {
-	sync.Mutex
-	Service string            `yaml:"service"`
-	Method  string            `yaml:"method"`
 	Params  map[string]string `yaml:"params"`
 	Headers map[string]string `yaml:"headers"`
 	Cookies map[string]string `yaml:"cookies"`
@@ -34,9 +36,10 @@ type Response struct {
 
 // An endpoint
 type Endpoint struct {
-	Wait     time.Duration `yaml:"wait"`
-	Request  *Request      `yaml:"endpoint"`
-	Response *Response     `yaml:"response"`
+	Wait     time.Duration    `yaml:"wait"`
+	RPC      *RemoteProcedure `yaml:"grpc"`
+	Request  *Request         `yaml:"endpoint"`
+	Response *Response        `yaml:"response"`
 }
 
 // A test suite
@@ -84,8 +87,8 @@ func (s *Suite) FindEndpoint(mname string) (Endpoint, bool) {
 	s.epByMethodOnce.Do(func() {
 		m := make(map[string]Endpoint)
 		for _, e := range s.Endpoints {
-			if req := e.Request; req != nil {
-				m[methodName(e.Request.Service, e.Request.Method)] = e
+			if rpc := e.RPC; rpc != nil {
+				m[methodName(rpc.Service, rpc.Method)] = e
 			}
 		}
 		s.epByMethod = m
@@ -95,7 +98,7 @@ func (s *Suite) FindEndpoint(mname string) (Endpoint, bool) {
 }
 
 func methodName(s, m string) string {
-	return fmt.Sprintf("%s.%s", s, m)
+	return fmt.Sprintf("%s/%s", s, m)
 }
 
 func unmarshal(data []byte, dest interface{}) error {

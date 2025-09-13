@@ -3,13 +3,14 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
+	"github.com/instaunit/instaunit/hunit/protodyn"
 	"github.com/instaunit/instaunit/hunit/service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -37,6 +38,7 @@ type grpcService struct {
 	conf   service.Config
 	suite  *Suite
 	server *grpc.Server
+	svcreg *protodyn.ServiceRegistry
 	vars   expr.Variables
 }
 
@@ -56,10 +58,22 @@ func New(conf service.Config) (service.Service, error) {
 		"std": runtime.Stdlib,
 	}
 
+	var (
+		reg  = protodyn.NewServiceRegistry()
+		root = path.Dir(conf.Path)
+	)
+	for _, p := range suite.Protos {
+		err := reg.LoadFileDescriptorSetFromPath(path.Join(root, p))
+		if err != nil {
+			return nil, fmt.Errorf("Could not load Protobuf descriptor set: %v: %w", p, err)
+		}
+	}
+
 	svc := &grpcService{
-		conf:  conf,
-		suite: suite,
-		vars:  vars,
+		conf:   conf,
+		suite:  suite,
+		svcreg: reg,
+		vars:   vars,
 	}
 
 	// Create gRPC server with unknown service handler
@@ -91,8 +105,12 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 	if !ok {
 		return status.Error(codes.Unimplemented, fmt.Sprintf("Not implemented: %s", mname))
 	}
+	method, err := s.svcreg.MethodForName(mname)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Method is not defined in any known service: %w", mname))
+	}
 
-	log.Printf("Handling call to method: %s: %v", mname, epoint)
+	fmt.Println(">>>>>>>>>>>>>>>>>>", epoint, method)
 
 	// log.Printf("Successfully handled call to %s", fullMethodName)
 	return nil

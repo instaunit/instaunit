@@ -49,6 +49,7 @@ import (
 	"io/ioutil"
 	"maps"
 	"slices"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -130,6 +131,27 @@ func (r *ServiceRegistry) ServiceForName(fullName string) (protoreflect.ServiceD
 		return nil, fmt.Errorf("service %s not found", fullName)
 	}
 	return svc, nil
+}
+
+// MethodWithName retrieves a method descriptor by its fully qulified name, e.g.:
+//
+//	<package>.<service>/<method>
+func (r *ServiceRegistry) MethodForName(fullName string) (protoreflect.MethodDescriptor, error) {
+	var sname, mname string
+	if x := strings.Index(fullName, "/"); x > 0 {
+		sname, mname = fullName[:x], fullName[x+1:]
+	} else {
+		return nil, fmt.Errorf("Invalid method name; expected fully qualified endpoint: <package>.<service>/<method>; got: %s", fullName)
+	}
+	svc, err := r.ServiceForName(sname)
+	if err != nil {
+		return nil, fmt.Errorf("Service is not registered: %s: %w", sname, err)
+	}
+	method := svc.Methods().ByName(protoreflect.Name(mname))
+	if method == nil {
+		return nil, fmt.Errorf("Method %s not found in service %s", mname, sname)
+	}
+	return method, nil
 }
 
 // Invocation encapsulates a gRPC call
