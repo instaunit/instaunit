@@ -56,10 +56,6 @@ func New(conf service.Config) (service.Service, error) {
 		return nil, err
 	}
 
-	vars := expr.Variables{
-		"std": runtime.Stdlib,
-	}
-
 	var (
 		reg  = protodyn.NewServiceRegistry()
 		root = path.Dir(conf.Path)
@@ -75,7 +71,9 @@ func New(conf service.Config) (service.Service, error) {
 		conf:   conf,
 		suite:  suite,
 		svcreg: reg,
-		vars:   vars,
+		vars: expr.Variables{
+			"std": runtime.Stdlib,
+		},
 	}
 
 	// Create gRPC server with unknown service handler
@@ -117,8 +115,6 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 		return status.Error(codes.Internal, fmt.Sprintf("Method is not defined in any known service: %v", mname))
 	}
 
-	fmt.Println(">>>>>>>>>>>>>>>>>>", epoint, method)
-
 	// Create request message to receive the incoming data
 	reqmsg := dynamicpb.NewMessage(method.Input())
 	// Receive the request (this reads the request but we don't need to use it for static responses)
@@ -127,10 +123,22 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("Could not receive request message: %v", err))
 	}
 
+	// interpolate the response
+	rspdata, err := expr.Interpolate(epoint.Response.Entity, s.vars.With(expr.Variables{
+		"method":   mname,
+		"endpoint": epoint,
+		"request": expr.Variables{
+			"value": reqmsg,
+		},
+	}))
+	if err != nil {
+		return fmt.Errorf("Could not interpolate response: %w", err)
+	}
+
 	// Create request message to receive the incoming data
 	rspmsg := dynamicpb.NewMessage(method.Output())
 	// Use protojson to unmarshal into the dynamic message
-	err = protojson.Unmarshal([]byte(epoint.Response.Entity), rspmsg)
+	err = protojson.Unmarshal([]byte(rspdata), rspmsg)
 	if err != nil {
 		return fmt.Errorf("Could not unmarshal JSON response to protobuf: %v", err)
 	}

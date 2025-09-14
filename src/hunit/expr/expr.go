@@ -3,6 +3,7 @@ package expr
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
 
@@ -49,6 +50,16 @@ func (e ExprError) Detail() string {
 
 // Variables
 type Variables map[string]interface{}
+
+// With produces a set of variables by merging arguments with the reciever.
+// In case of confilct, the last argument to define a value prevails.
+func (v Variables) With(o ...Variables) Variables {
+	d := maps.Clone(v)
+	for _, e := range o {
+		maps.Copy(d, e)
+	}
+	return d
+}
 
 // Map the environment
 func mapenv(v []string) map[string]string {
