@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/service/backend/errors"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 
 	yaml "gopkg.in/yaml.v3"
 )
@@ -20,9 +23,7 @@ type RemoteProcedure struct {
 
 // A request
 type Request struct {
-	Params  map[string]string `yaml:"params"`
 	Headers map[string]string `yaml:"headers"`
-	Cookies map[string]string `yaml:"cookies"`
 	Entity  string            `yaml:"entity"`
 }
 
@@ -38,7 +39,7 @@ type Response struct {
 type Endpoint struct {
 	Wait     time.Duration    `yaml:"wait"`
 	RPC      *RemoteProcedure `yaml:"grpc"`
-	Request  *Request         `yaml:"endpoint"`
+	Request  *Request         `yaml:"request"`
 	Response *Response        `yaml:"response"`
 }
 
@@ -48,7 +49,7 @@ type Suite struct {
 	Endpoints []Endpoint `yaml:"service"`
 
 	epByMethodOnce sync.Once
-	epByMethod     map[string]Endpoint
+	epByMethod     map[string][]Endpoint
 }
 
 // Load a test suite
@@ -83,18 +84,48 @@ func LoadSuite(src io.ReadCloser) (*Suite, error) {
 	}
 }
 
-func (s *Suite) FindEndpoint(mname string) (Endpoint, bool) {
+func (s *Suite) MatchEndpoint(mname string, reqmsg *dynamicpb.Message, matchers ...RequestMatcher) (Endpoint, bool) {
 	s.epByMethodOnce.Do(func() {
-		m := make(map[string]Endpoint)
+		m := make(map[string][]Endpoint)
 		for _, e := range s.Endpoints {
 			if rpc := e.RPC; rpc != nil {
-				m[methodName(rpc.Service, rpc.Method)] = e
+				name := methodName(rpc.Service, rpc.Method)
+				m[name] = append(m[name], e)
 			}
 		}
 		s.epByMethod = m
 	})
-	e, ok := s.epByMethod[mname]
-	return e, ok
+	epoints, ok := s.epByMethod[mname]
+	if !ok || len(epoints) == 0 {
+		return Endpoint{}, false
+	}
+outer:
+	for _, e := range epoints {
+		// compare the declared request (if we have one defined) against the actual request
+		if req := e.Request; req != nil {
+			if ent := req.Entity; ent != "" {
+				// Create request message to receive the incoming data
+				chkmsg := dynamicpb.NewMessage(reqmsg.Descriptor())
+				// Use protojson to unmarshal into the dynamic message
+				err := protojson.Unmarshal([]byte(ent), chkmsg)
+				if err != nil {
+					logf("Could not unmarshal JSON response to protobuf to match gRPC request: %v", err)
+					continue outer
+				}
+				// match the entity
+				if !leftEqual(chkmsg, reqmsg) {
+					continue outer
+				}
+			}
+		}
+		// apply additional user-specified matching criteria
+		if !RequestMatchers(matchers).MatchesRequest(e, reqmsg) {
+			continue outer
+		}
+		// if we've reached the end, we've fully matched
+		return e, true
+	}
+	return Endpoint{}, ok
 }
 
 func methodName(s, m string) string {
@@ -105,4 +136,24 @@ func unmarshal(data []byte, dest interface{}) error {
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.KnownFields(true)
 	return dec.Decode(dest)
+}
+
+// leftEqual compares all the fields in left to the corresponding fields in
+// right. Only fields present in left are considered; if a field is present in
+// right but not left, it is ignored.
+func leftEqual(left, right *dynamicpb.Message) bool {
+	match := true // matches unless we have a mismatch
+	left.Range(func(fd protoreflect.FieldDescriptor, lval protoreflect.Value) bool {
+		if !right.Has(fd) {
+			match = false
+			return false
+		}
+		rval := right.Get(fd)
+		if !lval.Equal(rval) {
+			match = false
+			return false
+		}
+		return true
+	})
+	return match
 }

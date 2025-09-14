@@ -2,12 +2,14 @@ package grpc
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 	"github.com/instaunit/instaunit/hunit/protodyn"
@@ -19,6 +21,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
+
+var marshalOptions = protojson.MarshalOptions{}
 
 func logln(v ...any) {
 	fmt.Fprintln(os.Stderr, v...)
@@ -101,15 +105,6 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 		mname = strings.TrimPrefix(sinfo.Method(), "/")
 	)
 
-	epoint, ok := s.suite.FindEndpoint(mname)
-	if !ok {
-		return status.Error(codes.Unimplemented, fmt.Sprintf("Not implemented: %s", mname))
-	}
-	rsp := epoint.Response
-	if rsp == nil {
-		return fmt.Errorf("Endpoint has no response defined")
-	}
-
 	method, err := s.svcreg.MethodForName(mname)
 	if err != nil {
 		return status.Error(codes.Internal, fmt.Sprintf("Method is not defined in any known service: %v", mname))
@@ -123,14 +118,37 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("Could not receive request message: %v", err))
 	}
 
+	// Convert the request to JSON data...
+	reqdata, err := marshalOptions.Marshal(reqmsg)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Could not marshal request message: %v", err))
+	}
+	// ...and unmarshal back to generic types for us in interpolation vars
+	var reqjson interface{}
+	err = json.Unmarshal(reqdata, &reqjson)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Could not convert request to JSON: %v", err))
+	}
+
+	epoint, ok := s.suite.MatchEndpoint(mname, reqmsg)
+	if !ok {
+		return status.Error(codes.Unimplemented, fmt.Sprintf("Not implemented: %s", mname))
+	}
+	rsp := epoint.Response
+	if rsp == nil {
+		return fmt.Errorf("Endpoint has no response defined")
+	}
+
 	// interpolate the response
-	rspdata, err := expr.Interpolate(epoint.Response.Entity, s.vars.With(expr.Variables{
+	vars := s.vars.With(expr.Variables{
 		"method":   mname,
 		"endpoint": epoint,
 		"request": expr.Variables{
-			"value": reqmsg,
+			"value": reqjson,
 		},
-	}))
+	})
+	spew.Dump(vars)
+	rspdata, err := expr.Interpolate(rsp.Entity, vars)
 	if err != nil {
 		return fmt.Errorf("Could not interpolate response: %w", err)
 	}
