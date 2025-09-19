@@ -1,0 +1,147 @@
+protos:
+  - ../../fixtures/grpc/service.pb
+
+tests:
+  -
+    grpc:
+      service: grpcservice.UserService
+      method: CreateUser
+
+    request:
+      format: application/json
+      entity: |
+        {
+          "user": {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+            "is_active": true,
+            "tags": [
+              "developer",
+              "golang"
+            ],
+            "metadata": {
+              "department": "Engineering",
+              "level": "Senior"
+            },
+            "address": {
+              "street": "123 Main St",
+              "city": "San Francisco",
+              "state": "CA",
+              "zip_code": "94102",
+              "country": "USA"
+            },
+            "type": "USER_TYPE_REGULAR",
+            "phone": "+1-917-555-0123"
+          }
+        }
+
+    response:
+      entity: |
+        {
+          "user": {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+            "is_active": true,
+            "tags": [
+              "developer",
+              "golang"
+            ],
+            "metadata": {
+              "department": "Engineering",
+              "level": "Senior"
+            },
+            "address": {
+              "street": "123 Main St",
+              "city": "San Francisco",
+              "state": "CA",
+              "zip_code": "94102",
+              "country": "USA"
+            },
+            "type": "USER_TYPE_REGULAR",
+            "phone": "+1-917-555-0123"
+          }
+        }
+
+  -
+    grpc:
+      service: grpcservice.UserService
+      method: GetUser
+
+    request:
+      format: application/json
+      entity: |
+        {
+          "user_id": 123
+        }
+
+    response:
+      entity: |
+        {
+          "user": {
+            "id": 123,
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+            "is_active": true,
+            "tags": [
+              "developer",
+              "golang"
+            ],
+            "metadata": {
+              "department": "Engineering",
+              "level": "Senior"
+            },
+            "address": {
+              "street": "123 Main St",
+              "city": "San Francisco",
+              "state": "CA",
+              "zip_code": "94102",
+              "country": "USA"
+            },
+            "type": "USER_TYPE_REGULAR",
+            "phone": "+1-917-555-0123"
+          }
+        }
+
+  -
+    grpc:
+      service: grpcservice.UserService
+      method: GetUser
+
+    request:
+      format: application/json
+      entity: |
+        {
+          "user_id": 654
+        }
+
+    response:
+      entity: |
+        {
+          "user": {
+            "id": 654,
+            "name": "Catch All",
+            "email": "catchall@example.com",
+            "age": 30,
+            "is_active": true,
+            "tags": [
+              "developer",
+              "golang"
+            ],
+            "metadata": {
+              "department": "Engineering",
+              "level": "Senior"
+            },
+            "address": {
+              "street": "123 Main St",
+              "city": "San Francisco",
+              "state": "CA",
+              "zip_code": "94102",
+              "country": "USA"
+            },
+            "type": "USER_TYPE_REGULAR",
+            "phone": "+1-917-555-0123"
+          }
+        }
