@@ -9,7 +9,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 	"github.com/instaunit/instaunit/hunit/protodyn"
@@ -147,7 +146,6 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 			"value": reqjson,
 		},
 	})
-	spew.Dump(vars)
 	rspdata, err := expr.Interpolate(rsp.Entity, vars)
 	if err != nil {
 		return fmt.Errorf("Could not interpolate response: %w", err)
