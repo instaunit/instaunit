@@ -3,7 +3,23 @@ package service
 import (
 	"fmt"
 	"strings"
+	"sync"
+
+	"github.com/instaunit/instaunit/hunit/service/status"
 )
+
+var (
+	statusSvc  *status.Service
+	statusOnce sync.Once
+)
+
+func StatusService() (*status.Service, error) {
+	var err error
+	statusOnce.Do(func() {
+		statusSvc, err = status.New()
+	})
+	return statusSvc, err
+}
 
 type Backend string
 
@@ -20,9 +36,10 @@ type Service interface {
 
 // Service config
 type Config struct {
-	Impl Backend
-	Addr string
-	Path string
+	Impl   Backend
+	Addr   string
+	Path   string
+	Status *status.Service
 }
 
 // Parse configuration

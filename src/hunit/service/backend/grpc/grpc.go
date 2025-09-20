@@ -13,10 +13,12 @@ import (
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
 	"github.com/instaunit/instaunit/hunit/protodyn"
 	"github.com/instaunit/instaunit/hunit/service"
+	"github.com/instaunit/instaunit/hunit/service/status"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/status"
+	grpcstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
@@ -58,6 +60,8 @@ func New(conf service.Config) (service.Service, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	conf.Status.Set(conf.Addr, status.Pending)
 
 	var (
 		reg  = protodyn.NewServiceRegistry()
@@ -106,7 +110,7 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 
 	method, err := s.svcreg.MethodForName(mname)
 	if err != nil {
-		return status.Error(codes.Internal, fmt.Sprintf("Method is not defined in any known service: %v", mname))
+		return grpcstatus.Error(codes.Internal, fmt.Sprintf("Method is not defined in any known service: %v", mname))
 	}
 
 	// Create request message to receive the incoming data
@@ -114,24 +118,24 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 	// Receive the request (this reads the request but we don't need to use it for static responses)
 	err = stream.RecvMsg(reqmsg)
 	if err != nil {
-		return status.Error(codes.InvalidArgument, fmt.Sprintf("Could not receive request message: %v", err))
+		return grpcstatus.Error(codes.InvalidArgument, fmt.Sprintf("Could not receive request message: %v", err))
 	}
 
 	// Convert the request to JSON data...
 	reqdata, err := marshalOptions.Marshal(reqmsg)
 	if err != nil {
-		return status.Error(codes.Internal, fmt.Sprintf("Could not marshal request message: %v", err))
+		return grpcstatus.Error(codes.Internal, fmt.Sprintf("Could not marshal request message: %v", err))
 	}
 	// ...and unmarshal back to generic types for us in interpolation vars
 	var reqjson interface{}
 	err = json.Unmarshal(reqdata, &reqjson)
 	if err != nil {
-		return status.Error(codes.Internal, fmt.Sprintf("Could not convert request to JSON: %v", err))
+		return grpcstatus.Error(codes.Internal, fmt.Sprintf("Could not convert request to JSON: %v", err))
 	}
 
 	epoint, ok := s.suite.MatchEndpoint(mname, reqmsg)
 	if !ok {
-		return status.Error(codes.Unimplemented, fmt.Sprintf("Not implemented: %s", mname))
+		return grpcstatus.Error(codes.Unimplemented, fmt.Sprintf("Not implemented: %s", mname))
 	}
 	rsp := epoint.Response
 	if rsp == nil {
@@ -161,7 +165,7 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 	// Send our response
 	err = stream.SendMsg(rspmsg)
 	if err != nil {
-		return status.Error(codes.Internal, fmt.Sprintf("Could not send response message: %v", err))
+		return grpcstatus.Error(codes.Internal, fmt.Sprintf("Could not send response message: %v", err))
 	}
 
 	return nil
@@ -180,26 +184,12 @@ func (s *grpcService) Start() error {
 		}
 	}()
 
+	s.conf.Status.Set(s.conf.Addr, status.Ready)
 	return nil
 }
 
 func (s *grpcService) Stop() error {
+	s.conf.Status.Set(s.conf.Addr, status.Stopped)
 	s.server.GracefulStop()
 	return nil
 }
-
-// populateMessageFromConfig populates a protobuf message from configuration data
-// func (m *MockGRPCServer) populateMessageFromConfig(msg *dynamicpb.Message, configData map[string]interface{}) error {
-// 	// Convert config data to JSON for easier protobuf unmarshaling
-// 	jsonData, err := json.Marshal(configData)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to marshal config to JSON: %v", err)
-// 	}
-//
-// 	// Use protojson to unmarshal into the dynamic message
-// 	if err := protojson.Unmarshal(jsonData, msg); err != nil {
-// 		return fmt.Errorf("failed to unmarshal JSON to protobuf: %v", err)
-// 	}
-//
-// 	return nil
-// }

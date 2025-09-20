@@ -2,8 +2,8 @@ package rest
 
 import (
 	"bytes"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"sync"
 	"time"
 
@@ -48,11 +48,10 @@ func LoadSuite(src io.ReadCloser) (*Suite, error) {
 	suite := &Suite{}
 	var errs []error
 
-	data, err := ioutil.ReadAll(src)
+	data, err := io.ReadAll(src)
 	if err != nil {
 		return nil, err
 	}
-
 	err = unmarshal(data, suite)
 	if err != nil {
 		errs = append(errs, err)
@@ -67,12 +66,11 @@ func LoadSuite(src io.ReadCloser) (*Suite, error) {
 			suite.Endpoints = endpoints
 		}
 	}
-
 	if len(suite.Endpoints) < 1 && len(errs) > 0 {
-		return nil, errors.AlternateErrors(errs)
-	} else {
-		return suite, nil
+		return nil, fmt.Errorf("Could not unmarshal REST service: %w", errors.AlternateErrors(errs))
 	}
+
+	return suite, nil
 }
 
 func unmarshal(data []byte, dest interface{}) error {

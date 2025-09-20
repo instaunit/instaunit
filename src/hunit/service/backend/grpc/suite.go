@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"sync"
 	"time"
 
-	"github.com/instaunit/instaunit/hunit/service/backend/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
@@ -24,6 +22,7 @@ type RemoteProcedure struct {
 // A request
 type Request struct {
 	Headers map[string]string `yaml:"headers"`
+	Format  string            `yaml:"format"` // the format of entity (only 'application/json' is currently supported)
 	Entity  string            `yaml:"entity"`
 }
 
@@ -54,34 +53,18 @@ type Suite struct {
 
 // Load a test suite
 func LoadSuite(src io.ReadCloser) (*Suite, error) {
-	suite := &Suite{}
-	var errs []error
-
-	data, err := ioutil.ReadAll(src)
+	data, err := io.ReadAll(src)
 	if err != nil {
 		return nil, err
 	}
 
+	suite := &Suite{}
 	err = unmarshal(data, suite)
 	if err != nil {
-		errs = append(errs, err)
+		return nil, fmt.Errorf("Could not unmarshal gRPC service: %w", err)
 	}
 
-	if len(suite.Endpoints) < 1 {
-		var endpoints []Endpoint
-		err := unmarshal(data, &endpoints)
-		if err != nil {
-			errs = append(errs, err)
-		} else {
-			suite.Endpoints = endpoints
-		}
-	}
-
-	if len(suite.Endpoints) < 1 && len(errs) > 0 {
-		return nil, errors.AlternateErrors(errs)
-	} else {
-		return suite, nil
-	}
+	return suite, nil
 }
 
 func (s *Suite) MatchEndpoint(mname string, reqmsg *dynamicpb.Message, matchers ...RequestMatcher) (Endpoint, bool) {

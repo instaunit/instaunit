@@ -226,6 +226,10 @@ func app() error {
 		if err != nil {
 			return fmt.Errorf("Could not create mock service: %v", err)
 		}
+		conf.Status, err = service.StatusService()
+		if err != nil {
+			return fmt.Errorf("Could not initialize status service: %v", err)
+		}
 		var svc service.Service
 		switch conf.Impl {
 		case service.GRPC:

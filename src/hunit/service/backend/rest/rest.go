@@ -2,25 +2,22 @@ package rest
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/entity"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
-	"github.com/instaunit/instaunit/hunit/net/await"
 	"github.com/instaunit/instaunit/hunit/service"
+	"github.com/instaunit/instaunit/hunit/service/status"
 
 	"github.com/bww/go-router/v2"
 	routerentity "github.com/bww/go-router/v2/entity"
@@ -34,13 +31,20 @@ import (
 // Don't wait forever
 const ioTimeout = time.Second * 10
 
-// Status
-const (
-	statusMethod = "GET"
-	statusPath   = "/_instaunit/status"
-)
+func logln(v ...any) {
+	fmt.Fprintln(os.Stderr, v...)
+}
 
-const prefix = "[rest]"
+func logf(f string, a ...any) {
+	if n := len(f); n == 0 {
+		fmt.Fprintln(os.Stderr)
+	} else if f[n] == '\n' {
+		fmt.Fprintf(os.Stderr, f, a...)
+	} else {
+		fmt.Fprintf(os.Stderr, f, a...)
+		fmt.Fprintln(os.Stderr)
+	}
+}
 
 // REST service
 type restService struct {
@@ -63,6 +67,8 @@ func New(conf service.Config) (service.Service, error) {
 		return nil, err
 	}
 
+	conf.Status.Set(conf.Addr, status.Pending)
+
 	vars := expr.Variables{
 		"std": runtime.Stdlib,
 	}
@@ -83,7 +89,7 @@ func New(conf service.Config) (service.Service, error) {
 				b.Match(func(req *router.Request, route *router.Route) bool {
 					bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
 					if err != nil {
-						fmt.Printf("%s * * * Error checking if request body matches expected endpoint entity: %v: %v\n", prefix, req.URL, err)
+						logf("* * * Error checking if request body matches expected endpoint entity: %v: %v", req.URL, err)
 					}
 					return bodyMatch
 				})
@@ -134,14 +140,6 @@ func (s *restService) Start() error {
 		return fmt.Errorf("Service is running")
 	}
 
-	host, port, err := net.SplitHostPort(s.conf.Addr)
-	if err != nil {
-		return fmt.Errorf("Invalid address: %v", err)
-	}
-	if host == "" {
-		host = "localhost"
-	}
-
 	s.server = &http.Server{
 		Addr:           s.conf.Addr,
 		Handler:        http.HandlerFunc(s.routeRequest),
@@ -157,20 +155,13 @@ func (s *restService) Start() error {
 		}
 	}()
 
-	// wait for our service to start up
-	status := fmt.Sprintf("http://%s:%s%s", host, port, statusPath)
-	err = await.Await(context.Background(), []string{status}, ioTimeout)
-	if err == await.ErrTimeout {
-		return fmt.Errorf("Timed out waiting for service: %s", status)
-	} else if err != nil {
-		return err
-	}
-
+	s.conf.Status.Set(s.conf.Addr, status.Ready)
 	return nil
 }
 
 // Stop the service
 func (s *restService) Stop() error {
+	s.conf.Status.Set(s.conf.Addr, status.Stopped)
 	if s.server == nil {
 		return fmt.Errorf("Service is not running")
 	}
@@ -188,31 +179,22 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 		} else {
 			dlen = humanize.Bytes(uint64(req.ContentLength))
 		}
-		fmt.Printf("%s -> %s %s (%s)\n", prefix, req.Method, req.URL.Path, dlen)
+		logf("-> %s %s (%s)", req.Method, req.URL.Path, dlen)
 		if req.ContentLength > 0 {
 			data, err := io.ReadAll(req.Body)
 			if err != nil {
-				fmt.Printf("%s * * * Could not handle request: %v: %v\n", prefix, req.URL, err)
+				logf("* * * Could not handle request: %v: %v", req.URL, err)
 				return
 			}
 			req.Body = io.NopCloser(bytes.NewBuffer(data))
-			fmt.Println(text.Indent(string(data), strings.Repeat(" ", len(prefix))+" > "))
+			logln(text.Indent(string(data), " > "))
 		}
-	}
-
-	// match our internal status endpoint; we don't allow this to be shadowed
-	// by defined endpoints so that we can monitor the service.
-	if req.Method == statusMethod && req.URL.Path == statusPath {
-		rsp.Header().Set("Server", "Instaunit/1")
-		rsp.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		rsp.WriteHeader(http.StatusOK)
-		return
 	}
 
 	// handle our route
 	res, err := s.router.Handle((*router.Request)(req))
 	if err != nil {
-		fmt.Printf("%s * * * Could not handle request: %v: %v\n", prefix, req.URL, err)
+		logf("* * * Could not handle request: %v: %v", req.URL, err)
 		return
 	}
 
@@ -237,9 +219,9 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 			if len(req.URL.RawQuery) > 0 {
 				query = "?" + req.URL.RawQuery
 			}
-			fmt.Printf("%s <- %d/%s (%v) %s %s%s (%s)\n", prefix, r.Status, http.StatusText(r.Status), time.Since(start), req.Method, req.URL.Path, query, humanize.Bytes(uint64(len(e))))
+			logf("<- %d/%s (%v) %s %s%s (%s)", r.Status, http.StatusText(r.Status), time.Since(start), req.Method, req.URL.Path, query, humanize.Bytes(uint64(len(e))))
 			if len(e) > 0 {
-				fmt.Println(text.Indent(e, strings.Repeat(" ", len(prefix))+" < "))
+				logln(text.Indent(e, " < "))
 			}
 		}()
 	}
