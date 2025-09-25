@@ -20,7 +20,7 @@ type RemoteProcedure struct {
 }
 
 type Error struct {
-	Code    string `yaml:"code"`    // this is a convenience to set the status using an error constant
+	Code    any    `yaml:"code"`    // this is a convenience to set the status using an error constant
 	Message string `yaml:"message"` // the error message to return; if undefined, the error code constant is used
 }
 

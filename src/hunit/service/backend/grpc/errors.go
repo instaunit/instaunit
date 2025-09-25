@@ -28,13 +28,19 @@ var grpcErrorCodes = map[string]codes.Code{
 	"UNAUTHENTICATED":     codes.Unauthenticated,
 }
 
-func parseErrorCode(c string, d codes.Code) codes.Code {
-	v, ok := grpcErrorCodes[strings.ToUpper(c)]
-	if ok {
-		return v
-	} else {
-		return d
+func parseErrorCode(c any, d codes.Code) codes.Code {
+	switch x := c.(type) {
+	case int:
+		return codes.Code(x)
+	case float64:
+		return codes.Code(x)
+	case string:
+		v, ok := grpcErrorCodes[strings.ToUpper(x)]
+		if ok {
+			return v
+		}
 	}
+	return d
 }
 
 func grpcErrf(c codes.Code, f string, a ...any) error {
