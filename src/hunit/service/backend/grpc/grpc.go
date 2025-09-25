@@ -13,20 +13,16 @@ import (
 	"github.com/instaunit/instaunit/hunit/protodyn"
 	"github.com/instaunit/instaunit/hunit/service"
 	"github.com/instaunit/instaunit/hunit/service/status"
+	"github.com/instaunit/instaunit/hunit/text"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
-	grpcstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 var marshalOptions = protojson.MarshalOptions{}
-
-func grpcErrf(c codes.Code, f string, a ...any) error {
-	return grpcstatus.Error(c, fmt.Sprintf("instaunit: "+f, a...))
-}
 
 func logln(v ...any) {
 	fmt.Fprintln(os.Stderr, v...)
@@ -148,6 +144,13 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 			"value": reqjson,
 		},
 	})
+
+	if e := rsp.Error; e != nil && e.Code != "" {
+		return grpcErrf(parseErrorCode(e.Code, codes.Unknown), text.Coalesce(e.Message, e.Code))
+	} else if rsp.Status != 0 {
+		return grpcErrf(codes.Code(rsp.Status), "Status")
+	}
+
 	rspdata, err := expr.Interpolate(rsp.Entity, vars)
 	if err != nil {
 		return grpcErrf(codes.Internal, "Could not interpolate response: %v", err)

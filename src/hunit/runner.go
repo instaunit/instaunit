@@ -96,7 +96,6 @@ func runREST(suite *testcase.Suite, tcase testcase.Case, vars expr.Variables, re
 		return nil, nil, nil, fmt.Errorf("Could not resolve request URL: %s", tcase.Request.URL)
 	}
 	requrl := curl.String()
-	fmt.Println("EFFECTIVE:", requrl)
 
 	// incrementally update the name as we evaluate it
 	result.Name = formatRESTName(tcase, method, requrl)

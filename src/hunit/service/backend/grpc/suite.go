@@ -19,6 +19,11 @@ type RemoteProcedure struct {
 	Method  string `yaml:"method"`
 }
 
+type Error struct {
+	Code    string `yaml:"code"`    // this is a convenience to set the status using an error constant
+	Message string `yaml:"message"` // the error message to return; if undefined, the error code constant is used
+}
+
 // A request
 type Request struct {
 	Headers map[string]string `yaml:"headers"`
@@ -29,6 +34,7 @@ type Request struct {
 // A response
 type Response struct {
 	Status  int               `yaml:"status"`
+	Error   *Error            `yaml:"error"`
 	Headers map[string]string `yaml:"headers"`
 	Cookies map[string]string `yaml:"cookies"`
 	Entity  string            `yaml:"entity"`
