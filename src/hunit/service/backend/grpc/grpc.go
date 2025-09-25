@@ -1,7 +1,6 @@
 package grpc
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -24,6 +23,10 @@ import (
 )
 
 var marshalOptions = protojson.MarshalOptions{}
+
+func grpcErrf(c codes.Code, f string, a ...any) error {
+	return grpcstatus.Error(c, fmt.Sprintf("instaunit: "+f, a...))
+}
 
 func logln(v ...any) {
 	fmt.Fprintln(os.Stderr, v...)
@@ -85,7 +88,6 @@ func New(conf service.Config) (service.Service, error) {
 
 	// Create gRPC server with unknown service handler
 	grs := grpc.NewServer(
-		grpc.UnaryInterceptor(svc.unaryInterceptor),
 		grpc.UnknownServiceHandler(svc.handleUnknownService),
 	)
 
@@ -97,49 +99,45 @@ func New(conf service.Config) (service.Service, error) {
 	return svc, nil
 }
 
-func (s *grpcService) unaryInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	return nil, nil
-}
-
 // handleUnknownService handles all incoming gRPC calls
 func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerStream) error {
 	var (
 		sinfo = grpc.ServerTransportStreamFromContext(stream.Context())
 		mname = strings.TrimPrefix(sinfo.Method(), "/")
 	)
-
 	method, err := s.svcreg.MethodForName(mname)
 	if err != nil {
-		return grpcstatus.Error(codes.Internal, fmt.Sprintf("Method is not defined in any known service: %v", mname))
+		return grpcErrf(codes.Internal, "Method is not defined in any known service: %v", mname)
 	}
 
 	// Create request message to receive the incoming data
-	reqmsg := dynamicpb.NewMessage(method.Input())
+	msgdsc := method.Input()
+	reqmsg := dynamicpb.NewMessage(msgdsc)
 	// Receive the request (this reads the request but we don't need to use it for static responses)
 	err = stream.RecvMsg(reqmsg)
 	if err != nil {
-		return grpcstatus.Error(codes.InvalidArgument, fmt.Sprintf("Could not receive request message: %v", err))
+		return grpcErrf(codes.InvalidArgument, "Could not receive request message: %v: %v", msgdsc.FullName(), err)
 	}
 
 	// Convert the request to JSON data...
 	reqdata, err := marshalOptions.Marshal(reqmsg)
 	if err != nil {
-		return grpcstatus.Error(codes.Internal, fmt.Sprintf("Could not marshal request message: %v", err))
+		return grpcErrf(codes.Internal, "Could not marshal request message: %v", err)
 	}
 	// ...and unmarshal back to generic types for us in interpolation vars
 	var reqjson interface{}
 	err = json.Unmarshal(reqdata, &reqjson)
 	if err != nil {
-		return grpcstatus.Error(codes.Internal, fmt.Sprintf("Could not convert request to JSON: %v", err))
+		return grpcErrf(codes.Internal, "Could not convert request to JSON: %v", err)
 	}
 
 	epoint, ok := s.suite.MatchEndpoint(mname, reqmsg)
 	if !ok {
-		return grpcstatus.Error(codes.Unimplemented, fmt.Sprintf("Not implemented: %s", mname))
+		return grpcErrf(codes.Unimplemented, "Not implemented: %s", mname)
 	}
 	rsp := epoint.Response
 	if rsp == nil {
-		return fmt.Errorf("Endpoint has no response defined")
+		return grpcErrf(codes.Internal, "Endpoint has no response defined")
 	}
 
 	// interpolate the response
@@ -152,20 +150,22 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 	})
 	rspdata, err := expr.Interpolate(rsp.Entity, vars)
 	if err != nil {
-		return fmt.Errorf("Could not interpolate response: %w", err)
+		return grpcErrf(codes.Internal, "Could not interpolate response: %v", err)
 	}
 
 	// Create request message to receive the incoming data
-	rspmsg := dynamicpb.NewMessage(method.Output())
+	msgdsc = method.Output()
+	rspmsg := dynamicpb.NewMessage(msgdsc)
 	// Use protojson to unmarshal into the dynamic message
 	err = protojson.Unmarshal([]byte(rspdata), rspmsg)
 	if err != nil {
-		return fmt.Errorf("Could not unmarshal JSON response to protobuf: %v", err)
+		return grpcErrf(codes.Internal, "Could not unmarshal JSON response to protobuf: %v: %v (this is a configuration error in your Instaunit service; make sure your response conforms to the endpoint's output type)", msgdsc.FullName(), err)
 	}
+
 	// Send our response
 	err = stream.SendMsg(rspmsg)
 	if err != nil {
-		return grpcstatus.Error(codes.Internal, fmt.Sprintf("Could not send response message: %v", err))
+		return grpcErrf(codes.Internal, "Could not send response message: %v", err)
 	}
 
 	return nil
