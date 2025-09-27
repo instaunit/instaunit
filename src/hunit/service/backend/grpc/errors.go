@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
+	"google.golang.org/grpc/status"
 )
 
 var grpcErrorCodes = map[string]codes.Code{
@@ -44,5 +44,5 @@ func parseErrorCode(c any, d codes.Code) codes.Code {
 }
 
 func grpcErrf(c codes.Code, f string, a ...any) error {
-	return grpcstatus.Error(c, "instaunit: "+fmt.Sprintf(f, a...))
+	return status.Error(c, "instaunit: "+fmt.Sprintf(f, a...))
 }
