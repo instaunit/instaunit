@@ -148,7 +148,7 @@ func (s *grpcService) handleUnknownService(srv interface{}, stream grpc.ServerSt
 	if e := rsp.Error; e != nil && e.Code != nil {
 		return grpcErrf(parseErrorCode(e.Code, codes.Unknown), text.Coalesce(e.Message, fmt.Sprint(e.Code)))
 	} else if rsp.Status != 0 {
-		return grpcErrf(codes.Code(rsp.Status), "Status")
+		return grpcErrf(codes.Code(rsp.Status), "gRPC status: %v", rsp.Status)
 	}
 
 	rspdata, err := expr.Interpolate(rsp.Entity, vars)

@@ -44,5 +44,5 @@ func parseErrorCode(c any, d codes.Code) codes.Code {
 }
 
 func grpcErrf(c codes.Code, f string, a ...any) error {
-	return grpcstatus.Error(c, fmt.Sprintf("instaunit: "+f, a...))
+	return grpcstatus.Error(c, "instaunit: "+fmt.Sprintf(f, a...))
 }
