@@ -60,7 +60,7 @@ func New(conf service.Config) (service.Service, error) {
 		return nil, err
 	}
 
-	conf.Status.Set(conf.Addr, status.Pending)
+	conf.Status.Set(conf.Addr, status.NewStatic(status.Pending))
 
 	var (
 		reg  = protodyn.NewServiceRegistry()
@@ -187,12 +187,12 @@ func (s *grpcService) Start() error {
 		}
 	}()
 
-	s.conf.Status.Set(s.conf.Addr, status.Ready)
+	s.conf.Status.Set(s.conf.Addr, status.NewStatic(status.Ready))
 	return nil
 }
 
 func (s *grpcService) Stop() error {
-	s.conf.Status.Set(s.conf.Addr, status.Stopped)
+	s.conf.Status.Set(s.conf.Addr, status.NewStatic(status.Stopped))
 	s.server.GracefulStop()
 	return nil
 }

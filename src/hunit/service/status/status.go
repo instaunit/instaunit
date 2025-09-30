@@ -22,21 +22,45 @@ const (
 	Error   Status = "error"
 )
 
-type serviceStatus struct {
-	Status Status `json:"status"`
+type Provider interface {
+	Status() Status
+}
+
+type StaticProvider struct {
+	status Status
+}
+
+func NewStatic(s Status) Provider {
+	return StaticProvider{
+		status: s,
+	}
+}
+
+func (s StaticProvider) Status() Status {
+	return s.status
+}
+
+func Literalize(p Provider) literalStatus {
+	return literalStatus{
+		State: p.Status(),
+	}
+}
+
+type literalStatus struct {
+	State Status `json:"state"`
 }
 
 // status service
 type Service struct {
 	sync.RWMutex
 	server   *http.Server
-	services map[string]Status
+	services map[string]Provider
 }
 
 // Create a new status service
 func New() (*Service, error) {
 	s := &Service{
-		services: make(map[string]Status),
+		services: make(map[string]Provider),
 	}
 
 	mux := http.NewServeMux()
@@ -64,21 +88,21 @@ func New() (*Service, error) {
 	return s, nil
 }
 
-func (s *Service) Get(svc string) (Status, bool) {
+func (s *Service) Get(svc string) (Provider, bool) {
 	s.RLock()
 	status, ok := s.services[svc]
 	s.RUnlock()
 	return status, ok
 }
 
-func (s *Service) clone() map[string]Status {
+func (s *Service) clone() map[string]Provider {
 	s.RLock()
 	svcs := maps.Clone(s.services)
 	s.RUnlock()
 	return svcs
 }
 
-func (s *Service) Set(svc string, status Status) {
+func (s *Service) Set(svc string, status Provider) {
 	s.Lock()
 	s.services[svc] = status
 	s.Unlock()
@@ -101,7 +125,7 @@ func (s *Service) handleListStatus(rsp http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Service) handleFetchStatus(rsp http.ResponseWriter, req *http.Request) {
-	status, ok := s.Get(req.PathValue("service"))
+	provider, ok := s.Get(req.PathValue("service"))
 	if !ok {
 		rsp.WriteHeader(http.StatusNotFound)
 		return
@@ -111,7 +135,5 @@ func (s *Service) handleFetchStatus(rsp http.ResponseWriter, req *http.Request) 
 	hdr.Set("Content-Type", "application/json")
 
 	rsp.WriteHeader(http.StatusOK)
-	json.NewEncoder(rsp).Encode(serviceStatus{
-		Status: status,
-	})
+	json.NewEncoder(rsp).Encode(Literalize(provider))
 }

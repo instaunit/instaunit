@@ -57,6 +57,8 @@ type restService struct {
 
 // Create a new service
 func New(conf service.Config) (service.Service, error) {
+	conf.Status.Set(conf.Addr, status.NewStatic(status.Pending))
+
 	src, err := os.Open(conf.Path)
 	if err != nil {
 		return nil, err
@@ -66,8 +68,6 @@ func New(conf service.Config) (service.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	conf.Status.Set(conf.Addr, status.Pending)
 
 	vars := expr.Variables{
 		"std": runtime.Stdlib,
@@ -155,13 +155,13 @@ func (s *restService) Start() error {
 		}
 	}()
 
-	s.conf.Status.Set(s.conf.Addr, status.Ready)
+	s.conf.Status.Set(s.conf.Addr, status.NewStatic(status.Ready))
 	return nil
 }
 
 // Stop the service
 func (s *restService) Stop() error {
-	s.conf.Status.Set(s.conf.Addr, status.Stopped)
+	s.conf.Status.Set(s.conf.Addr, status.NewStatic(status.Stopped))
 	if s.server == nil {
 		return fmt.Errorf("Service is not running")
 	}
