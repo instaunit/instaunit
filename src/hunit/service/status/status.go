@@ -40,13 +40,15 @@ func (s StaticProvider) Status() Status {
 	return s.status
 }
 
-func Literalize(p Provider) literalStatus {
+func Literalize(a string, p Provider) literalStatus {
 	return literalStatus{
+		Addr:  a,
 		State: p.Status(),
 	}
 }
 
 type literalStatus struct {
+	Addr  string `json:"addr"`
 	State Status `json:"state"`
 }
 
@@ -116,16 +118,21 @@ func (s *Service) Del(svc string) {
 
 func (s *Service) handleListStatus(rsp http.ResponseWriter, req *http.Request) {
 	svcs := s.clone()
+	list := make([]literalStatus, 0, len(svcs))
+	for k, v := range svcs {
+		list = append(list, Literalize(k, v))
+	}
 
 	hdr := rsp.Header()
 	hdr.Set("Content-Type", "application/json")
 
 	rsp.WriteHeader(http.StatusOK)
-	json.NewEncoder(rsp).Encode(svcs)
+	json.NewEncoder(rsp).Encode(list)
 }
 
 func (s *Service) handleFetchStatus(rsp http.ResponseWriter, req *http.Request) {
-	provider, ok := s.Get(req.PathValue("service"))
+	addr := req.PathValue("service")
+	provider, ok := s.Get(addr)
 	if !ok {
 		rsp.WriteHeader(http.StatusNotFound)
 		return
@@ -135,5 +142,5 @@ func (s *Service) handleFetchStatus(rsp http.ResponseWriter, req *http.Request) 
 	hdr.Set("Content-Type", "application/json")
 
 	rsp.WriteHeader(http.StatusOK)
-	json.NewEncoder(rsp).Encode(Literalize(provider))
+	json.NewEncoder(rsp).Encode(Literalize(addr, provider))
 }
