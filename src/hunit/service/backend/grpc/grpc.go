@@ -31,7 +31,7 @@ func logln(v ...any) {
 func logf(f string, a ...any) {
 	if n := len(f); n == 0 {
 		fmt.Fprintln(os.Stderr)
-	} else if f[n] == '\n' {
+	} else if f[n-1] == '\n' {
 		fmt.Fprintf(os.Stderr, f, a...)
 	} else {
 		fmt.Fprintf(os.Stderr, f, a...)

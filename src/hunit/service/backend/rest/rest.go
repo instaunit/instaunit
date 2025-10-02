@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -38,7 +37,7 @@ func logln(v ...any) {
 func logf(f string, a ...any) {
 	if n := len(f); n == 0 {
 		fmt.Fprintln(os.Stderr)
-	} else if f[n] == '\n' {
+	} else if f[n-1] == '\n' {
 		fmt.Fprintf(os.Stderr, f, a...)
 	} else {
 		fmt.Fprintf(os.Stderr, f, a...)
@@ -83,8 +82,18 @@ func New(conf service.Config) (service.Service, error) {
 
 	for _, e := range suite.Endpoints {
 		if e.Request != nil {
+			var methods []string
+			if m := e.Request.Method; m != "" {
+				methods = append(methods, m)
+			}
+			if m := e.Request.Methods; len(m) > 0 {
+				methods = append(methods, m...)
+			}
 			endpoint := e
-			b := r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
+			b := r.
+				Add(e.Request.Path, handler(e)).
+				Methods(methods...).
+				Params(convertParams(e.Request.Params))
 			if endpoint.Request.Entity != "" {
 				b.Match(func(req *router.Request, route *router.Route) bool {
 					bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
@@ -94,6 +103,11 @@ func New(conf service.Config) (service.Service, error) {
 					return bodyMatch
 				})
 			}
+			if debug.VERBOSE {
+				logf("route: %v", b)
+			}
+		} else {
+			logln("error: Route defines no endpoint, cannot match any request; did you specify an 'endpoint'?")
 		}
 	}
 
@@ -118,17 +132,19 @@ func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 
 	// check if request body is not empty, check if matches this endpoint's entity
 	if len(reqBody) != 0 {
-		var reqData interface{}
-		if err := json.Unmarshal(reqBody, &reqData); err != nil {
+		var reqEntity interface{}
+		if err := json.Unmarshal(reqBody, &reqEntity); err != nil {
 			return false, err
 		}
 
-		var endpointBody interface{}
-		if err := json.Unmarshal([]byte(entityBody), &endpointBody); err != nil {
+		var cmpEntity interface{} // this can be cached, it's a fixture
+		if err := json.Unmarshal([]byte(entityBody), &cmpEntity); err != nil {
 			return false, err
 		}
 
-		return reflect.DeepEqual(endpointBody, reqData), nil
+		// we use semantic comparison, which allows the fixture side of the
+		// comparison to match against a subset of the request side
+		return entity.SemanticEqual(cmpEntity, reqEntity), nil
 	}
 
 	return false, nil

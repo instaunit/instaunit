@@ -15,6 +15,7 @@ import (
 // A request
 type Request struct {
 	sync.Mutex
+	Method  string            `yaml:"method"`
 	Methods []string          `yaml:"methods"`
 	Path    string            `yaml:"path"`
 	Params  map[string]string `yaml:"params"`
