@@ -41,7 +41,8 @@ type Endpoint struct {
 
 // A test suite
 type Suite struct {
-	Endpoints []Endpoint `yaml:"service"`
+	Globals   map[string]any `yaml:"vars"`
+	Endpoints []Endpoint     `yaml:"service"`
 }
 
 // Load a test suite

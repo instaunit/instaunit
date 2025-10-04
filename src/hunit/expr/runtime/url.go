@@ -27,3 +27,25 @@ func (s stdURL) Query(v string) (string, error) {
 		return "", nil
 	}
 }
+
+func (s stdURL) AddParam(b, k, v string) (string, error) {
+	u, err := url.Parse(b)
+	if err != nil {
+		return "", err
+	}
+	q := u.Query()
+	q.Add(k, v)
+	u.RawQuery = q.Encode()
+	return u.String(), nil
+}
+
+func (s stdURL) SetParam(b, k, v string) (string, error) {
+	u, err := url.Parse(b)
+	if err != nil {
+		return "", err
+	}
+	q := u.Query()
+	q.Add(k, v)
+	u.RawQuery = q.Encode()
+	return u.String(), nil
+}
