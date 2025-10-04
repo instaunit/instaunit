@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/entity"
@@ -196,6 +197,9 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 			dlen = humanize.Bytes(uint64(req.ContentLength))
 		}
 		logf("-> %s %s (%s)", req.Method, req.URL.Path, dlen)
+		for k, v := range req.Header {
+			logf(" - %s: %s", k, strings.Join(v, "; "))
+		}
 		if req.ContentLength > 0 {
 			data, err := io.ReadAll(req.Body)
 			if err != nil {
