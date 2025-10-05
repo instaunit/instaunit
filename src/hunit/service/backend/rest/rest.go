@@ -103,34 +103,33 @@ func New(conf service.Config) (service.Service, error) {
 
 	r := router.New()
 
-	for _, e := range suite.Endpoints {
-		if e.Request != nil {
+	for _, ept := range suite.Endpoints {
+		if ept.Request != nil {
 			var methods []string
-			if m := e.Request.Method; m != "" {
+			if m := ept.Request.Method; m != "" {
 				methods = append(methods, m)
 			}
-			if m := e.Request.Methods; len(m) > 0 {
+			if m := ept.Request.Methods; len(m) > 0 {
 				methods = append(methods, m...)
 			}
-			endpoint := e
 			b := r.
-				Add(e.Request.Path, handler(e)).
+				Add(ept.Request.Path, handler(ept)).
 				Methods(methods...).
-				Params(convertParams(e.Request.Params))
-			if endpoint.Request.Entity != "" {
+				Params(convertParams(ept.Request.Params))
+			if ept.Request.Entity != "" {
 				b.Match(func(req *router.Request, route *router.Route) bool {
-					bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
+					matches, err := entityMatches(ept.Request.Entity, req)
 					if err != nil {
 						logf("* * * Error checking if request body matches expected endpoint entity: %v: %v", req.URL, err)
 					}
-					return bodyMatch
+					return matches
 				})
 			}
 			if debug.VERBOSE {
 				logf("route: %v", b)
 			}
 		} else {
-			logln("error: Route defines no endpoint, cannot match any request; did you specify an 'endpoint'?")
+			logln("error: Route defines no endpoint, cannot match any request; did you specify 'endpoint:'?")
 		}
 	}
 
@@ -142,9 +141,9 @@ func New(conf service.Config) (service.Service, error) {
 	}, nil
 }
 
-// bodyMatches compares the request entity object with the request body for a match.
+// entityMatches compares the request entity object with the request body for a match.
 // Since it has to read the body from the router.Request it replaces it for future processing
-func bodyMatches(entityBody string, req *router.Request) (bool, error) {
+func entityMatches(matchdata string, req *router.Request) (bool, error) {
 	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		return false, err
@@ -161,7 +160,7 @@ func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 		}
 
 		var cmpEntity interface{} // this can be cached, it's a fixture
-		if err := json.Unmarshal([]byte(entityBody), &cmpEntity); err != nil {
+		if err := json.Unmarshal([]byte(matchdata), &cmpEntity); err != nil {
 			return false, err
 		}
 
