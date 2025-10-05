@@ -222,15 +222,15 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 		for k, v := range req.Header {
 			logf(" - %s: %s", k, strings.Join(v, "; "))
 		}
-		if req.Body != nil {
-			data, err := io.ReadAll(req.Body)
+		if req.ContentLength != 0 {
+			reqdata, err := io.ReadAll(req.Body)
 			if err != nil {
 				logf("* * * Could not handle request: %v: %v", req.URL, err)
 				return
 			}
-			req.Body = io.NopCloser(bytes.NewBuffer(data))
-			if len(data) > 0 {
-				logln(text.Indent(string(data), " > "))
+			req.Body = io.NopCloser(bytes.NewBuffer(reqdata))
+			if len(reqdata) > 0 {
+				logln(text.Indent(string(reqdata), " > "))
 			}
 		}
 	}
