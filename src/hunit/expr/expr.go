@@ -3,6 +3,7 @@ package expr
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
 
@@ -49,6 +50,16 @@ func (e ExprError) Detail() string {
 
 // Variables
 type Variables map[string]interface{}
+
+// With produces a set of variables by merging arguments with the reciever.
+// In case of confilct, the last argument to define a value prevails.
+func (v Variables) With(o ...Variables) Variables {
+	d := maps.Clone(v)
+	for _, e := range o {
+		maps.Copy(d, e)
+	}
+	return d
+}
 
 // Map the environment
 func mapenv(v []string) map[string]string {
@@ -146,7 +157,7 @@ func interpolate(s, pre, suf string, context interface{}) (string, error) {
 
 				res, err := prg.Exec(context)
 				if err != nil {
-					return "", newExprError(fmt.Errorf("Could not evaluate expression: {%v}: %v", s[start:i], err), context)
+					return "", newExprError(fmt.Errorf("Could not evaluate expression: %s%v%s: %v", pre, s[start:i], suf, err), context)
 				}
 
 				switch v := res.(type) {

@@ -6,12 +6,14 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 // An assertion error
 type AssertionError struct {
-	Expected, Actual interface{}
-	Message          string
+	Expect, Actual interface{}
+	Message        string
 }
 
 func (e AssertionError) Error() string {
@@ -20,11 +22,18 @@ func (e AssertionError) Error() string {
 		m += ":\n"
 	}
 
-	_, ek := typeAndKind(e.Expected)
+	var diffopts []cmp.Option
+	_, expectpb := e.Expect.(proto.Message)
+	_, actualpb := e.Actual.(proto.Message)
+	if expectpb || actualpb {
+		diffopts = append(diffopts, protocmp.Transform())
+	}
+
+	_, ek := typeAndKind(e.Expect)
 	if ek == reflect.String || ek == reflect.Struct || ek == reflect.Map || ek == reflect.Slice || ek == reflect.Array {
-		m += cmp.Diff(e.Expected, e.Actual)
+		m += cmp.Diff(e.Expect, e.Actual, diffopts...)
 	} else {
-		m += "expected: " + spew.Sdump(e.Expected)
+		m += "expected: " + spew.Sdump(e.Expect)
 		m += "  actual: " + spew.Sdump(e.Actual)
 	}
 

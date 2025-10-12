@@ -72,6 +72,7 @@ type Suite struct {
 	Exec      *exec.Command             `yaml:"process"`
 	Deps      *Dependencies             `yaml:"depends"`
 	Globals   map[string]interface{}    `yaml:"vars"`
+	Protos    []string                  `yaml:"protos"` // compiled protobuf descriptor sets to load and make available in the test suite
 }
 
 // Determine if this suite is documented or not

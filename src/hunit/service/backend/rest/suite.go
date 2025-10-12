@@ -4,38 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"strings"
 	"sync"
 	"time"
+
+	"github.com/instaunit/instaunit/hunit/service/backend/errors"
 
 	yaml "gopkg.in/yaml.v3"
 )
 
-type alternateErrors []error
-
-func (errs alternateErrors) Error() string {
-	switch len(errs) {
-	case 0:
-		return "No error"
-	case 1:
-		return errs[0].Error()
-	}
-
-	b := &strings.Builder{}
-	b.WriteString(fmt.Sprintf("One of %d possible errors occurred:\n", len(errs)))
-
-	for i, err := range errs {
-		b.WriteString("\n")
-		b.WriteString(fmt.Sprintf("#%d: %v\n", i+1, err))
-	}
-
-	return b.String()
-}
-
 // A request
 type Request struct {
 	sync.Mutex
+	Method  string            `yaml:"method"`
 	Methods []string          `yaml:"methods"`
 	Path    string            `yaml:"path"`
 	Params  map[string]string `yaml:"params"`
@@ -61,7 +41,8 @@ type Endpoint struct {
 
 // A test suite
 type Suite struct {
-	Endpoints []Endpoint `yaml:"service"`
+	Globals   map[string]any `yaml:"vars"`
+	Endpoints []Endpoint     `yaml:"service"`
 }
 
 // Load a test suite
@@ -69,11 +50,10 @@ func LoadSuite(src io.ReadCloser) (*Suite, error) {
 	suite := &Suite{}
 	var errs []error
 
-	data, err := ioutil.ReadAll(src)
+	data, err := io.ReadAll(src)
 	if err != nil {
 		return nil, err
 	}
-
 	err = unmarshal(data, suite)
 	if err != nil {
 		errs = append(errs, err)
@@ -88,26 +68,15 @@ func LoadSuite(src io.ReadCloser) (*Suite, error) {
 			suite.Endpoints = endpoints
 		}
 	}
-
 	if len(suite.Endpoints) < 1 && len(errs) > 0 {
-		return nil, alternateErrors(errs)
-	} else {
-		return suite, nil
+		return nil, fmt.Errorf("Could not unmarshal REST service: %w", errors.AlternateErrors(errs))
 	}
+
+	return suite, nil
 }
 
 func unmarshal(data []byte, dest interface{}) error {
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.KnownFields(true)
 	return dec.Decode(dest)
-}
-
-// Return the first non-nil error or nil if there are none.
-func coalesce(err ...error) error {
-	for _, e := range err {
-		if e != nil {
-			return e
-		}
-	}
-	return nil
 }

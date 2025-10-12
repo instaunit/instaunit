@@ -1,6 +1,9 @@
 package testcase
 
 import (
+	"fmt"
+	"net/url"
+	"path"
 	"time"
 
 	"github.com/instaunit/instaunit/hunit/expr"
@@ -47,6 +50,19 @@ type Request struct {
 	Comments  string            `yaml:"doc"`
 }
 
+func (r Request) ResolveURL(base *url.URL) (string, error) {
+	if base == nil {
+		return r.URL, nil
+	}
+	// there's no point in caching this since every request is run exactly once
+	// or repeatedly in a tight loop where the URL should be cached externally
+	ref, err := url.Parse(r.URL)
+	if err != nil {
+		return "", err
+	}
+	return base.ResolveReference(ref).String(), nil
+}
+
 // A test response
 type Response struct {
 	Status     int               `yaml:"status"`
@@ -84,6 +100,10 @@ type Source struct {
 	File         string
 	Line, Column int
 	Comments     Comments
+}
+
+func (s Source) String() string {
+	return fmt.Sprintf("%s:%d", path.Base(s.File), s.Line)
 }
 
 // Route descrition for documentation
@@ -135,6 +155,11 @@ func (m Matrix) Frames() []Frame {
 	return r
 }
 
+type RemoteProcedure struct {
+	Service string `yaml:"service"`
+	Method  string `yaml:"method"`
+}
+
 // A test case
 type Case struct {
 	Id         string                   `yaml:"id"`
@@ -150,6 +175,7 @@ type Case struct {
 	Verbose    bool                     `yaml:"verbose"` // enable verbose mode for this test case specifically
 	Params     map[string]Parameter     `yaml:"params"`
 	Security   map[string]AccessControl `yaml:"security"`
+	RPC        *RemoteProcedure         `yaml:"grpc"`
 	Request    Request                  `yaml:"request"`
 	Response   Response                 `yaml:"response"`
 	Stream     *Stream                  `yaml:"websocket"`

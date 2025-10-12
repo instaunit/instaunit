@@ -1,0 +1,19 @@
+user {
+  name: "John Doe"
+  email: "john@example.com"
+  age: 30
+  is_active: true
+  tags: "developer"
+  tags: "golang"
+  metadata { key: "department" value: "Engineering" }
+  metadata { key: "level" value: "Senior" }
+  address {
+    street: "123 Main St"
+    city: "San Francisco"
+    state: "CA"
+    zip_code: "94102"
+    country: "USA"
+  },
+  type: USER_TYPE_REGULAR
+  phone: "+1-917-555-0123"
+}

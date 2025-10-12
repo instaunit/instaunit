@@ -9,7 +9,7 @@ import (
 )
 
 // Scheme matcher
-var urlish = regexp.MustCompile("^[a-z]+://")
+var urlish = regexp.MustCompile("^[a-z]+://.+")
 
 // Determine if a URL appears to be absolute. It is considered absolute
 // if the string begins with a scheme://.

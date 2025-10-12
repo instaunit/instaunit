@@ -19,7 +19,7 @@ var iomodeNames = []string{
 
 // Stringer
 func (c IOMode) String() string {
-	if c < 0 || c > IOModeAsync {
+	if c > IOModeAsync {
 		return "<invalid>"
 	} else {
 		return iomodeNames[int(c)]

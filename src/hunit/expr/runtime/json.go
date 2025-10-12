@@ -33,3 +33,16 @@ func (s stdJSON) Unmarshal(v interface{}) (interface{}, error) {
 	}
 	return obj, nil
 }
+
+func (s stdJSON) Format(v interface{}) (string, error) {
+	var data json.RawMessage
+	switch c := v.(type) {
+	case []byte:
+		data = c
+	case string:
+		data = []byte(c)
+	default:
+		return "", fmt.Errorf("Unsupported type: %T", v)
+	}
+	return s.Marshal(data)
+}

@@ -19,7 +19,7 @@ var comparisonNames = []string{
 
 // Stringer
 func (c Comparison) String() string {
-	if c < 0 || c > CompareSemantic {
+	if c > CompareSemantic {
 		return "<invalid>"
 	} else {
 		return comparisonNames[int(c)]

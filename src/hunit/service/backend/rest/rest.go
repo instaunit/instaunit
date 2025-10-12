@@ -2,15 +2,13 @@ package rest
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
-	"reflect"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -18,8 +16,8 @@ import (
 	"github.com/instaunit/instaunit/hunit/entity"
 	"github.com/instaunit/instaunit/hunit/expr"
 	"github.com/instaunit/instaunit/hunit/expr/runtime"
-	"github.com/instaunit/instaunit/hunit/net/await"
 	"github.com/instaunit/instaunit/hunit/service"
+	"github.com/instaunit/instaunit/hunit/service/status"
 
 	"github.com/bww/go-router/v2"
 	routerentity "github.com/bww/go-router/v2/entity"
@@ -33,13 +31,30 @@ import (
 // Don't wait forever
 const ioTimeout = time.Second * 10
 
-// Status
-const (
-	statusMethod = "GET"
-	statusPath   = "/_instaunit/status"
-)
+// The status for internal errors
+const errorStatus = http.StatusInternalServerError
 
-const prefix = "[rest]"
+func logln(v ...any) {
+	fmt.Fprintln(os.Stderr, v...)
+}
+
+func logf(f string, a ...any) {
+	if n := len(f); n == 0 {
+		fmt.Fprintln(os.Stderr)
+	} else if f[n-1] == '\n' {
+		fmt.Fprintf(os.Stderr, f, a...)
+	} else {
+		fmt.Fprintf(os.Stderr, f, a...)
+		fmt.Fprintln(os.Stderr)
+	}
+}
+
+// REST error
+type restError struct {
+	Status int    `json:"status"`
+	Error  string `json:"error"`
+	Cause  string `json:"cause"`
+}
 
 // REST service
 type restService struct {
@@ -52,36 +67,69 @@ type restService struct {
 
 // Create a new service
 func New(conf service.Config) (service.Service, error) {
-	suite, err := LoadSuite(conf.Resource)
+	conf.Status.Set(conf.Addr, status.NewStatic(status.Pending))
+
+	src, err := os.Open(conf.Path)
+	if err != nil {
+		return nil, err
+	}
+	defer src.Close()
+	suite, err := LoadSuite(src)
 	if err != nil {
 		return nil, err
 	}
 
 	vars := expr.Variables{
-		"std": runtime.Stdlib,
+		"vars": suite.Globals,
+		"std":  runtime.Stdlib,
 	}
 
-	handler := func(e Endpoint) router.Handler {
+	handler := func(ept Endpoint) router.Handler {
 		return func(req *router.Request, cxt router.Context) (*router.Response, error) {
-			return handleRequest((*http.Request)(req), cxt, e, maps.Copy(vars))
+			rsp, err := handleRequest((*http.Request)(req), cxt, ept, maps.Copy(vars))
+			if err != nil {
+				rsp, err = router.NewResponse(errorStatus).SetJSON(restError{
+					Status: errorStatus,
+					Error:  "Instaunit could not fulfill this request due to an internal error",
+					Cause:  err.Error(),
+				})
+			}
+			if rsp.Status == 0 {
+				rsp.Status = http.StatusOK
+			}
+			return rsp, err
 		}
 	}
 
 	r := router.New()
 
-	for _, e := range suite.Endpoints {
-		if e.Request != nil {
-			endpoint := e
-			b := r.Add(e.Request.Path, handler(e)).Methods(e.Request.Methods...).Params(convertParams(e.Request.Params))
-			if endpoint.Request.Entity != "" {
+	for _, ept := range suite.Endpoints {
+		if ept.Request != nil {
+			var methods []string
+			if m := ept.Request.Method; m != "" {
+				methods = append(methods, m)
+			}
+			if m := ept.Request.Methods; len(m) > 0 {
+				methods = append(methods, m...)
+			}
+			b := r.
+				Add(ept.Request.Path, handler(ept)).
+				Methods(methods...).
+				Params(convertParams(ept.Request.Params))
+			if ept.Request.Entity != "" {
 				b.Match(func(req *router.Request, route *router.Route) bool {
-					bodyMatch, err := bodyMatches(endpoint.Request.Entity, req)
+					matches, err := entityMatches(ept.Request.Entity, req)
 					if err != nil {
-						fmt.Printf("%s * * * Error checking if request body matches expected endpoint entity: %v: %v\n", prefix, req.URL, err)
+						logf("* * * Error checking if request body matches expected endpoint entity: %v: %v", req.URL, err)
 					}
-					return bodyMatch
+					return matches
 				})
 			}
+			if debug.VERBOSE {
+				logf("route: %v", b)
+			}
+		} else {
+			logln("error: Route defines no endpoint, cannot match any request; did you specify 'endpoint:'?")
 		}
 	}
 
@@ -93,9 +141,9 @@ func New(conf service.Config) (service.Service, error) {
 	}, nil
 }
 
-// bodyMatches compares the request entity object with the request body for a match.
+// entityMatches compares the request entity object with the request body for a match.
 // Since it has to read the body from the router.Request it replaces it for future processing
-func bodyMatches(entityBody string, req *router.Request) (bool, error) {
+func entityMatches(matchdata string, req *router.Request) (bool, error) {
 	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		return false, err
@@ -106,17 +154,19 @@ func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 
 	// check if request body is not empty, check if matches this endpoint's entity
 	if len(reqBody) != 0 {
-		var reqData interface{}
-		if err := json.Unmarshal(reqBody, &reqData); err != nil {
+		var reqEntity interface{}
+		if err := json.Unmarshal(reqBody, &reqEntity); err != nil {
 			return false, err
 		}
 
-		var endpointBody interface{}
-		if err := json.Unmarshal([]byte(entityBody), &endpointBody); err != nil {
+		var cmpEntity interface{} // this can be cached, it's a fixture
+		if err := json.Unmarshal([]byte(matchdata), &cmpEntity); err != nil {
 			return false, err
 		}
 
-		return reflect.DeepEqual(endpointBody, reqData), nil
+		// we use semantic comparison, which allows the fixture side of the
+		// comparison to match against a subset of the request side
+		return entity.SemanticEqual(cmpEntity, reqEntity), nil
 	}
 
 	return false, nil
@@ -126,14 +176,6 @@ func bodyMatches(entityBody string, req *router.Request) (bool, error) {
 func (s *restService) Start() error {
 	if s.server != nil {
 		return fmt.Errorf("Service is running")
-	}
-
-	host, port, err := net.SplitHostPort(s.conf.Addr)
-	if err != nil {
-		return fmt.Errorf("Invalid address: %v", err)
-	}
-	if host == "" {
-		host = "localhost"
 	}
 
 	s.server = &http.Server{
@@ -151,20 +193,13 @@ func (s *restService) Start() error {
 		}
 	}()
 
-	// wait for our service to start up
-	status := fmt.Sprintf("http://%s:%s%s", host, port, statusPath)
-	err = await.Await(context.Background(), []string{status}, ioTimeout)
-	if err == await.ErrTimeout {
-		return fmt.Errorf("Timed out waiting for service: %s", status)
-	} else if err != nil {
-		return err
-	}
-
+	s.conf.Status.Set(s.conf.Addr, status.NewStatic(status.Ready))
 	return nil
 }
 
 // Stop the service
 func (s *restService) Stop() error {
+	s.conf.Status.Set(s.conf.Addr, status.NewStatic(status.Stopped))
 	if s.server == nil {
 		return fmt.Errorf("Service is not running")
 	}
@@ -182,31 +217,27 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 		} else {
 			dlen = humanize.Bytes(uint64(req.ContentLength))
 		}
-		fmt.Printf("%s -> %s %s (%s)\n", prefix, req.Method, req.URL.Path, dlen)
-		if req.ContentLength > 0 {
-			data, err := io.ReadAll(req.Body)
+		logf("-> %s %s (%s)", req.Method, req.URL.Path, dlen)
+		for k, v := range req.Header {
+			logf(" - %s: %s", k, strings.Join(v, "; "))
+		}
+		if req.ContentLength != 0 {
+			reqdata, err := io.ReadAll(req.Body)
 			if err != nil {
-				fmt.Printf("%s * * * Could not handle request: %v: %v\n", prefix, req.URL, err)
+				logf("* * * Could not handle request: %v: %v", req.URL, err)
 				return
 			}
-			req.Body = io.NopCloser(bytes.NewBuffer(data))
-			fmt.Println(text.Indent(string(data), strings.Repeat(" ", len(prefix))+" > "))
+			req.Body = io.NopCloser(bytes.NewBuffer(reqdata))
+			if len(reqdata) > 0 {
+				logln(text.Indent(string(reqdata), " > "))
+			}
 		}
-	}
-
-	// match our internal status endpoint; we don't allow this to be shadowed
-	// by defined endpoints so that we can monitor the service.
-	if req.Method == statusMethod && req.URL.Path == statusPath {
-		rsp.Header().Set("Server", "Instaunit/1")
-		rsp.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		rsp.WriteHeader(http.StatusOK)
-		return
 	}
 
 	// handle our route
 	res, err := s.router.Handle((*router.Request)(req))
 	if err != nil {
-		fmt.Printf("%s * * * Could not handle request: %v: %v\n", prefix, req.URL, err)
+		logf("* * * Could not handle request: %v: %v", req.URL, err)
 		return
 	}
 
@@ -215,15 +246,16 @@ func (s *restService) routeRequest(rsp http.ResponseWriter, req *http.Request) {
 }
 
 // Handle requests
-func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, vars expr.Variables) (*router.Response, error) {
-	var err error
-
-	r := endpoint.Response
-	if r == nil {
+func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, vars expr.Variables) (rsp *router.Response, err error) {
+	spec := endpoint.Response
+	if spec == nil {
 		return router.NewResponse(http.StatusOK), nil
 	}
 
-	var e string
+	var (
+		status int
+		ent    string
+	)
 	if debug.VERBOSE {
 		start := time.Now()
 		defer func() {
@@ -231,9 +263,16 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 			if len(req.URL.RawQuery) > 0 {
 				query = "?" + req.URL.RawQuery
 			}
-			fmt.Printf("%s <- %d/%s (%v) %s %s%s (%s)\n", prefix, r.Status, http.StatusText(r.Status), time.Since(start), req.Method, req.URL.Path, query, humanize.Bytes(uint64(len(e))))
-			if len(e) > 0 {
-				fmt.Println(text.Indent(e, strings.Repeat(" ", len(prefix))+" < "))
+			if err != nil {
+				logf("<- ERROR (%v) %s %s%s: %v", time.Since(start), req.Method, req.URL.Path, query, err)
+			} else {
+				logf("<- %d/%s (%v) %s %s%s (%s)", status, http.StatusText(status), time.Since(start), req.Method, req.URL.Path, query, humanize.Bytes(uint64(len(ent))))
+				for k, v := range rsp.Header {
+					logf(" - %s: %s", k, strings.Join(v, "; "))
+				}
+				if len(ent) > 0 {
+					logln(text.Indent(ent, " < "))
+				}
 			}
 		}()
 	}
@@ -279,45 +318,61 @@ func handleRequest(req *http.Request, cxt router.Context, endpoint Endpoint, var
 		"form":   cform,
 		"value":  reqent, // if available; this may be nil
 	}
-	e, err = expr.Interpolate(r.Entity, vars)
+	ent, err = expr.Interpolate(spec.Entity, vars)
 	if err != nil {
 		return nil, err
 	}
 
-	x := router.NewResponse(r.Status)
-	if l := len(e); l > 0 {
-		ent, err := routerentity.NewString("binary/octet-stream", e)
-		if err != nil {
-			return nil, err
-		}
-		_, err = x.SetEntity(ent)
-		if err != nil {
-			return nil, err
-		}
-		x.SetHeader("Content-Length", strconv.FormatInt(int64(l), 10))
-	}
-	for k, v := range r.Headers {
-		x.SetHeader(k, v)
+	if spec.Status != 0 {
+		status = spec.Status
+	} else {
+		status = http.StatusOK
 	}
 
-	return x, nil
+	rsp = router.NewResponse(status)
+	if l := len(ent); l > 0 {
+		ent, err := routerentity.NewString("binary/octet-stream", ent)
+		if err != nil {
+			return nil, err
+		}
+		_, err = rsp.SetEntity(ent)
+		if err != nil {
+			return nil, err
+		}
+		rsp.SetHeader("Content-Length", strconv.FormatInt(int64(l), 10))
+	}
+	for k, v := range spec.Headers {
+		x, err := expr.Interpolate(k, vars)
+		if err != nil {
+			return nil, fmt.Errorf("Could not interpolate header key: [%s -> %s] %w", k, v, err)
+		}
+		y, err := expr.Interpolate(v, vars)
+		if err != nil {
+			return nil, fmt.Errorf("Could not interpolate header value: [%s -> %s] %w", k, v, err)
+		}
+		rsp.SetHeader(x, y)
+	}
+
+	return rsp, nil
 }
 
 // Handle responses
-func handleResponse(rsp http.ResponseWriter, req *http.Request, res *router.Response) {
-	for k, v := range res.Header {
-		rsp.Header().Set(k, v[0])
+func handleResponse(w http.ResponseWriter, req *http.Request, rsp *router.Response) {
+	for k, v := range rsp.Header {
+		w.Header().Set(k, v[0])
 	}
 
-	if res.Status != 0 {
-		rsp.WriteHeader(res.Status)
+	var status int
+	if rsp.Status != 0 {
+		status = rsp.Status
 	} else {
-		rsp.WriteHeader(http.StatusOK)
+		status = http.StatusOK
 	}
+	w.WriteHeader(status)
 
-	if e := res.Entity; e != nil {
+	if e := rsp.Entity; e != nil {
 		defer e.Close()
-		_, err := io.Copy(rsp, e)
+		_, err := io.Copy(w, e)
 		if err != nil {
 			fmt.Printf("* * * Could not write response: %v: %v\n", req.URL, err)
 		}

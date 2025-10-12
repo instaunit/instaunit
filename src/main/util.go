@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -114,4 +115,18 @@ type colorWriter struct {
 
 func (w colorWriter) Write(p []byte) (int, error) {
 	return color.New(w.attrs...).Fprint(w.WriteCloser, string(p))
+}
+
+func println(text string) {
+	fprintln(os.Stdout, text)
+}
+
+// Print with a newline only if necessary
+func fprintln(w io.Writer, text string) {
+	if n := len(text); n > 0 {
+		fmt.Fprint(w, text)
+		if text[n-1] != '\n' {
+			fmt.Fprintln(w)
+		}
+	}
 }
