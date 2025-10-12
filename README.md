@@ -1,6 +1,6 @@
 # Instaunit tests your HTTP APIs
 
-Instaunit is a tool that lets you write integration tests for REST and Websocket services declaratively and run them automatically. You can use Instaunit locally for development and on your CI infrastructure as part of your integration tests.
+Instaunit is a tool that lets you write integration tests for REST, gRPC, and Websocket services declaratively and run them automatically. You can use Instaunit locally for development and on your CI infrastructure.
 
 **Instaunit manages the repetitive details** of setting up and tearing down, executing requests and evaluating responses, which allows you to get more value out of your tests faster.
 
